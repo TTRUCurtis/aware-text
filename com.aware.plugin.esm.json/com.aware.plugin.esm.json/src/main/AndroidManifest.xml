@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aware.plugin.esm.json">
+
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <service
+            android:name="com.aware.plugin.esm.json.Plugin"
+            android:exported="true"
+            android:label="AWARE: ESM JSON Plugin" />
+        <activity
+            android:name="com.aware.plugin.esm.json.Settings"
+            android:exported="true"
+            android:label="AWARE: ESM JSON Plugin" />
+    </application>
+</manifest>

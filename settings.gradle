@@ -31,6 +31,9 @@ project(':com.aware.plugin.openweather').projectDir = new File('com.aware.plugin
 include ':com.aware.plugin.esm.scheduler'
 project(':com.aware.plugin.esm.scheduler').projectDir = new File('com.aware.plugin.esm.scheduler/com.aware.plugin.esm.scheduler.lib')
 
+include ':com.aware.plugin.esm.json'
+project(':com.aware.plugin.esm.json').projectDir = new File('com.aware.plugin.esm.json/com.aware.plugin.esm.json.lib')
+
 include ':com.aware.plugin.sensortag'
 project(':com.aware.plugin.sensortag').projectDir = new File('com.aware.plugin.sensortag/com.aware.plugin.sensortag.lib')
 

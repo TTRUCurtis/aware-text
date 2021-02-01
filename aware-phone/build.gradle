@@ -132,6 +132,7 @@ dependencies {
     api (project(":com.aware.plugin.google.fused_location"))
     api (project(":com.aware.plugin.openweather"))
     api (project(":com.aware.plugin.esm.scheduler"))
+    api (project(":com.aware.plugin.esm.json"))
     api (project(":com.aware.plugin.sensortag"))
     api (project(":com.aware.plugin.sentimental"))
 }

@@ -1,0 +1,1 @@
+include ':com.aware.plugin.esm.json', ':com.aware.plugin.esm.json.lib'
