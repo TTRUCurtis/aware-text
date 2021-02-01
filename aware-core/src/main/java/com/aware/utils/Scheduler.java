@@ -27,6 +27,9 @@ import org.json.JSONObject;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -46,6 +49,8 @@ public class Scheduler extends Aware_Sensor {
     public static final String SCHEDULE_ID = "schedule_id";
     public static final String TRIGGER_INTERVAL = "interval";
     public static final String TRIGGER_INTERVAL_DELAYED = "interval_delayed";
+    public static final String TRIGGER_MIN_DATE = "min_date";
+    public static final String TRIGGER_MAX_DATE = "max_date";
     public static final String TRIGGER_MINUTE = "minute";
     public static final String TRIGGER_HOUR = "hour";
     public static final String TRIGGER_TIMER = "timer";
@@ -95,6 +100,8 @@ public class Scheduler extends Aware_Sensor {
     //String is the scheduler ID, and hashtable contains list of Uri and ContentObservers
     private static final Hashtable<String, Hashtable<Uri, ContentObserver>> schedulerDataObservers = new Hashtable<>();
     private static String TAG = "AWARE::Scheduler";
+
+    private static final DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
 
     /**
      * Save the defined scheduled task
@@ -844,6 +851,18 @@ public class Scheduler extends Aware_Sensor {
                 if (DEBUG) Log.i(TAG, "Scheduler last triggered: " + previous.getTime().toString());
             }
 
+            Boolean execute_min_date = null;
+            if (schedule.getMinDate() != null && schedule.getMinDate().length() > 0) {
+                execute_min_date = is_trigger_min_date(schedule);
+                if (DEBUG) Log.d(Scheduler.TAG, "Trigger min date: " + execute_min_date);
+            }
+
+            Boolean execute_max_date = null;
+            if (schedule.getMaxDate() != null && schedule.getMaxDate().length() > 0) {
+                execute_max_date = is_trigger_max_date(schedule);
+                if (DEBUG) Log.d(Scheduler.TAG, "Trigger max date: " + execute_max_date);
+            }
+
             Boolean execute_interval = null;
             if (schedule.getInterval() > 0 && previous == null) {
                 execute_interval = true;
@@ -907,6 +926,8 @@ public class Scheduler extends Aware_Sensor {
             }
 
             ArrayList<Boolean> executers = new ArrayList<>();
+            if (execute_min_date != null) executers.add(execute_min_date);
+            if (execute_max_date != null) executers.add(execute_max_date);
             if (execute_interval != null) executers.add(execute_interval);
             if (execute_month != null) executers.add(execute_month);
             if (execute_weekdays != null) executers.add(execute_weekdays);
@@ -952,6 +973,57 @@ public class Scheduler extends Aware_Sensor {
     public boolean is_same_month(Calendar date_one, Calendar date_two) {
         return date_one.get(Calendar.YEAR) == date_two.get(Calendar.YEAR)
                 && date_one.get(Calendar.MONTH) == date_two.get(Calendar.MONTH);
+    }
+
+    /**
+     * Check if this trigger falls after or on the minimum date
+     *
+     * @param schedule
+     * @return
+     */
+    private boolean is_trigger_min_date(Schedule schedule) {
+        if (DEBUG) Log.d(Scheduler.TAG, "Checking min date matching");
+
+        try {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(dateFormat.parse(schedule.getMinDate()));
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            if (DEBUG) Log.d(Scheduler.TAG, "Checking " + new Date() + " vs " + cal.getTime());
+            return System.currentTimeMillis() >= cal.getTimeInMillis();
+        } catch (JSONException | ParseException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if this trigger falls before or on the maximum date
+     *
+     * @param schedule
+     * @return
+     */
+    private boolean is_trigger_max_date(Schedule schedule) {
+        if (DEBUG) Log.d(Scheduler.TAG, "Checking max date matching");
+
+        try {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(dateFormat.parse(schedule.getMaxDate()));
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+            if (DEBUG) Log.d(Scheduler.TAG, "Checking " + new Date() + " vs " + cal.getTime());
+            return System.currentTimeMillis() <= cal.getTimeInMillis();
+        } catch (JSONException | ParseException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 
     /**
@@ -1006,7 +1078,7 @@ public class Scheduler extends Aware_Sensor {
                 if (DEBUG)
                     Log.d(Scheduler.TAG, "Hour " + hour + " vs now " + now.get(Calendar.HOUR_OF_DAY) + " in trigger hours: " + hours.toString());
 
-                if (hour == (int) now.get(Calendar.HOUR_OF_DAY)) return true;
+                if (hour == -1 || hour == (int) now.get(Calendar.HOUR_OF_DAY)) return true;
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -1407,6 +1479,42 @@ public class Scheduler extends Aware_Sensor {
             if (!update) {
                 extras.put(new JSONObject().put(ACTION_EXTRA_KEY, key).put(ACTION_EXTRA_VALUE, value));
             }
+            return this;
+        }
+
+        /**
+         * Get scheduled min date (MM-dd-yyyy format).
+         *
+         * @return
+         * @throws JSONException
+         */
+        public String getMinDate() throws JSONException {
+            if (!this.schedule.getJSONObject(SCHEDULE_TRIGGER).has(TRIGGER_MIN_DATE)) {
+                this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_MIN_DATE, "");
+            }
+            return this.schedule.getJSONObject(SCHEDULE_TRIGGER).getString(TRIGGER_MIN_DATE);
+        }
+
+        public Schedule setMinDate(String minDate) throws JSONException {
+            this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_MIN_DATE, minDate);
+            return this;
+        }
+
+        /**
+         * Get scheduled max date (MM-dd-yyyy format).
+         *
+         * @return
+         * @throws JSONException
+         */
+        public String getMaxDate() throws JSONException {
+            if (!this.schedule.getJSONObject(SCHEDULE_TRIGGER).has(TRIGGER_MAX_DATE)) {
+                this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_MAX_DATE, "");
+            }
+            return this.schedule.getJSONObject(SCHEDULE_TRIGGER).getString(TRIGGER_MAX_DATE);
+        }
+
+        public Schedule setMaxDate(String maxDate) throws JSONException {
+            this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_MAX_DATE, maxDate);
             return this;
         }
 
