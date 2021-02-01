@@ -125,6 +125,13 @@ public class Plugin extends Aware_Plugin {
                     schedule.setMaxDate(maxDate);
                 }
 
+                if (entry.has("context")) {
+                    JSONArray contexts = entry.getJSONArray("context");
+                    for (int j = 0, z = contexts.length(); j < z; ++j) {
+                        schedule.addContext(contexts.getString(j));
+                    }
+                }
+
                 // TODO support expiration
                 // Each ESM question supports esm_expiration_threshold and esm_notification_timeout,
                 // but ESMs in Android don't have overall timeouts.
@@ -136,7 +143,11 @@ public class Plugin extends Aware_Plugin {
                 // set the schedule action to trigger the embedded ESM
                 schedule.setActionType(Scheduler.ACTION_TYPE_BROADCAST);
                 schedule.setActionIntentAction(ESM.ACTION_AWARE_QUEUE_ESM);
-                schedule.addActionExtra(ESM.EXTRA_ESM, entry.getJSONArray("esms"));
+                if (entry.has("esms")) {
+                    JSONArray esms = entry.getJSONArray("esms");
+                    Log.i(Aware.TAG, "Configured ESMs: " + esms.toString());
+                    schedule.addActionExtra(ESM.EXTRA_ESM, esms.toString());
+                }
 
                 Scheduler.saveSchedule(getApplication(), schedule);
             }
