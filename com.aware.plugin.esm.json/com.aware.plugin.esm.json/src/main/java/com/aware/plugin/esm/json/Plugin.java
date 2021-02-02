@@ -147,6 +147,10 @@ public class Plugin extends Aware_Plugin {
                 schedule.addMinute(minuteOffset);
             }
 
+            if (entry.has("interval")) {
+                schedule.setInterval(entry.getLong("interval")); // in minutes
+            }
+
             if (entry.has("start_date")) {
                 String minDate = entry.getString("start_date");
                 schedule.setMinDate(minDate);
