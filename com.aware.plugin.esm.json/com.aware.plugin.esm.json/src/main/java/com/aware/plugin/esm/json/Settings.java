@@ -33,7 +33,7 @@ public class Settings extends AppCompatPreferenceActivity {
 
         status = (CheckBoxPreference) findPreference(STATUS_PLUGIN_ESM_JSON);
         if (Aware.getSetting(this, STATUS_PLUGIN_ESM_JSON).length() == 0) {
-            Aware.setSetting(this, STATUS_PLUGIN_ESM_JSON, true);
+            Aware.setSetting(this, STATUS_PLUGIN_ESM_JSON, false);
         }
         status.setChecked(Aware.getSetting(getApplicationContext(), STATUS_PLUGIN_ESM_JSON).equals("true"));
 
