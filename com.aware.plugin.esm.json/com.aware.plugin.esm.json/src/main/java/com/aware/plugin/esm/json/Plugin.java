@@ -147,14 +147,13 @@ public class Plugin extends Aware_Plugin {
                 schedule.addMinute(minuteOffset);
             }
 
-
-            String minDate = entry.getString("start_date");
-            if (minDate != null) {
+            if (entry.has("start_date")) {
+                String minDate = entry.getString("start_date");
                 schedule.setMinDate(minDate);
             }
 
-            String maxDate = entry.getString("end_date");
-            if (maxDate != null) {
+            if (entry.has("end_date")) {
+                String maxDate = entry.getString("end_date");
                 schedule.setMaxDate(maxDate);
             }
 
