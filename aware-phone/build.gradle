@@ -57,6 +57,7 @@ android {
         resValue "string", "provider_openweather", android.defaultConfig.applicationId + ".provider.openweather"
         resValue "string", "provider_sensortag", android.defaultConfig.applicationId + ".provider.sensortag"
         resValue "string", "provider_sentimental", android.defaultConfig.applicationId + ".provider.sentimental"
+        resValue "string", "provider_sms", android.defaultConfig.applicationId + ".provider.sms"
     }
 
     splits {
@@ -135,6 +136,7 @@ dependencies {
     api (project(":com.aware.plugin.esm.json"))
     api (project(":com.aware.plugin.sensortag"))
     api (project(":com.aware.plugin.sentimental"))
+    api (project(":com.aware.plugin.sms"))
 }
 
 repositories {
