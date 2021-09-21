@@ -34,6 +34,6 @@
 [submodule "com.aware.plugin.sms"]
 	path = com.aware.plugin.sms
 	url = https://github.com/DouglasBellew/com.aware.plugin.sms.git
-[submodule "com.aware.plugin.sentimental"]
-	path = com.aware.plugin.sentimental
-	url = https://github.com/wwbp-mobile/com.aware.plugin.sentimental.git
+[submodule "com.aware.plugin.sentiment"]
+	path = com.aware.plugin.sentiment
+	url = https://github.com/wwbp/com.aware.plugin.sentimental.git
