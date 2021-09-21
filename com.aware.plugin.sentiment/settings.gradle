@@ -1,0 +1,1 @@
+include ':com.aware.plugin.sentimental', ':com.aware.plugin.sentimental.lib'

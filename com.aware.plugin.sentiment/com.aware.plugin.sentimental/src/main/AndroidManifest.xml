@@ -1,0 +1,37 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aware.plugin.sentimental">
+
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
+
+    <application>
+        <service
+            android:name="com.aware.plugin.sentimental.Plugin"
+            android:label="AWARE: Sentimental"
+            android:exported="true" />
+
+        <provider
+            android:name="com.aware.plugin.sentimental.Provider"
+            android:authorities="${applicationId}.provider.sentimental"
+            android:exported="true"
+            android:label="@string/plugin_sentimental"
+            android:readPermission="com.aware.READ_CONTEXT_DATA"
+            android:syncable="true"
+            android:writePermission="com.aware.WRITE_CONTEXT_DATA" />
+
+        <activity
+            android:name="com.aware.plugin.sentimental.Settings"
+            android:label="AWARE: Sentimental"
+            android:exported="true" />
+
+        <service
+            android:name="com.aware.plugin.sentimental.syncadapters.Sentimental_Sync"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/sync_sentimental" />
+        </service>
+    </application>
+</manifest>
