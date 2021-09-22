@@ -135,7 +135,7 @@ dependencies {
     api (project(":com.aware.plugin.esm.scheduler"))
     api (project(":com.aware.plugin.esm.json"))
     api (project(":com.aware.plugin.sensortag"))
-    api (project(":com.aware.plugin.sentimental"))
+    api (project(":com.aware.plugin.sentiment"))
     api (project(":com.aware.plugin.sms"))
 }
 

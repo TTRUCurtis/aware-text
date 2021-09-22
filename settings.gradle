@@ -37,7 +37,7 @@ project(':com.aware.plugin.esm.json').projectDir = new File('com.aware.plugin.es
 include ':com.aware.plugin.sensortag'
 project(':com.aware.plugin.sensortag').projectDir = new File('com.aware.plugin.sensortag/com.aware.plugin.sensortag.lib')
 
-include ':com.aware.plugin.sentimental'
-project(':com.aware.plugin.sentimental').projectDir = new File('com.aware.plugin.sentimental/com.aware.plugin.sentimental.lib')
+include ':com.aware.plugin.sentiment'
+project(':com.aware.plugin.sentiment').projectDir = new File('com.aware.plugin.sentiment/com.aware.plugin.sentiment.lib')
 include ':com.aware.plugin.sms'
 project(':com.aware.plugin.sms').projectDir = new File('com.aware.plugin.sms/com.aware.plugin.sms.lib')
