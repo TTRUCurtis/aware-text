@@ -68,7 +68,7 @@ public class TestActivity extends Activity {
         btnSentimentat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TestSentimental sentimental = new TestSentimental();
+                TestSentiment sentimental = new TestSentiment();
                 sentimental.test(getApplicationContext());
             }
         });
