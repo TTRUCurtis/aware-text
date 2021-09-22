@@ -64,12 +64,12 @@ public class TestActivity extends Activity {
             }
         });
 
-        Button btnSentimentat = findViewById(R.id.btnSentimental);
+        Button btnSentimentat = findViewById(R.id.btnSentiment);
         btnSentimentat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TestSentiment sentimental = new TestSentiment();
-                sentimental.test(getApplicationContext());
+                TestSentiment sentiment = new TestSentiment();
+                sentiment.test(getApplicationContext());
             }
         });
 

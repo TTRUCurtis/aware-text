@@ -28,8 +28,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/btn_jenkins" />
     <Button
-            android:text="Sentimental"
+            android:text="Sentiment"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:id="@+id/btnSentimental"/>
+            android:layout_height="wrap_content" android:id="@+id/btnSentiment"/>
 
 </LinearLayout>

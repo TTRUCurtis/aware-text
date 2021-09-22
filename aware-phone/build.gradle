@@ -56,7 +56,7 @@ android {
         resValue "string", "provider_google_fused", android.defaultConfig.applicationId + ".provider.geofences"
         resValue "string", "provider_openweather", android.defaultConfig.applicationId + ".provider.openweather"
         resValue "string", "provider_sensortag", android.defaultConfig.applicationId + ".provider.sensortag"
-        resValue "string", "provider_sentimental", android.defaultConfig.applicationId + ".provider.sentimental"
+        resValue "string", "provider_sentiment", android.defaultConfig.applicationId + ".provider.sentiment"
         resValue "string", "provider_sms", android.defaultConfig.applicationId + ".provider.sms"
     }
 
