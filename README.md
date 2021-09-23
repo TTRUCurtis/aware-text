@@ -85,3 +85,29 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+Compilation Instructions:
+=========================
+
+Clone this respository to a workspace directory
+    It should contain all the necessary submodules and gradle build instructions.
+
+Open Android Studio
+    Project -> Open Project <workspace directory>
+    
+    Change build project from "aware-tests" to "aware-phone" (Top bar, just right of green hammer)
+    Build Variant (Left Side tab column) Set build variant to desired version (debug/release)    
+    Build -> Make Project
+    Build -> Build Bundles -> Build APK(s)
+    Completed APK located in aware_client/aware-phone/build/outpus/apk/[debug/release]/aware-phone-armeabi-[debug/release].apk
+    Rename file to desired filename and move to accessble location
+    
+Modifying Submodules:
+=====================
+
+Each plugin has its own git repository and this main repository links to them
+Currently the WWBP supports 2 plugins:
+    https://github.com/wwbp/com.aware.plugin.sentiment
+    https://github.com/wwbp/com.aware.plugin.sms
+    
+To incorporate any updates to the submodules it will require updating the version linked to in this repository. 
