@@ -41,9 +41,17 @@ public class Https {
     private int timeout = 60 * 1000;
 
     /**
-     * Initialise a HTTPS client
-     * @param certificate SSL certificate
+     * Initialise a HTTPS client using the default SSLSocketFactory
+     * TODO check if we need this. May need to get the cert stored in the app?
      */
+    public Https() {
+        sslSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+    }
+
+        /**
+         * Initialise a HTTPS client
+         * @param certificate SSL certificate
+         */
     public Https(InputStream certificate) {
         if (certificate == null) {
             //Log.e(TAG, "SSL: unable to read certificate!");
