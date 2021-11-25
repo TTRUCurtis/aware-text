@@ -228,7 +228,7 @@ public class Https {
             return result;
 
         } catch (IOException | NullPointerException e) {
-            //Log.e(TAG, "Sync HTTPS dataGet io/null error: " + e.getMessage());
+            Log.e(TAG, "Sync HTTPS dataGet io/null error: " + e.getMessage());
         }
 
         return null;

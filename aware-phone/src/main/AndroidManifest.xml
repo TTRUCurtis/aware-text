@@ -63,9 +63,9 @@
         android:icon="@drawable/ic_launcher_aware"
         android:label="AWARE"
         android:theme="@style/Theme.Aware">
-        <!--//TODO do we need launchmode single top?-->
         <activity
-            android:name=".ui.registration.RegistrationActivity"
+            android:name=".ui.onboarding.JoinStudyActivity"
+            android:icon="@drawable/ic_launcher_aware"
             android:launchMode="singleTop"
             android:exported="true">
             <intent-filter android:autoVerify="true">
@@ -76,6 +76,17 @@
                 <data
                     android:scheme="https"
                     android:host="survey.wwbp.org"/>
+
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <!-- Activities -->
@@ -87,12 +98,6 @@
             android:label="AWARE"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Aware">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name="com.aware.phone.ui.Stream_UI"

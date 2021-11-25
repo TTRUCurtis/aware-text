@@ -34,6 +34,8 @@ import com.aware.Aware_Preferences;
 import com.aware.phone.ui.Aware_Activity;
 import com.aware.phone.ui.Aware_Join_Study;
 import com.aware.phone.ui.Aware_Participant;
+import com.aware.phone.ui.PermissionUtils;
+import com.aware.phone.ui.onboarding.JoinStudyActivity;
 import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
@@ -51,7 +53,6 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     private static Hashtable<Integer, Boolean> listSensorType;
     private static SharedPreferences prefs;
 
-    private static final ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
     private static final Hashtable<String, Integer> optionalSensors = new Hashtable<>();
 
     private final Aware.AndroidPackageMonitor packageMonitor = new Aware.AndroidPackageMonitor();
@@ -84,25 +85,9 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             listSensorType.put(sensors.get(i).getType(), true);
         }
 
-        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_WIFI_STATE);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.CAMERA);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_ADMIN);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_PHONE_STATE);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.GET_ACCOUNTS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_SYNC_SETTINGS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_SETTINGS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_STATS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) REQUIRED_PERMISSIONS.add(Manifest.permission.FOREGROUND_SERVICE);
-
         boolean PERMISSIONS_OK = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String p : REQUIRED_PERMISSIONS) {
+            for (String p : PermissionUtils.getRequiredPermissions()) {
                 if (PermissionChecker.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
                     PERMISSIONS_OK = false;
                     break;
@@ -293,7 +278,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
 
         permissions_ok = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String p : REQUIRED_PERMISSIONS) {
+            for (String p : PermissionUtils.getRequiredPermissions()) {
                 if (PermissionChecker.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
                     permissions_ok = false;
                     break;
@@ -305,7 +290,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             Log.d(Aware.TAG, "Requesting permissions...");
 
             Intent permissionsHandler = new Intent(this, PermissionsHandler.class);
-            permissionsHandler.putStringArrayListExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, REQUIRED_PERMISSIONS);
+            permissionsHandler.putStringArrayListExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, PermissionUtils.getRequiredPermissions());
             permissionsHandler.putExtra(PermissionsHandler.EXTRA_REDIRECT_ACTIVITY, getPackageName() + "/" + getClass().getName());
             permissionsHandler.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(permissionsHandler);
