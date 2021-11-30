@@ -58,7 +58,6 @@ public class JoinStudy extends AsyncTask<String, Void, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        Toast.makeText(application, "join study complete", Toast.LENGTH_LONG).show();
         listener.onPostExecute(null);
     }
 

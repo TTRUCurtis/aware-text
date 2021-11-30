@@ -72,6 +72,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
     }
 
     private void joinStudy(String studyUrl) {
+        loadingIndicator.postValue(true);
         new JoinStudy(getApplication(), result -> {
             loadingIndicator.postValue(false);
             joinStudySuccessMsg.postValue(studyMetadata.getValue().getSurveyUrl());

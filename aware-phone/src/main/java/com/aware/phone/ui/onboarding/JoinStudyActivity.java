@@ -13,7 +13,9 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.provider.Telephony;
 import android.text.Html;
 import android.text.SpannableString;
@@ -79,7 +81,7 @@ public class JoinStudyActivity extends AppCompatActivity {
 
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse("sms:"));
-            intent.putExtra("address", "***REMOVED***"); //TODO put number here if it's constant to open up that convo
+            intent.putExtra("address", "***REMOVED***"); //TODO put number here if it's constant to open up that convo. What happens if the convo had been deleted?
             startActivity(intent);
         });
 
@@ -247,6 +249,11 @@ public class JoinStudyActivity extends AppCompatActivity {
         if (!Aware.is_watch(this)) {
             Applications.isAccessibilityServiceActive(this);
         }
+
+        Intent whitelisting = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        whitelisting.setData(Uri.parse("package:" + getPackageName()));
+        startActivity(whitelisting);
+
         ActivityCompat.requestPermissions(this, permissions.toArray(new String[permissions.size()]), RC_PERMISSIONS);
     }
 }
