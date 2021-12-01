@@ -34,6 +34,7 @@ import com.aware.phone.Aware_Client;
 import com.aware.phone.R;
 import com.aware.ui.PermissionsHandler;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -51,6 +52,7 @@ public class JoinStudyActivity extends AppCompatActivity {
     private JoinStudyViewModel viewModel;
 
     private ProgressDialog loader;
+    private AlertDialog alertDialog;
     private LinearLayout joinStudyFromTextLayout;
 
     private LinearLayout studyMetadataLayout;
@@ -133,14 +135,15 @@ public class JoinStudyActivity extends AppCompatActivity {
                 viewModel.joinStudy();
             });
 
-            if (studyMetadata.getPermissions() != null) {
+            if (studyMetadata.showPermissionsNoticeDialog()) {
                 actionButton.setEnabled(false);
 
-                new AlertDialog.Builder(this)
+                alertDialog = new AlertDialog.Builder(this)
                         .setTitle("Permissions Required to Join Study")
                         .setMessage("A few permissions are required to join this study. Press OK to review the required permissions.")
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                             dialog.dismiss();
+                            studyMetadata.setShowPermissionsNoticeDialog(false); //don't need to show the dialog again
                             requestPermissions(studyMetadata.getPermissions());
                         }).show();
             } else {
@@ -148,24 +151,24 @@ public class JoinStudyActivity extends AppCompatActivity {
             }
 
         });
-        viewModel.getJoinedStudySuccessMsg().observe(this, surveyUrl -> {
-            if (surveyUrl != null) {
-                final SpannableString spannableMsg = new SpannableString("Please complete this brief follow-up survey: " + surveyUrl); // msg should have url to enable clicking
+        viewModel.getJoinedStudySuccessMsg().observe(this, joinedStudyMessage -> {
+            if (joinedStudyMessage.showSuccessDialog()) {
+                final SpannableString spannableMsg = new SpannableString(joinedStudyMessage.getDescription() + joinedStudyMessage.getSurveyUrl());
                 Linkify.addLinks(spannableMsg, Linkify.ALL);
-                final AlertDialog alertDialog = new AlertDialog.Builder(this)
-                        .setTitle("Congratulations! You've successfully registered for this study")
+                alertDialog = new AlertDialog.Builder(this)
+                        .setTitle(joinedStudyMessage.getTitle())
                         .setMessage(spannableMsg)
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                             dialog.dismiss();
+                            joinedStudyMessage.setShowSuccessDialog(false); //no need to show the dialog again after dismissal
                         }).show();
-
                 ((TextView) alertDialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
-
-                TextView joinedSuccessfully = findViewById(R.id.txt_study_successfully_joined);
-                joinedSuccessfully.setText("Congratulations! You've successfully registered for this study Please complete this brief follow-up survey: " + surveyUrl);
-                joinedSuccessfully.setMovementMethod(LinkMovementMethod.getInstance());
-                joinedSuccessfully.setVisibility(View.VISIBLE);
             }
+
+            TextView joinedSuccessfully = findViewById(R.id.txt_study_successfully_joined);
+            joinedSuccessfully.setVisibility(View.VISIBLE);
+            joinedSuccessfully.setText(MessageFormat.format("{0}{1}{2}", joinedStudyMessage.getTitle(), joinedStudyMessage.getDescription(), joinedStudyMessage.getSurveyUrl()));
+            joinedSuccessfully.setMovementMethod(LinkMovementMethod.getInstance());
 
             actionButton.setText("Done");
             actionButton.setOnClickListener(v -> {
@@ -193,26 +196,13 @@ public class JoinStudyActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_PERMISSIONS && resultCode == Activity.RESULT_OK) {
-            //TODO add checkbox for enabling accessibility and then enable join study after they check it
-            if (reviewPermissionsLayout != null && reviewPermissionsLayout.getVisibility() == View. VISIBLE) {
-                reviewPermissionsLayout.setVisibility(View.GONE);
-                actionButton.setEnabled(true);
-            }
-        } else {
-            //show must accept permissions UI
-            if (reviewPermissionsLayout == null) {
-                reviewPermissionsLayout = findViewById(R.id.layout_review_permissions);
-                Button reviewPermissionsButton = findViewById(R.id.btn_review_permissions);
-                reviewPermissionsButton.setOnClickListener(v -> {
-                    ArrayList<String> permissions = new ArrayList<>();
-                    Collections.addAll(permissions, data.getStringArrayExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS));
-                    requestPermissions(permissions);
-                });
-            }
-            reviewPermissionsLayout.setVisibility(View.VISIBLE);
+    protected void onDestroy() {
+        super.onDestroy();
+        if (loader != null && loader.isShowing() ){
+            loader.cancel(); //was leaking a window, so need to dismiss here
+        }
+        if (alertDialog != null && alertDialog.isShowing()) {
+            alertDialog.cancel();
         }
     }
 

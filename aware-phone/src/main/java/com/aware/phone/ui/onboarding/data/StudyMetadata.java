@@ -9,6 +9,16 @@ public class StudyMetadata {
     private final String researcher;
     private final ArrayList<String> permissions;
 
+    public boolean showPermissionsNoticeDialog() {
+        return showPermissionsNoticeDialog;
+    }
+
+    public void setShowPermissionsNoticeDialog(boolean showPermissionsNoticeDialog) {
+        this.showPermissionsNoticeDialog = showPermissionsNoticeDialog;
+    }
+
+    private boolean showPermissionsNoticeDialog = true;
+
     public String getSurveyUrl() {
         return surveyUrl;
     }

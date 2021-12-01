@@ -12,6 +12,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.phone.ui.PermissionUtils;
+import com.aware.phone.ui.onboarding.data.JoinedStudyMessage;
 import com.aware.phone.ui.onboarding.data.LoadingIndicator;
 import com.aware.phone.ui.onboarding.data.StudyMetadata;
 import com.aware.phone.ui.onboarding.tasks.GetStudyMetadata;
@@ -23,14 +24,11 @@ import java.util.ArrayList;
 
 public class JoinStudyViewModel extends AndroidViewModel {
 
-    private String surveyUrl;
-    private String studyUrl;
-
     private final MutableLiveData<LoadingIndicator> loadingIndicator = new MutableLiveData<>();
     private final MutableLiveData<ArrayList<String>> requiredPermissions = new MutableLiveData<>();
     private final MutableLiveData<StudyMetadata> studyMetadata = new MutableLiveData<>();
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
-    private final MutableLiveData<String> joinStudySuccessMsg = new MutableLiveData<>();
+    private final MutableLiveData<JoinedStudyMessage> joinStudySuccessMsg = new MutableLiveData<>();
 
     public JoinStudyViewModel(@NonNull Application application) {
         super(application);
@@ -38,15 +36,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
 
     public void loadStudy(Uri registrationData) {
         //TODO check if already fetched study url
-        if (studyUrl != null) {
-            Cursor cursor = Aware.getStudy(getApplication(), studyUrl);
-            if (cursor == null || !cursor.moveToFirst()) {
-                //TODO join study
-            } else {
-                //TODO display message to user, you've already joined this study
-                // return to main UI? but could still need survey URL
-            }
-        } else {
+        if (studyMetadata.getValue() == null) {
             loadingIndicator.postValue(new LoadingIndicator("Loading study", "Please wait..."));
             String participantId = registrationData.getQueryParameter("pid");
 
@@ -60,7 +50,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
         }
     }
 
-    public LiveData<String> getJoinedStudySuccessMsg() {
+    public LiveData<JoinedStudyMessage> getJoinedStudySuccessMsg() {
         return joinStudySuccessMsg;
     }
 
@@ -72,16 +62,16 @@ public class JoinStudyViewModel extends AndroidViewModel {
         return requiredPermissions;
     }
 
-    private void joinStudy(String studyUrl) {
+    public void joinStudy() {
         loadingIndicator.postValue(new LoadingIndicator("Joining study", "Please wait..."));
         new JoinStudy(getApplication(), result -> {
             loadingIndicator.postValue(null);
-            joinStudySuccessMsg.postValue(studyMetadata.getValue().getSurveyUrl());
+            joinStudySuccessMsg.postValue(new JoinedStudyMessage(
+                    studyMetadata.getValue().getSurveyUrl(),
+                    "Congratulations! You've successfully registered for this study",
+                    "Please complete this brief follow-up survey: "
+                    ));
         }).execute(studyMetadata.getValue().getStudyUrl());
-    }
-
-    public void joinStudy() {
-        joinStudy(studyUrl);
     }
 
     public MutableLiveData<StudyMetadata> getStudyMetadata() {
