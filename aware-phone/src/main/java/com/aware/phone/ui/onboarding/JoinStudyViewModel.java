@@ -12,6 +12,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.phone.ui.PermissionUtils;
+import com.aware.phone.ui.onboarding.data.LoadingIndicator;
 import com.aware.phone.ui.onboarding.data.StudyMetadata;
 import com.aware.phone.ui.onboarding.tasks.GetStudyMetadata;
 import com.aware.phone.ui.onboarding.tasks.JoinStudy;
@@ -25,7 +26,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
     private String surveyUrl;
     private String studyUrl;
 
-    private final MutableLiveData<Boolean> loadingIndicator = new MutableLiveData<>();
+    private final MutableLiveData<LoadingIndicator> loadingIndicator = new MutableLiveData<>();
     private final MutableLiveData<ArrayList<String>> requiredPermissions = new MutableLiveData<>();
     private final MutableLiveData<StudyMetadata> studyMetadata = new MutableLiveData<>();
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
@@ -46,14 +47,14 @@ public class JoinStudyViewModel extends AndroidViewModel {
                 // return to main UI? but could still need survey URL
             }
         } else {
-            loadingIndicator.postValue(true);
+            loadingIndicator.postValue(new LoadingIndicator("Loading study", "Please wait..."));
             String participantId = registrationData.getQueryParameter("pid");
 
             //TODO move this to join study task
             Aware.setSetting(getApplication(), Aware_Preferences.DEVICE_LABEL, participantId);
 
             new GetStudyMetadata(getApplication(), studyMetadata -> {
-                loadingIndicator.postValue(false);
+                loadingIndicator.postValue(null);
                 this.studyMetadata.postValue(studyMetadata);
             }).execute(registrationData);
         }
@@ -63,7 +64,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
         return joinStudySuccessMsg;
     }
 
-    public LiveData<Boolean> getLoadingIndicator() {
+    public LiveData<LoadingIndicator> getLoadingIndicator() {
         return loadingIndicator;
     }
 
@@ -72,9 +73,9 @@ public class JoinStudyViewModel extends AndroidViewModel {
     }
 
     private void joinStudy(String studyUrl) {
-        loadingIndicator.postValue(true);
+        loadingIndicator.postValue(new LoadingIndicator("Joining study", "Please wait..."));
         new JoinStudy(getApplication(), result -> {
-            loadingIndicator.postValue(false);
+            loadingIndicator.postValue(null);
             joinStudySuccessMsg.postValue(studyMetadata.getValue().getSurveyUrl());
         }).execute(studyMetadata.getValue().getStudyUrl());
     }

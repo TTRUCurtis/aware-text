@@ -67,7 +67,7 @@
         <activity
             android:name=".ui.onboarding.JoinStudyActivity"
             android:icon="@drawable/ic_launcher_aware"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:exported="true">
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />

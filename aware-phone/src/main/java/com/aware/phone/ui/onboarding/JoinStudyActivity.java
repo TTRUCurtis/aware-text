@@ -69,6 +69,7 @@ public class JoinStudyActivity extends AppCompatActivity {
         if (Aware.isStudy(this)) {
             //Redirect the user to the main UI
             Intent mainUI = new Intent(getApplicationContext(), Aware_Client.class);
+            mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(mainUI);
             finish();
         }
@@ -97,15 +98,15 @@ public class JoinStudyActivity extends AppCompatActivity {
 
     private void observeViewModel(JoinStudyViewModel joinStudyViewModel) {
         viewModel = joinStudyViewModel;
-        viewModel.getLoadingIndicator().observe(this, isLoading -> {
-            if (isLoading) {
+        viewModel.getLoadingIndicator().observe(this, loadingIndicator -> {
+            if (loadingIndicator != null) {
                 if (loader == null) {
                     loader = new ProgressDialog(JoinStudyActivity.this);
-                    loader.setTitle("Loading study");
-                    loader.setMessage("Please wait...");
                     loader.setCancelable(false);
                     loader.setIndeterminate(true);
                 }
+                loader.setTitle(loadingIndicator.getTitle());
+                loader.setMessage(loadingIndicator.getMessage());
                 loader.show();
             } else {
                 if (loader != null) {
@@ -159,12 +160,18 @@ public class JoinStudyActivity extends AppCompatActivity {
                         }).show();
 
                 ((TextView) alertDialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+
+                TextView joinedSuccessfully = findViewById(R.id.txt_study_successfully_joined);
+                joinedSuccessfully.setText("Congratulations! You've successfully registered for this study Please complete this brief follow-up survey: " + surveyUrl);
+                joinedSuccessfully.setMovementMethod(LinkMovementMethod.getInstance());
+                joinedSuccessfully.setVisibility(View.VISIBLE);
             }
 
-            actionButton.setText("Continue to Main Screen");
+            actionButton.setText("Done");
             actionButton.setOnClickListener(v -> {
                 //Redirect the user to the main UI
                 Intent mainUI = new Intent(getApplicationContext(), Aware_Client.class);
+                mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(mainUI);
                 finish();
             });
