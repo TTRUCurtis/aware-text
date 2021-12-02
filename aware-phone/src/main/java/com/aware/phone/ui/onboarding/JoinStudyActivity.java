@@ -84,7 +84,7 @@ public class JoinStudyActivity extends AppCompatActivity {
 
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse("sms:"));
-            intent.putExtra("address", "***REMOVED***"); //TODO put number here if it's constant to open up that convo. What happens if the convo had been deleted?
+            intent.putExtra("address", "***REMOVED***");
             startActivity(intent);
         });
 

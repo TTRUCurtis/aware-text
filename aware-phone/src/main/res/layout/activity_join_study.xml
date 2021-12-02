@@ -124,7 +124,7 @@
             android:layout_gravity="end"
             android:layout_margin="0dp"
             android:layout_weight="1"
-            android:background="@color/button_selector"
+            android:background="@drawable/button_selector"
             android:padding="0dp"
             android:text="@string/go_to_text_messages"
             android:textColor="@android:color/white"/>
