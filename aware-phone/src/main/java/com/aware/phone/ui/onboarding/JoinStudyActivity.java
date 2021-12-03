@@ -140,10 +140,12 @@ public class JoinStudyActivity extends AppCompatActivity {
 
                 alertDialog = new AlertDialog.Builder(this)
                         .setTitle("Permissions Required to Join Study")
-                        .setMessage("A few permissions are required to join this study. Press OK to review the required permissions.")
+                        .setMessage("A few permissions are required to join this study. Press OK " +
+                                "to review the required permissions. Please select \"Allow\" or \"While using the app\" for all permissions.")
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                             dialog.dismiss();
-                            studyMetadata.setShowPermissionsNoticeDialog(false); //don't need to show the dialog again
+                            studyMetadata
+                                    .setShowPermissionsNoticeDialog(false); //don't need to show the dialog again
                             requestPermissions(studyMetadata.getPermissions());
                         }).show();
             } else {
@@ -153,21 +155,28 @@ public class JoinStudyActivity extends AppCompatActivity {
         });
         viewModel.getJoinedStudySuccessMsg().observe(this, joinedStudyMessage -> {
             if (joinedStudyMessage.showSuccessDialog()) {
-                final SpannableString spannableMsg = new SpannableString(joinedStudyMessage.getDescription() + joinedStudyMessage.getSurveyUrl());
+                final SpannableString spannableMsg =
+                        new SpannableString(joinedStudyMessage.getDescription() + joinedStudyMessage
+                                .getSurveyUrl());
                 Linkify.addLinks(spannableMsg, Linkify.ALL);
                 alertDialog = new AlertDialog.Builder(this)
                         .setTitle(joinedStudyMessage.getTitle())
                         .setMessage(spannableMsg)
                         .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                             dialog.dismiss();
-                            joinedStudyMessage.setShowSuccessDialog(false); //no need to show the dialog again after dismissal
+                            joinedStudyMessage
+                                    .setShowSuccessDialog(false); //no need to show the dialog again after dismissal
                         }).show();
-                ((TextView) alertDialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+                ((TextView) alertDialog.findViewById(android.R.id.message))
+                        .setMovementMethod(LinkMovementMethod.getInstance());
             }
 
+            findViewById(R.id.txt_do_not_close_aware).setVisibility(View.VISIBLE);
             TextView joinedSuccessfully = findViewById(R.id.txt_study_successfully_joined);
             joinedSuccessfully.setVisibility(View.VISIBLE);
-            joinedSuccessfully.setText(MessageFormat.format("{0}{1}{2}", joinedStudyMessage.getTitle(), joinedStudyMessage.getDescription(), joinedStudyMessage.getSurveyUrl()));
+            joinedSuccessfully.setText(MessageFormat
+                    .format("{0}.\n{1}{2}", joinedStudyMessage.getTitle(), joinedStudyMessage
+                            .getDescription(), joinedStudyMessage.getSurveyUrl()));
             joinedSuccessfully.setMovementMethod(LinkMovementMethod.getInstance());
 
             actionButton.setText("Done");
@@ -198,7 +207,7 @@ public class JoinStudyActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (loader != null && loader.isShowing() ){
+        if (loader != null && loader.isShowing()) {
             loader.cancel(); //was leaking a window, so need to dismiss here
         }
         if (alertDialog != null && alertDialog.isShowing()) {
@@ -232,7 +241,8 @@ public class JoinStudyActivity extends AppCompatActivity {
                 }
                 reviewPermissionsLayout.setVisibility(View.VISIBLE);
             } else {
-                if (reviewPermissionsLayout != null && reviewPermissionsLayout.getVisibility() == View. VISIBLE) {
+                if (reviewPermissionsLayout != null && reviewPermissionsLayout
+                        .getVisibility() == View.VISIBLE) {
                     reviewPermissionsLayout.setVisibility(View.GONE);
                 }
                 actionButton.setEnabled(true);
@@ -241,6 +251,7 @@ public class JoinStudyActivity extends AppCompatActivity {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
+
     private void requestPermissions(ArrayList<String> permissions) {
         //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
         if (!Aware.is_watch(this)) {
@@ -251,6 +262,7 @@ public class JoinStudyActivity extends AppCompatActivity {
         whitelisting.setData(Uri.parse("package:" + getPackageName()));
         startActivity(whitelisting);
 
-        ActivityCompat.requestPermissions(this, permissions.toArray(new String[permissions.size()]), RC_PERMISSIONS);
+        ActivityCompat.requestPermissions(this, permissions
+                .toArray(new String[permissions.size()]), RC_PERMISSIONS);
     }
 }

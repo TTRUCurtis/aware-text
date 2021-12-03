@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="you_have_not_signed_up_for_a_study">You have not yet signed up for a study. Please click the download link in your text messages again to register for this study.</string>
+    <string name="do_not_close_aware">Please do not close AWARE for the duration of the study.</string>
+</resources>

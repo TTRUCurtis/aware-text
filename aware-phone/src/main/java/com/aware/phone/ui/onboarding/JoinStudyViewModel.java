@@ -69,7 +69,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
             joinStudySuccessMsg.postValue(new JoinedStudyMessage(
                     studyMetadata.getValue().getSurveyUrl(),
                     "Congratulations! You've successfully registered for this study",
-                    "Please complete this brief follow-up survey: "
+                    "Please complete this follow-up survey: "
                     ));
         }).execute(studyMetadata.getValue().getStudyUrl());
     }

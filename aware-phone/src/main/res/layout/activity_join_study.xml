@@ -25,7 +25,7 @@
             android:id="@+id/message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="You have not yet signed up for a study. Please click the link in the text message you received to download this app, to register for the study" />
+            android:text="@string/you_have_not_signed_up_for_a_study" />
     </LinearLayout>
 
     <LinearLayout
@@ -69,14 +69,23 @@
                     android:text="Researcher" />
 
                 <TextView
+                    android:id="@+id/txt_do_not_close_aware"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:text="@string/do_not_close_aware"
+                    android:visibility="gone"/>
+
+                <TextView
                     android:id="@+id/txt_study_successfully_joined"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp"
+                    android:singleLine="false"
                     android:linksClickable="true"
                     android:autoLink="web"
                     android:visibility="gone"
-                    tools:text="Thank you for joining this study! Please fill out this brief survey: https://upenn.co1.qualtrics.com/jfe/form/SV_2mHDdjVZgAOQzg9"/>
+                    tools:text="Thank you for joining this study! Please fill out this survey: https://upenn.co1.qualtrics.com/jfe/form/SV_2mHDdjVZgAOQzg9"/>
 
             </LinearLayout>
         </ScrollView>

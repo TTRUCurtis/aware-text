@@ -243,7 +243,7 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, JSONObject> {
 //                while (!SSLManager.hasCertificate(application, registrationUri.getHost())) {
 //                    //wait until we have the certificate downloaded
 //                }
-                request = new Https().dataGET(url, false);
+                request = new Https().dataGET(url, true);
             }
 
             try {
