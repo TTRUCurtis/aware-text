@@ -227,7 +227,9 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, JSONObject> {
 
     private JSONObject fetchStudyAndSurveyUrls(Uri registrationUri) {
         String protocol = registrationUri.getScheme();
-        String url = registrationUri.toString() + "&config=1";
+        Uri.Builder builder = registrationUri.buildUpon();
+        builder.appendPath("config");
+        String url = builder.build().toString();
         List<String> pathSegments = registrationUri.getPathSegments();
 
         //TODO will path segments ever be 0?
@@ -250,15 +252,7 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, JSONObject> {
                 return new JSONObject(request);
             } catch (JSONException e) {
                 e.printStackTrace();
-                //TODO remove this stubbed response once the server is working
-                try {
-                    return new JSONObject("{\n" +
-                            "  \"study_url\": \"https://aware-dev.wwbp.org/index.php/webservice/index/13/pnYFx6s6gIPp\",\n" +
-                            "  \"survey_url\": \"https://upenn.co1.qualtrics.com/jfe/form/SV_2mHDdjVZgAOQzg9\"\n" +
-                            "}");
-                } catch (JSONException jsonException) {
-                    jsonException.printStackTrace();
-                }
+                //TODO notify listener of bad response
             }
 
         } else {
