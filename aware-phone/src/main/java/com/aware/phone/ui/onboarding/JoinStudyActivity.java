@@ -2,7 +2,6 @@ package com.aware.phone.ui.onboarding;
 
 import static com.aware.ui.PermissionsHandler.RC_PERMISSIONS;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -10,10 +9,10 @@ import androidx.lifecycle.ViewModelProvider;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.provider.Telephony;
@@ -24,7 +23,6 @@ import android.text.util.Linkify;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -32,7 +30,6 @@ import com.aware.Applications;
 import com.aware.Aware;
 import com.aware.phone.Aware_Client;
 import com.aware.phone.R;
-import com.aware.ui.PermissionsHandler;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -117,7 +114,20 @@ public class JoinStudyActivity extends AppCompatActivity {
             }
         });
 
-        viewModel.getStudyMetadata().observe(this, studyMetadata -> {
+        viewModel.getErrorMsgLiveData().observe(this, errorMsg -> {
+            if (errorMsg != null) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setPositiveButton("OK", (dialog, which) -> {
+                    viewModel.dismissErrorDialog();
+                    dialog.dismiss();
+                });
+                builder.setTitle("Error retrieving study metadata");
+                builder.setMessage(errorMsg);
+                builder.show();
+            }
+        });
+
+        viewModel.getStudyMetadataLiveData().observe(this, studyMetadata -> {
             joinStudyFromTextLayout.setVisibility(View.GONE);
             if (studyMetadataLayout == null) {
                 studyMetadataLayout = findViewById(R.id.layout_study_info);
@@ -126,7 +136,7 @@ public class JoinStudyActivity extends AppCompatActivity {
                 researcherTextView = findViewById(R.id.txt_researcher);
             }
             studyMetadataLayout.setVisibility(View.VISIBLE);
-            titleTextView.setText(studyMetadata.getTitle());
+            titleTextView.setText(studyMetadata.getName());
             descriptionTextView.setText(Html.fromHtml(studyMetadata.getDescription()));
             researcherTextView.setText(studyMetadata.getResearcher());
 

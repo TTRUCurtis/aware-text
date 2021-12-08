@@ -1,7 +1,6 @@
 package com.aware.phone.ui.onboarding;
 
 import android.app.Application;
-import android.database.Cursor;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
@@ -9,16 +8,11 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.aware.Aware;
-import com.aware.Aware_Preferences;
-import com.aware.phone.ui.PermissionUtils;
 import com.aware.phone.ui.onboarding.data.JoinedStudyMessage;
 import com.aware.phone.ui.onboarding.data.LoadingIndicator;
 import com.aware.phone.ui.onboarding.data.StudyMetadata;
 import com.aware.phone.ui.onboarding.tasks.GetStudyMetadata;
 import com.aware.phone.ui.onboarding.tasks.JoinStudy;
-
-import org.json.JSONException;
 
 import java.util.ArrayList;
 
@@ -26,8 +20,8 @@ public class JoinStudyViewModel extends AndroidViewModel {
 
     private final MutableLiveData<LoadingIndicator> loadingIndicator = new MutableLiveData<>();
     private final MutableLiveData<ArrayList<String>> requiredPermissions = new MutableLiveData<>();
-    private final MutableLiveData<StudyMetadata> studyMetadata = new MutableLiveData<>();
-    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
+    private final MutableLiveData<StudyMetadata> studyMetadataLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> errorMsgLiveData = new MutableLiveData<>();
     private final MutableLiveData<JoinedStudyMessage> joinStudySuccessMsg = new MutableLiveData<>();
 
     public JoinStudyViewModel(@NonNull Application application) {
@@ -35,17 +29,21 @@ public class JoinStudyViewModel extends AndroidViewModel {
     }
 
     public void loadStudy(Uri registrationData) {
-        //TODO check if already fetched study url
-        if (studyMetadata.getValue() == null) {
-            loadingIndicator.postValue(new LoadingIndicator("Loading study", "Please wait..."));
-            String participantId = registrationData.getQueryParameter("pid");
+        if (studyMetadataLiveData.getValue() == null) {
+            loadingIndicator.setValue(new LoadingIndicator("Loading study", "Please wait..."));
 
-            //TODO move this to join study task
-            Aware.setSetting(getApplication(), Aware_Preferences.DEVICE_LABEL, participantId);
+            new GetStudyMetadata(getApplication(), new GetStudyMetadata.Listener() {
+                @Override
+                public void onSuccess(StudyMetadata studyMetadata) {
+                    loadingIndicator.setValue(null);
+                    studyMetadataLiveData.setValue(studyMetadata);
+                }
 
-            new GetStudyMetadata(getApplication(), studyMetadata -> {
-                loadingIndicator.postValue(null);
-                this.studyMetadata.postValue(studyMetadata);
+                @Override
+                public void onError(String errorMsg) {
+                    loadingIndicator.setValue(null);
+                    errorMsgLiveData.setValue(errorMsg);
+                }
             }).execute(registrationData);
         }
     }
@@ -63,18 +61,26 @@ public class JoinStudyViewModel extends AndroidViewModel {
     }
 
     public void joinStudy() {
-        loadingIndicator.postValue(new LoadingIndicator("Joining study", "Please wait..."));
+        loadingIndicator.setValue(new LoadingIndicator("Joining study", "Please wait..."));
         new JoinStudy(getApplication(), result -> {
-            loadingIndicator.postValue(null);
-            joinStudySuccessMsg.postValue(new JoinedStudyMessage(
-                    studyMetadata.getValue().getSurveyUrl(),
+            loadingIndicator.setValue(null);
+            joinStudySuccessMsg.setValue(new JoinedStudyMessage(
+                    studyMetadataLiveData.getValue().getSurveyUrl(),
                     "Congratulations! You've successfully registered for this study",
                     "Please complete this follow-up survey: "
                     ));
-        }).execute(studyMetadata.getValue().getStudyUrl());
+        }).execute(studyMetadataLiveData.getValue().getUrl());
     }
 
-    public MutableLiveData<StudyMetadata> getStudyMetadata() {
-        return studyMetadata;
+    public MutableLiveData<StudyMetadata> getStudyMetadataLiveData() {
+        return studyMetadataLiveData;
+    }
+
+    public MutableLiveData<String> getErrorMsgLiveData() {
+        return errorMsgLiveData;
+    }
+
+    public void dismissErrorDialog() {
+        errorMsgLiveData.setValue(null);
     }
 }

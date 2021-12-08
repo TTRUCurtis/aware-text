@@ -50,7 +50,8 @@ public class JoinStudy extends AsyncTask<String, Void, Void> {
         if (!study.isClosed()) study.close();
 
         //Last step in joining study
-        //TODO uncomment and figure out how this really works and how it creates/inserts all those tables on the server
+        //TODO figure out how this really works and how it creates/inserts all those tables on
+        // the server
         StudyUtils.applySettings(application, study_configs);
         return null;
     }
