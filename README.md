@@ -93,6 +93,7 @@ Clone this respository to a workspace directory
     It should contain all the necessary submodules and gradle build instructions.
 
 Open Android Studio
+
     Project -> Open Project <workspace directory>
     
     Change build project from "aware-tests" to "aware-phone" (Top bar, just right of green hammer)
@@ -106,7 +107,9 @@ Modifying Submodules:
 =====================
 
 Each plugin has its own git repository and this main repository links to them
+
 Currently the WWBP supports 2 plugins:
+
     https://github.com/wwbp/com.aware.plugin.sentiment
     https://github.com/wwbp/com.aware.plugin.sms
     
@@ -114,6 +117,7 @@ To incorporate any updates to the submodules it will require updating the versio
 
 Updating Submodule Version in Main repository:
 ==============================================
+
 ```bash
     $ git clone https://github.com/wwbp/aware_client
     $ <delete submodule directory>
