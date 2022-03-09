@@ -111,3 +111,17 @@ Currently the WWBP supports 2 plugins:
     https://github.com/wwbp/com.aware.plugin.sms
     
 To incorporate any updates to the submodules it will require updating the version linked to in this repository. 
+
+Updating Submodule Version in Main repository:
+==============================================
+git clone https://github.com/wwbp/aware_client
+<delete submodule directory>
+git clone https://github.com/wwbp/<submodule>
+git checkout -b <branch>
+git diff
+    Should show updated module sha
+git add <submodule>
+git commit -m "<commit message>"
+git push
+
+
