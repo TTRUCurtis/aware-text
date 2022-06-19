@@ -101,6 +101,13 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) REQUIRED_PERMISSIONS.add(Manifest.permission.FOREGROUND_SERVICE);
 
         boolean PERMISSIONS_OK = true;
+
+        //TODO Permissions 1: Delete all existing permission checking from this class. We'll check
+        // permissions when we enable plugins/sensors. If the user disables permissions for this
+        // app from their Android Settings and those plugins/sensors are still enabled when they
+        // start the app, we can ask again in the app startup process, but that will be an edge case
+        // so we can take care of it later.
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             for (String p : REQUIRED_PERMISSIONS) {
                 if (PermissionChecker.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
@@ -161,6 +168,11 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             else if (entry instanceof Integer)
                 value = String.valueOf(sharedPreferences.getInt(key, 0));
         }
+
+        //TODO Permissions 4: This is where the sensors get enabled/disabled. Let's check here
+        // we have the correct permission if we're enabling a sensor. If the user doesn't grant
+        // it, don't enable it. NIH will let us know whether this is a valid or important use
+        // case for them, otherwise it might not be worth it to implement this right now.
 
         Aware.setSetting(getApplicationContext(), key, value);
         Preference pref = findPreference(key);
