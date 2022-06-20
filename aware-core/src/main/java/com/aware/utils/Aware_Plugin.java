@@ -89,7 +89,13 @@ public class Aware_Plugin extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        PERMISSIONS_OK = true;
+
+        //TODO Permissions 6: Delete all permission requesting from the plugins. Potentially we
+        // can still check if they are granted and throw an exception if not. This will be a
+        // clear indication to anyone working on this project that permissions need to be
+        // accepted before the plugins can be enabled/started. We should check what happens when a
+        // plugin is active and the user disables the permission from the Settings. If the
+        // services work in the background... this could be an issue...
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             for (String p : REQUIRED_PERMISSIONS) {
                 if (PermissionChecker.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
