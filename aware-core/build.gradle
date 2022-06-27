@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
-
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     compileSdkVersion compile_sdk
@@ -66,6 +66,9 @@ android {
 }
 
 dependencies {
+    implementation "com.google.dagger:hilt-android:2.38.1"
+    kapt "com.google.dagger:hilt-compiler:2.38.1"
+
     implementation "org.eclipse.paho:org.eclipse.paho.client.mqttv3:$mqtt_libs"
     implementation 'com.koushikdutta.ion:ion:2.2.1' //don't update
     implementation 'com.koushikdutta.async:androidasync:2.2.1'
