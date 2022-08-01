@@ -2,21 +2,19 @@ package com.aware.phone.ui
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.R
 import com.aware.ui.PermissionsHandler
 import kotlinx.android.synthetic.main.aware_ui_participant.*
-import java.util.ArrayList
 
 class Aware_Participant : AppCompatActivity() {
 
@@ -53,7 +51,7 @@ class Aware_Participant : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.title.toString().equals(resources.getString(R.string.aware_qrcode), ignoreCase = true)) {
-            if (PermissionChecker.checkSelfPermission(this, Manifest.permission.CAMERA) != PermissionChecker.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PermissionChecker.PERMISSION_GRANTED) {
                 val permission = ArrayList<String>()
                 permission.add(Manifest.permission.CAMERA)
 

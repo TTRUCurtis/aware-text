@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <lint>
     <issue id="AdapterViewChildren" severity="ignore" />
-    <issue id="AllowBackup" severity="ignore" />
     <issue id="AlwaysShowAction" severity="ignore" />
     <issue id="ButtonCase" severity="ignore" />
     <issue id="ButtonOrder" severity="ignore" />
