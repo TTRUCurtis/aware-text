@@ -91,7 +91,7 @@ public class Aware_Sensor extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        //TODO Permissions 7: Delete all permission requesting from the sensors. Potentially we
+        //TODO Permissions 5: Delete all permission requesting from the sensors. Potentially we
         // can still check if they are granted and throw an exception if not. This will be a
         // clear indication to anyone working on this project that permissions need to be
         // accepted before the sensors can be enabled/started. We should check what happens when a

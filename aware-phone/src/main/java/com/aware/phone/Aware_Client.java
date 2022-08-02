@@ -156,7 +156,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                 value = String.valueOf(sharedPreferences.getInt(key, 0));
         }
 
-        //TODO Permissions 4: This is where the sensors get manually enabled/disabled. Let's check
+        //TODO Permissions 6: This is where the sensors get manually enabled/disabled. Let's check
         // here we have the correct permission if we're enabling a sensor. If the user doesn't grant
         // it, don't enable it. Not super important, since NIH does not allow manually enabling
         // sensors, but we should do it anyway in case we want to manually enable for testing

@@ -242,7 +242,9 @@ public class Plugins_Manager extends Aware_Activity {
                         convertView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                //TODO Permissions 5: This is where plugins are enabled. Check the permission before showing the
+                                //TODO Permissions 7: This is where plugins are manually enabled.
+                                // NIH doesn't manually enable them, but we can still do it if
+                                // time permits, for manually testing purposes. Check the permission before showing the
                                 // "Activate" dialog. The 'name' or 'package_name' field should
                                 // correspond to the permission. NIH will let us know whether this is a valid or important use
                                 // case for them, otherwise it might not be worth it to implement this right now.

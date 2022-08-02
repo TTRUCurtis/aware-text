@@ -92,7 +92,7 @@ public class Aware_Plugin extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        //TODO Permissions 6: Delete all permission requesting from the plugins. Potentially we
+        //TODO Permissions 4: Delete all permission requesting from the plugins. Potentially we
         // can still check if they are granted and throw an exception if not. This will be a
         // clear indication to anyone working on this project that permissions need to be
         // accepted before the plugins can be enabled/started. We should check what happens when a
