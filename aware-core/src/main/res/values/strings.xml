@@ -28,6 +28,7 @@
     <string name="aware_esm_other_follow">Can you be more specific, please?</string>
     <string name="plugins_required">Plugins needed (install to join)</string>
     <string name="sign_up">Sign Up!</string>
+    <string name="go_to_text_messages">Go to Text Messages</string>
     <string name="install">Install</string>
     <string name="foreground_notification_title">AWARE</string>
     <string name="foreground_notification_text">Data collection active</string>

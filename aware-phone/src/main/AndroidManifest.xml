@@ -65,7 +65,34 @@
         android:icon="@drawable/ic_launcher_aware"
         android:label="AWARE"
         android:theme="@style/Theme.Aware">
+        <activity
+            android:name=".ui.onboarding.JoinStudyActivity"
+            android:icon="@drawable/ic_launcher_aware"
+            android:launchMode="singleTask"
+            android:exported="true">
+<!--            <intent-filter android:autoVerify="true">-->
+<!--                <action android:name="android.intent.action.VIEW" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--                <category android:name="android.intent.category.BROWSABLE" />-->
 
+<!--                <data-->
+<!--                    android:scheme="https"-->
+<!--                    android:host="survey.wwbp.org"/>-->
+<!--            TODO Uncomment the 3 lines below to switch to online registration-->
+
+<!--                <action android:name="android.intent.action.MAIN" />-->
+
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+<!--            TODO Uncomment the <intent-filter> below to switch to online registration-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+        </activity>
         <!-- Activities -->
         <activity
             android:name="com.aware.phone.Aware_Client"
@@ -75,6 +102,7 @@
             android:label="AWARE"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Aware">
+<!--            TODO Comment the <intent-filter> below to switch to in-person registration-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
