@@ -8,6 +8,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+
+import androidx.core.content.ContextCompat;
 import androidx.core.content.PermissionChecker;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
@@ -98,7 +100,7 @@ public class Aware_Plugin extends Service {
         // services work in the background... this could be an issue...
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             for (String p : REQUIRED_PERMISSIONS) {
-                if (PermissionChecker.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
                     PERMISSIONS_OK = false;
                     break;
                 }
