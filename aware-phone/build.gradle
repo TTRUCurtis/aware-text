@@ -6,7 +6,6 @@ apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     compileSdkVersion compile_sdk
-    buildToolsVersion build_tools
 
     defaultConfig {
         applicationId "com.aware.phone"
@@ -79,26 +78,19 @@ android {
             signingConfig signingConfigs.release
         }
     }
-
-    lintOptions {
-        abortOnError false
-    }
-
     packagingOptions {
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/license.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/notice.txt'
-        exclude 'META-INF/ASL2.0'
-        exclude 'META-INF/proguard/androidx-annotations.pro'
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/license.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/notice.txt', 'META-INF/ASL2.0', 'META-INF/proguard/androidx-annotations.pro']
+        }
     }
+
 
     compileOptions {
         sourceCompatibility 1.8
         targetCompatibility 1.8
+    }
+    lint {
+        abortOnError false
     }
 }
 
@@ -113,17 +105,15 @@ if (System.getenv("storeFile") != null && System.getenv("storePassword") != null
 }
 
 dependencies {
-    implementation "com.google.dagger:hilt-android:2.38.1"
-    kapt "com.google.dagger:hilt-compiler:2.38.1"
+    implementation "com.google.dagger:hilt-android:$hilt_version"
+    kapt "com.google.dagger:hilt-compiler:$hilt_version"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation "org.jetbrains.anko:anko:$anko_version"
 
     implementation "me.dm7.barcodescanner:zbar:1.9.8"
 
     implementation 'com.google.android.material:material:1.2.0-alpha01'
     implementation 'androidx.appcompat:appcompat:1.1.0'
-
 
 
     api (project(':aware-core'))
