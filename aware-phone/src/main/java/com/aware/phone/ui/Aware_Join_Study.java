@@ -58,6 +58,7 @@ public class Aware_Join_Study extends Aware_Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.aware_join_study);
@@ -94,6 +95,7 @@ public class Aware_Join_Study extends Aware_Activity {
         llPluginsRequired = (LinearLayout) findViewById(R.id.ll_plugins_required);
 
         study_url = getIntent().getStringExtra(EXTRA_STUDY_URL);
+
 
         //If we are getting here from an AWARE study link
         String scheme = getIntent().getScheme();
@@ -168,7 +170,7 @@ public class Aware_Join_Study extends Aware_Activity {
             btnAction.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
+                    System.out.println("INSIDE ONCLICK!1");
                     btnAction.setEnabled(false);
                     btnAction.setAlpha(0.5f);
 
@@ -188,7 +190,7 @@ public class Aware_Join_Study extends Aware_Activity {
             btnQuit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
+                    System.out.println("INSIDE ONCLICK!2");
                     Cursor dbStudy = Aware.getStudy(getApplicationContext(), study_url);
                     if (dbStudy != null && dbStudy.moveToFirst()) {
                         ContentValues complianceEntry = new ContentValues();
@@ -215,6 +217,7 @@ public class Aware_Join_Study extends Aware_Activity {
                             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialogInterface, int i) {
+                                    System.out.println("INSIDE ONCLICK!3");
                                     btnQuit.setEnabled(false);
                                     btnQuit.setAlpha(1f);
                                     btnAction.setEnabled(false);
@@ -356,6 +359,7 @@ public class Aware_Join_Study extends Aware_Activity {
                             return null;
                         }
                         JSONObject study_data = new JSONObject(request);
+
 
                         //Automatically register this device on the study and create credentials for this device ID!
                         Hashtable<String, String> data = new Hashtable<>();
@@ -603,6 +607,7 @@ public class Aware_Join_Study extends Aware_Activity {
     }
 
     private void populateStudyInfo(JSONArray study_config) {
+
         JSONArray plugins = new JSONArray();
         JSONArray sensors = new JSONArray();
 

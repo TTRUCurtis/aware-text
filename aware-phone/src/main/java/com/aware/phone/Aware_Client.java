@@ -51,7 +51,7 @@ import java.util.*;
  */
 public class Aware_Client extends Aware_Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    public static boolean permissions_ok;
+//    public static boolean permissions_ok;
     private static Hashtable<Integer, Boolean> listSensorType;
     private static SharedPreferences prefs;
 
@@ -87,7 +87,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             listSensorType.put(sensors.get(i).getType(), true);
         }
 
-        boolean PERMISSIONS_OK = true;
+//        boolean PERMISSIONS_OK = true;
 
         //TODO Permissions 1: Delete all existing permission checking from this class. We'll check
         // permissions when we enable plugins/sensors. (If the user disables permissions for this
@@ -95,18 +95,18 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         // start the app, we can ask again in the app startup process, but that will be an edge case
         // so we can take care of it later.)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String p : PermissionUtils.getRequiredPermissions()) {
-                if (ContextCompat.checkSelfPermission(this, p) != PERMISSION_GRANTED) {
-                    PERMISSIONS_OK = false;
-                    break;
-                }
-            }
-        }
-        if (PERMISSIONS_OK) {
-            Intent aware = new Intent(this, Aware.class);
-            startService(aware);
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            for (String p : PermissionUtils.getRequiredPermissions()) {
+//                if (ContextCompat.checkSelfPermission(this, p) != PERMISSION_GRANTED) {
+//                    PERMISSIONS_OK = false;
+//                    break;
+//                }
+//            }
+//        }
+//        if (PERMISSIONS_OK) {
+//            Intent aware = new Intent(this, Aware.class);
+//            startService(aware);
+//        }
 
         IntentFilter awarePackages = new IntentFilter();
         awarePackages.addAction(Intent.ACTION_PACKAGE_ADDED);
@@ -291,7 +291,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     protected void onResume() {
         super.onResume();
 
-        permissions_ok = true;
+/*        permissions_ok = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             for (String p : PermissionUtils.getRequiredPermissions()) {
                 if (ContextCompat.checkSelfPermission(this, p) != PERMISSION_GRANTED) {
@@ -310,7 +310,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             permissionsHandler.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(permissionsHandler);
 
-        } else {
+        } else {*/
 
             if (prefs.getAll().isEmpty() && Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0) {
                 PreferenceManager.setDefaultValues(getApplicationContext(), "com.aware.phone", Context.MODE_PRIVATE, com.aware.R.xml.aware_preferences, true);
@@ -468,7 +468,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                     findPreference(Aware_Preferences.DEBUG_TAG),
                     findPreference(Aware_Preferences.ENFORCE_FREQUENCY_ALL)
             );
-        }
+
 
         if (Aware.isStudy(this)) {
             if (Aware.getSetting(this, Aware_Preferences.INTERFACE_LOCKED).equals("true") ||
