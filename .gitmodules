@@ -34,7 +34,6 @@
 [submodule "com.aware.plugin.sms"]
 	path = com.aware.plugin.sms
 	url = https://github.com/wwbp/com.aware.plugin.sms
-	ignore = dirty
 [submodule "com.aware.plugin.sentiment"]
 	path = com.aware.plugin.sentiment
 	url = https://github.com/wwbp/com.aware.plugin.sentiment
