@@ -6,7 +6,7 @@
 	url = https://github.com/denzilferreira/com.aware.plugin.ambient_noise.git
 [submodule "com.aware.plugin.contacts_list"]
 	path = com.aware.plugin.contacts_list
-	url = https://github.com/denzilferreira/com.aware.plugin.contacts_list.git
+	url = https://github.com/wwbp/com.aware.plugin.contacts_list.git
 [submodule "com.aware.plugin.studentlife.audio"]
 	path = com.aware.plugin.studentlife.audio
 	url = https://github.com/denzilferreira/com.aware.plugin.studentlife.audio
