@@ -1,39 +1,39 @@
 [submodule "com.aware.plugin.device_usage"]
 	path = com.aware.plugin.device_usage
-	url = https://github.com/denzilferreira/com.aware.plugin.device_usage.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.device_usage.git
 [submodule "com.aware.plugin.ambient_noise"]
 	path = com.aware.plugin.ambient_noise
-	url = https://github.com/denzilferreira/com.aware.plugin.ambient_noise.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.ambient_noise.git
 [submodule "com.aware.plugin.contacts_list"]
 	path = com.aware.plugin.contacts_list
-	url = https://github.com/denzilferreira/com.aware.plugin.contacts_list.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.contacts_list.git
 [submodule "com.aware.plugin.studentlife.audio"]
 	path = com.aware.plugin.studentlife.audio
-	url = https://github.com/denzilferreira/com.aware.plugin.studentlife.audio
+	url = https://github.com/wwbp-mobile/com.aware.plugin.studentlife.audio_final.git
 [submodule "com.aware.plugin.fitbit"]
 	path = com.aware.plugin.fitbit
-	url = https://github.com/denzilferreira/com.aware.plugin.fitbit
+	url = https://github.com/wwbp-mobile/com.aware.plugin.fitbit.git
 [submodule "com.aware.plugin.google.activity_recognition"]
 	path = com.aware.plugin.google.activity_recognition
-	url = https://github.com/denzilferreira/com.aware.plugin.google.activity_recognition
+	url = https://github.com/wwbp-mobile/com.aware.plugin.google.activity_recognition.git
 [submodule "com.aware.plugin.google.auth"]
 	path = com.aware.plugin.google.auth
-	url = https://github.com/denzilferreira/com.aware.plugin.google.auth
+	url = https://github.com/wwbp-mobile/com.aware.plugin.google.auth.git
 [submodule "com.aware.plugin.google.fused_location"]
 	path = com.aware.plugin.google.fused_location
-	url = https://github.com/denzilferreira/com.aware.plugin.google.fused_location
+	url = https://github.com/wwbp-mobile/com.aware.plugin.google.fused_location.git
 [submodule "com.aware.plugin.openweather"]
 	path = com.aware.plugin.openweather
-	url = https://github.com/denzilferreira/com.aware.plugin.openweather
+	url = https://github.com/wwbp-mobile/com.aware.plugin.openweather.git
 [submodule "com.aware.plugin.esm.scheduler"]
 	path = com.aware.plugin.esm.scheduler
-	url = https://github.com/denzilferreira/com.aware.plugin.esm.scheduler
+	url =https://github.com/wwbp-mobile/com.aware.plugin.esm.scheduler.git
 [submodule "com.aware.plugin.sensortag"]
 	path = com.aware.plugin.sensortag
-	url = https://github.com/denzilferreira/com.aware.plugin.sensortag
+	url = https://github.com/wwbp-mobile/com.aware.plugin.sensortag.git
 [submodule "com.aware.plugin.sms"]
 	path = com.aware.plugin.sms
-	url = https://github.com/wwbp/com.aware.plugin.sms
+	url = https://github.com/wwbp-mobile/com.aware.plugin.sms.git
 [submodule "com.aware.plugin.sentiment"]
 	path = com.aware.plugin.sentiment
-	url = https://github.com/wwbp/com.aware.plugin.sentiment
+	url = https://github.com/wwbp-mobile/com.aware.plugin.sentiment.git

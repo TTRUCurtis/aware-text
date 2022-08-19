@@ -176,6 +176,7 @@ public class Aware_Join_Study extends Aware_Activity {
 
                     Cursor study = Aware.getStudy(getApplicationContext(), study_url);
                     if (study != null && study.moveToFirst()) {
+
                         ContentValues studyData = new ContentValues();
                         studyData.put(Aware_Provider.Aware_Studies.STUDY_JOINED, System.currentTimeMillis());
                         studyData.put(Aware_Provider.Aware_Studies.STUDY_EXIT, 0);
@@ -624,6 +625,9 @@ public class Aware_Join_Study extends Aware_Activity {
                 e.printStackTrace();
             }
         }
+        System.out.println("plugins: " + plugins);
+        System.out.println("sensors: " + sensors);
+        popluatePermissions(plugins, sensors);
 
         //Show the plugins' information
         active_plugins = new ArrayList<>();
@@ -645,6 +649,28 @@ public class Aware_Join_Study extends Aware_Activity {
 
         mAdapter = new PluginsAdapter(active_plugins);
         pluginsRecyclerView.setAdapter(mAdapter);
+    }
+
+    private void popluatePermissions(JSONArray plugins, JSONArray sensors){
+        for(int i = 0; i < plugins.length(); i++){
+            try {
+                JSONObject plugin = plugins.getJSONObject(i);
+                System.out.println("this is a plugin: " + plugin);
+                System.out.println(plugin.getString("plugin"));
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+        }
+        for(int i = 0; i < sensors.length(); i++){
+            try{
+                JSONObject sensor = sensors.getJSONObject(i);
+                System.out.println("This is a sensor: " + sensor);
+                System.out.println(sensor.getString("setting"));
+                System.out.println(sensor.getString("value"));
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
