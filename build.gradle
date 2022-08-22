@@ -44,3 +44,13 @@ allprojects {
         maven { url "https://jitpack.io" } //MPAndroidChart, AWARE
     }
 }
+
+task installGitHooks(type: Copy) {
+    if (!project.file('.git/hooks/pre-push').exists()) {
+        from new File(rootProject.rootDir, 'pre-push')
+        into { new File(rootProject.rootDir, '.git/hooks')}
+        fileMode 0775
+    }
+}
+
+tasks.getByPath(':aware-phone:preBuild').dependsOn installGitHooks
