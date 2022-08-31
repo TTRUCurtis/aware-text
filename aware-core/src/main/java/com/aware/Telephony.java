@@ -10,6 +10,11 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoWcdma;
 import android.telephony.CellLocation;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
@@ -200,16 +205,35 @@ public class Telephony extends Aware_Sensor {
                     if (Aware.DEBUG) Log.d(TAG, e.getMessage());
                 }
 
-                List<NeighboringCellInfo> neighbors = telephonyManager.getNeighboringCellInfo();
-                if (neighbors != null && neighbors.size() > 0) {
-                    for (NeighboringCellInfo neighbor : neighbors) {
+                List<CellInfo> cellInfoList = telephonyManager.getAllCellInfo();
+                if (cellInfoList != null && cellInfoList.size() > 0) {
+                    for (CellInfo cellInfo : cellInfoList) {
+                        int cid, lac, psc, rssi;
+                        cid = lac = psc = rssi = 0;
+                        if (cellInfo instanceof CellInfoWcdma) {
+                            CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) cellInfo;
+                            cid = cellInfoWcdma.getCellIdentity().getCid();
+                            lac = cellInfoWcdma.getCellIdentity().getLac();
+                            psc = cellInfoWcdma.getCellIdentity().getPsc();
+                        } else if (cellInfo instanceof CellInfoGsm) {
+                            CellInfoGsm cellInfoGsm = (CellInfoGsm) cellInfo;
+                            cid = cellInfoGsm.getCellIdentity().getCid();
+                            lac = cellInfoGsm.getCellIdentity().getLac();
+                            psc = cellInfoGsm.getCellIdentity().getPsc();
+                        } else if (cellInfo instanceof CellInfoLte) {
+                            CellInfoLte cellInfoLte = (CellInfoLte) cellInfo;
+                            cid = cellInfoLte.getCellIdentity().getCi();
+                        } else if (cellInfo instanceof CellInfoCdma) {
+                            CellInfoCdma cellInfoCdma = (CellInfoCdma) cellInfo;
+                            rssi = cellInfoCdma.getCellSignalStrength().getDbm();
+                        }
                         rowData = new ContentValues();
                         rowData.put(GSM_Neighbors_Data.TIMESTAMP, timestamp);
                         rowData.put(GSM_Neighbors_Data.DEVICE_ID, device_id);
-                        rowData.put(GSM_Neighbors_Data.CID, neighbor.getCid());
-                        rowData.put(GSM_Neighbors_Data.LAC, neighbor.getLac());
-                        rowData.put(GSM_Neighbors_Data.PSC, neighbor.getPsc());
-                        rowData.put(GSM_Neighbors_Data.SIGNAL_STRENGTH, neighbor.getRssi());
+                        rowData.put(GSM_Neighbors_Data.CID, cid);
+                        rowData.put(GSM_Neighbors_Data.LAC, lac);
+                        rowData.put(GSM_Neighbors_Data.PSC, psc);
+                        rowData.put(GSM_Neighbors_Data.SIGNAL_STRENGTH, rssi);
 
                         try {
                             getContentResolver().insert(GSM_Neighbors_Data.CONTENT_URI, rowData);
