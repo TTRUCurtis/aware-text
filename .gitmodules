@@ -19,7 +19,6 @@
 [submodule "com.aware.plugin.google.auth"]
 	path = com.aware.plugin.google.auth
 	url = https://github.com/wwbp-mobile/com.aware.plugin.google.auth
->>>>>>> origin
 [submodule "com.aware.plugin.google.fused_location"]
 	path = com.aware.plugin.google.fused_location
 	url = https://github.com/wwbp-mobile/com.aware.plugin.google.fused_location.git

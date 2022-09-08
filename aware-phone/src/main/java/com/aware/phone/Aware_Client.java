@@ -51,7 +51,7 @@ import java.util.*;
  */
 public class Aware_Client extends Aware_Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-//    public static boolean permissions_ok;
+//     public static boolean permissions_ok;
     private static Hashtable<Integer, Boolean> listSensorType;
     private static SharedPreferences prefs;
 
