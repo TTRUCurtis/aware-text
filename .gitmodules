@@ -9,28 +9,29 @@
 	url = https://github.com/wwbp-mobile/com.aware.plugin.contacts_list.git
 [submodule "com.aware.plugin.studentlife.audio"]
 	path = com.aware.plugin.studentlife.audio
-	url = https://github.com/wwbp-mobile/com.aware.plugin.studentlife.audio_final.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.studentlife.audio
 [submodule "com.aware.plugin.fitbit"]
 	path = com.aware.plugin.fitbit
-	url = https://github.com/wwbp-mobile/com.aware.plugin.fitbit.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.fitbit
 [submodule "com.aware.plugin.google.activity_recognition"]
 	path = com.aware.plugin.google.activity_recognition
-	url = https://github.com/wwbp-mobile/com.aware.plugin.google.activity_recognition.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.google.activity_recognition
 [submodule "com.aware.plugin.google.auth"]
 	path = com.aware.plugin.google.auth
-	url = https://github.com/wwbp-mobile/com.aware.plugin.google.auth.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.google.auth
+>>>>>>> origin
 [submodule "com.aware.plugin.google.fused_location"]
 	path = com.aware.plugin.google.fused_location
 	url = https://github.com/wwbp-mobile/com.aware.plugin.google.fused_location.git
 [submodule "com.aware.plugin.openweather"]
 	path = com.aware.plugin.openweather
-	url = https://github.com/wwbp-mobile/com.aware.plugin.openweather.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.openweather
 [submodule "com.aware.plugin.esm.scheduler"]
 	path = com.aware.plugin.esm.scheduler
-	url =https://github.com/wwbp-mobile/com.aware.plugin.esm.scheduler.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.esm.scheduler
 [submodule "com.aware.plugin.sensortag"]
 	path = com.aware.plugin.sensortag
-	url = https://github.com/wwbp-mobile/com.aware.plugin.sensortag.git
+	url = https://github.com/wwbp-mobile/com.aware.plugin.sensortag
 [submodule "com.aware.plugin.sms"]
 	path = com.aware.plugin.sms
 	url = https://github.com/wwbp-mobile/com.aware.plugin.sms.git

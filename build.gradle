@@ -6,14 +6,15 @@ buildscript {
         google_libs = "17.0.0"
         version_code = 817
         version_readable = "4.0." + version_code + "." + "bundle"
-        compile_sdk = 28
+        compile_sdk = 32
         target_sdk = 28
         minimum_sdk = 24
         build_tools = "28.0.3"
         aware_libs = "master-SNAPSHOT"
-        kotlin_version = '1.5.31'
-        build_gradle = '7.0.3'
-        anko_version = "0.10.8"
+        kotlin_version = '1.7.10'
+        build_gradle = '7.2.2'
+        jUnitVersion = '4.13.2'
+        hilt_version = '2.43.2'
     }
 
     repositories {
@@ -21,14 +22,14 @@ buildscript {
             url 'https://maven.google.com'
         }
         google()
-        jcenter()
+        mavenCentral()
         mavenCentral()
         maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:${build_gradle}"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.dagger:hilt-android-gradle-plugin:2.38.1'
+        classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_version"
     }
 }
 
@@ -38,8 +39,18 @@ allprojects {
             url 'https://maven.google.com'
         }
         google()
-        jcenter()
+        mavenCentral()
         mavenCentral()
         maven { url "https://jitpack.io" } //MPAndroidChart, AWARE
     }
 }
+
+task installGitHooks(type: Copy) {
+    if (!project.file('.git/hooks/pre-push').exists()) {
+        from new File(rootProject.rootDir, 'pre-push')
+        into { new File(rootProject.rootDir, '.git/hooks')}
+        fileMode 0775
+    }
+}
+
+tasks.getByPath(':aware-phone:preBuild').dependsOn installGitHooks
