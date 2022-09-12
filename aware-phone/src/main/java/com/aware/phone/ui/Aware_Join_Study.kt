@@ -19,6 +19,7 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -733,9 +734,16 @@ class Aware_Join_Study : AppCompatActivity() {
 
         val permissions = populatePermissionsList(plugins, sensors)
 
-//        permissionLauncher = registerForActivityResult(ActivityResultContract.RequestMultiplePermissions()) {
-//
-//        }
+        permissionLauncher =
+            registerForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) { perm: Map<String, Boolean> ->
+                perm.forEach { (key, value) ->
+                    shouldShowRequestPermissionRationale(key)
+                }
+        }
+
+
 
         requestStudyPermissions(permissions)
 
