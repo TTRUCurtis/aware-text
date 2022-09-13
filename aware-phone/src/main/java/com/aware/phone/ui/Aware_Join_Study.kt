@@ -739,11 +739,23 @@ class Aware_Join_Study : AppCompatActivity() {
                 ActivityResultContracts.RequestMultiplePermissions()
             ) { perm: Map<String, Boolean> ->
                 perm.forEach { (key, value) ->
-                    shouldShowRequestPermissionRationale(key)
+                    if(shouldShowRequestPermissionRationale(key)){
+                        val builder = AlertDialog.Builder(this)
+                        builder.setTitle("Permissions Required")
+                        builder.setMessage("In order to participate in this study you must accept all permissions")
+                        builder.setCancelable(false)
+                        builder.setPositiveButton("Ok", object: DialogInterface.OnClickListener{
+
+                            override fun onClick(p0: DialogInterface?, p1: Int) {
+                                println("wohoo")
+                            }
+                        })
+                        builder.show()
+
+                    }
+
                 }
         }
-
-
 
         requestStudyPermissions(permissions)
 
