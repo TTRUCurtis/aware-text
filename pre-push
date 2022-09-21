@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#The command to run
+CMD='./gradlew testDebugUnitTest'
+
+$CMD
+RESULT=$?
+if [ $RESULT -ne 0 ]; then
+ echo "failed $CMD"
+ exit 1
+fi
+exit 0
