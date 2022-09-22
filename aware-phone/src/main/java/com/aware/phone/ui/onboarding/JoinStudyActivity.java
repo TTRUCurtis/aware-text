@@ -81,7 +81,7 @@ public class JoinStudyActivity extends AppCompatActivity {
 
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse("sms:"));
-            intent.putExtra("address", "***REMOVED***");
+            intent.putExtra("address", JoinStudyViewModel.PHONE_NUMBER_FOR_STUDY_LINK);
             startActivity(intent);
         });
 
