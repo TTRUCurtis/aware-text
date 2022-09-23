@@ -104,6 +104,7 @@
             android:textStyle="bold"
             android:visibility="gone"
             android:text="Unable To Sign Up For Study Because Required Permissions Were Not Granted"/>
+
     </LinearLayout>
 
 
@@ -138,6 +139,18 @@
             android:padding="0dp"
             android:text="@string/sign_up"
             android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/btn_go_to_permissions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_weight="1"
+            android:background="@color/primaryDark"
+            android:text="Go To Permissions"
+            android:textColor="@android:color/white"
+            android:enabled="false"
+            />
 
     </LinearLayout>
 

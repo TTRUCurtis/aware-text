@@ -7,8 +7,8 @@ import android.database.DatabaseUtils
 import android.graphics.Color
 import android.net.Uri
 import android.os.AsyncTask
-import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.text.Editable
 import android.text.Html
 import android.text.TextWatcher
@@ -18,13 +18,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
-import androidx.core.content.PermissionChecker.PERMISSION_GRANTED
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.aware.Aware
@@ -41,7 +38,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.FileNotFoundException
 import java.util.*
-import kotlin.collections.ArrayList
+
 
 class Aware_Join_Study : AppCompatActivity() {
     private var active_plugins: ArrayList<PluginInfo>? = null
@@ -51,9 +48,11 @@ class Aware_Join_Study : AppCompatActivity() {
     private var pluginsInstalled = true
     private var btnAction: Button? = null
     private var btnQuit: Button? = null
+    private var btnPermissions: Button? = null
     private var txtJoinDisabled: TextView? = null
     private var llPluginsRequired: LinearLayout? = null
     private var study_configs: JSONArray? = null
+    private var permissions: ArrayList<String>? = null
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
 
 
@@ -65,6 +64,7 @@ class Aware_Join_Study : AppCompatActivity() {
         val txtStudyResearcher = findViewById<View>(R.id.txt_researcher) as TextView
         btnAction = findViewById<View>(R.id.btn_sign_up) as Button
         btnQuit = findViewById<View>(R.id.btn_quit_study) as Button
+        btnPermissions = findViewById<View>(R.id.btn_go_to_permissions) as Button
         txtJoinDisabled = findViewById(R.id.txt_join_disabled) as TextView
         val participant_label = findViewById<EditText>(R.id.participant_label)
         participant_label.setText(
@@ -163,6 +163,16 @@ class Aware_Join_Study : AppCompatActivity() {
             // If they decline, show a dialog saying they cannot join the study without
             // accepting the permissions and then return to the main screen (call finish() on the
             // current Activity)
+
+            btnPermissions!!.setOnClickListener {
+                startActivity(
+                    Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", packageName, null)
+                    )
+                )
+
+            }
 
 
             btnAction!!.setOnClickListener {
@@ -735,7 +745,7 @@ class Aware_Join_Study : AppCompatActivity() {
             }
         }
 
-        val permissions = populatePermissionsList(plugins, sensors)
+        permissions = populatePermissionsList(plugins, sensors)
 
         permissionLauncher =
             registerForActivityResult(
@@ -756,7 +766,7 @@ class Aware_Join_Study : AppCompatActivity() {
                 }
         }
 
-        requestStudyPermissions(permissions)
+        requestStudyPermissions(permissions!!)
 
 
         //Show the plugins' information
@@ -848,6 +858,15 @@ class Aware_Join_Study : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if(permissions != null){
+            pluginsInstalled =  true
+            for(p in permissions!!){
+                if(ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED){
+                    pluginsInstalled = false
+                    break
+                }
+            }
+        }
         if (active_plugins == null) return
         val qry = Aware.getStudy(this, study_url)
         if (qry != null && qry.moveToFirst()) {
@@ -855,13 +874,20 @@ class Aware_Join_Study : AppCompatActivity() {
             if (pluginsInstalled) {
                 btnAction!!.alpha = 1f
                 btnAction!!.isEnabled = true
+                btnAction!!.visibility = View.VISIBLE
                 txtJoinDisabled!!.isEnabled = false
                 txtJoinDisabled!!.visibility = View.GONE
+                btnPermissions!!.isEnabled = false
+                btnPermissions!!.visibility = View.GONE
             } else {
                 btnAction!!.isEnabled = false
                 btnAction!!.alpha = .3f
+                btnAction!!.visibility = View.GONE
                 txtJoinDisabled!!.isEnabled = true
                 txtJoinDisabled!!.visibility = View.VISIBLE
+                btnPermissions!!.isEnabled = true
+                btnPermissions!!.visibility = View.VISIBLE
+
             }
             if (Aware.isStudy(applicationContext)) {
                 btnQuit!!.visibility = View.VISIBLE
