@@ -1,5 +1,11 @@
 package com.aware.utils;
 
+import android.util.Log;
+
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
+
 public class Converters {
 
     /**
@@ -55,5 +61,29 @@ public class Converters {
                 input[i] = '1';
 
         return String.valueOf(input);
+    }
+
+    /**
+     * Formats a phone number according to the rules of the Google phone number library https://github.com/google/libphonenumber
+     * If input is not a valid phone number and a NumberParseException is thrown, the original
+     * address will be returned.
+     *
+     * @param address
+     * @return string
+     */
+    public static String formatIfPhoneNumber(String address) {
+        PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+        String formattedPhoneNumber = address;
+        try {
+            Phonenumber.PhoneNumber numberProto = phoneUtil.parse(address, "US");
+            formattedPhoneNumber = phoneUtil.format(
+                    numberProto,
+                    PhoneNumberUtil.PhoneNumberFormat.E164
+            );
+        } catch (NumberParseException e) {
+            //TODO log this in Firebase so we can know when it happens remotely
+            Log.e("NumberParseException was thrown for number: " + address + " ", e.getMessage(), e);
+        }
+        return formattedPhoneNumber;
     }
 }
