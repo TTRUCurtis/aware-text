@@ -119,7 +119,7 @@ public class Communication extends Aware_Sensor {
                                 received.put(Calls_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
                                 received.put(Calls_Data.TYPE, Calls.INCOMING_TYPE);
                                 received.put(Calls_Data.DURATION, lastCall.getInt(lastCall.getColumnIndex(Calls.DURATION)));
-                                received.put(Calls_Data.TRACE, Encrypter.hashPhone(getApplicationContext(), lastCall.getString(lastCall.getColumnIndex(Calls.NUMBER))));
+                                received.put(Calls_Data.TRACE, Encrypter.formatAndHashAddress(getApplicationContext(), lastCall.getString(lastCall.getColumnIndex(Calls.NUMBER))));
 
                                 try {
                                     getContentResolver().insert(Calls_Data.CONTENT_URI, received);
@@ -147,7 +147,7 @@ public class Communication extends Aware_Sensor {
                                 missed.put(Calls_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
                                 missed.put(Calls_Data.TYPE, Calls.MISSED_TYPE);
                                 missed.put(Calls_Data.DURATION, lastCall.getInt(lastCall.getColumnIndex(Calls.DURATION)));
-                                missed.put(Calls_Data.TRACE, Encrypter.hashPhone(getApplicationContext(), lastCall.getString(lastCall.getColumnIndex(Calls.NUMBER))));
+                                missed.put(Calls_Data.TRACE, Encrypter.formatAndHashAddress(getApplicationContext(), lastCall.getString(lastCall.getColumnIndex(Calls.NUMBER))));
                                 try {
                                     getContentResolver().insert(Calls_Data.CONTENT_URI, missed);
 
@@ -173,7 +173,7 @@ public class Communication extends Aware_Sensor {
                                 outgoing.put(Calls_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
                                 outgoing.put(Calls_Data.TYPE, Calls.OUTGOING_TYPE);
                                 outgoing.put(Calls_Data.DURATION, lastCall.getInt(lastCall.getColumnIndex(Calls.DURATION)));
-                                outgoing.put(Calls_Data.TRACE, Encrypter.hashPhone(getApplicationContext(), lastCall.getString(lastCall.getColumnIndex(Calls.NUMBER))));
+                                outgoing.put(Calls_Data.TRACE, Encrypter.formatAndHashAddress(getApplicationContext(), lastCall.getString(lastCall.getColumnIndex(Calls.NUMBER))));
                                 try {
                                     getContentResolver().insert(Calls_Data.CONTENT_URI, outgoing);
 
@@ -222,7 +222,7 @@ public class Communication extends Aware_Sensor {
                                 inbox.put(Messages_Data.TIMESTAMP, lastMessage.getLong(lastMessage.getColumnIndex("date")));
                                 inbox.put(Messages_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
                                 inbox.put(Messages_Data.TYPE, MESSAGE_INBOX);
-                                inbox.put(Messages_Data.TRACE, Encrypter.hashPhone(getApplicationContext(), lastMessage.getString(lastMessage.getColumnIndex("address"))));
+                                inbox.put(Messages_Data.TRACE, Encrypter.formatAndHashAddress(getApplicationContext(), lastMessage.getString(lastMessage.getColumnIndex("address"))));
 
                                 try {
                                     getContentResolver().insert(Messages_Data.CONTENT_URI, inbox);
@@ -248,7 +248,7 @@ public class Communication extends Aware_Sensor {
                                 sent.put(Messages_Data.TIMESTAMP, lastMessage.getLong(lastMessage.getColumnIndex("date")));
                                 sent.put(Messages_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
                                 sent.put(Messages_Data.TYPE, MESSAGE_SENT);
-                                sent.put(Messages_Data.TRACE, Encrypter.hashPhone(getApplicationContext(), lastMessage.getString(lastMessage.getColumnIndex("address"))));
+                                sent.put(Messages_Data.TRACE, Encrypter.formatAndHashAddress(getApplicationContext(), lastMessage.getString(lastMessage.getColumnIndex("address"))));
 
                                 try {
                                     getContentResolver().insert(Messages_Data.CONTENT_URI, sent);

@@ -2,7 +2,6 @@
 package com.aware.utils;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
@@ -191,9 +190,17 @@ public class Encrypter {
     }
 
     /*
-     * Hash a phone number.  Default to hashing even if blank.
+     * Same as hashPhone but formats it first. Default to hashing even if blank.
      */
-    public static final String hashPhone(Context context, String clear) {
+    public static String formatAndHashAddress(Context context, String address) {
+        String formattedAddress = Converters.formatIfPhoneNumber(address);
+        return hashAddress(context, formattedAddress);
+    }
+
+    /*
+     * Hash a phone number (or email address if from MMS).  Default to hashing even if blank.
+     */
+    public static final String hashAddress(Context context, String clear) {
         String hashProgram = Aware.getSetting(context.getApplicationContext(), Aware_Preferences.HASH_FUNCTION_PHONE);
         return _hashProgram(context, clear, hashProgram);
     }

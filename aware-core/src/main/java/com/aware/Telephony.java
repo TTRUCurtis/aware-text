@@ -16,7 +16,6 @@ import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
 import android.telephony.CellLocation;
-import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
@@ -291,7 +290,7 @@ public class Telephony extends Aware_Sensor {
             rowData.put(Telephony_Data.DATA_ENABLED, telephonyManager.getDataState());
             rowData.put(Telephony_Data.IMEI_MEID_ESN, Encrypter.hash(getApplicationContext(), telephonyManager.getDeviceId()));
             rowData.put(Telephony_Data.SOFTWARE_VERSION, telephonyManager.getDeviceSoftwareVersion());
-            rowData.put(Telephony_Data.LINE_NUMBER, Encrypter.hashPhone(getApplicationContext(), telephonyManager.getLine1Number()));
+            rowData.put(Telephony_Data.LINE_NUMBER, Encrypter.formatAndHashAddress(getApplicationContext(), telephonyManager.getLine1Number()));
             rowData.put(Telephony_Data.NETWORK_COUNTRY_ISO_MCC, telephonyManager.getNetworkCountryIso());
             rowData.put(Telephony_Data.NETWORK_OPERATOR_CODE, telephonyManager.getNetworkOperator());
             rowData.put(Telephony_Data.NETWORK_OPERATOR_NAME, telephonyManager.getNetworkOperatorName());
