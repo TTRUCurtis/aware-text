@@ -36,6 +36,8 @@ import com.aware.Aware_Preferences;
 import com.aware.phone.ui.Aware_Activity;
 import com.aware.phone.ui.Aware_Join_Study;
 import com.aware.phone.ui.Aware_Participant;
+import com.aware.phone.ui.PermissionUtils;
+import com.aware.phone.ui.onboarding.JoinStudyActivity;
 import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
@@ -49,11 +51,10 @@ import java.util.*;
  */
 public class Aware_Client extends Aware_Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    public static boolean permissions_ok;
+//     public static boolean permissions_ok;
     private static Hashtable<Integer, Boolean> listSensorType;
     private static SharedPreferences prefs;
 
-    private static final ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
     private static final Hashtable<String, Integer> optionalSensors = new Hashtable<>();
 
     private final Aware.AndroidPackageMonitor packageMonitor = new Aware.AndroidPackageMonitor();
@@ -86,38 +87,26 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             listSensorType.put(sensors.get(i).getType(), true);
         }
 
-        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_WIFI_STATE);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.CAMERA);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_ADMIN);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_PHONE_STATE);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.GET_ACCOUNTS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_SYNC_SETTINGS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_SETTINGS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_STATS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SMS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_CALL_LOG);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_CONTACTS);
+//        boolean PERMISSIONS_OK = true;
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) REQUIRED_PERMISSIONS.add(Manifest.permission.FOREGROUND_SERVICE);
+        //TODO Permissions 1: Delete all existing permission checking from this class. We'll check
+        // permissions when we enable plugins/sensors. (If the user disables permissions for this
+        // app from their Android Settings and those plugins/sensors are still enabled when they
+        // start the app, we can ask again in the app startup process, but that will be an edge case
+        // so we can take care of it later.)
 
-        boolean PERMISSIONS_OK = true;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String p : REQUIRED_PERMISSIONS) {
-                if (ContextCompat.checkSelfPermission(this, p) != PERMISSION_GRANTED) {
-                    PERMISSIONS_OK = false;
-                    break;
-                }
-            }
-        }
-        if (PERMISSIONS_OK) {
-            Intent aware = new Intent(this, Aware.class);
-            startService(aware);
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            for (String p : PermissionUtils.getRequiredPermissions()) {
+//                if (ContextCompat.checkSelfPermission(this, p) != PERMISSION_GRANTED) {
+//                    PERMISSIONS_OK = false;
+//                    break;
+//                }
+//            }
+//        }
+//        if (PERMISSIONS_OK) {
+//            Intent aware = new Intent(this, Aware.class);
+//            startService(aware);
+//        }
 
         IntentFilter awarePackages = new IntentFilter();
         awarePackages.addAction(Intent.ACTION_PACKAGE_ADDED);
@@ -166,6 +155,12 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             else if (entry instanceof Integer)
                 value = String.valueOf(sharedPreferences.getInt(key, 0));
         }
+
+        //TODO Permissions 6: This is where the sensors get manually enabled/disabled. Let's check
+        // here we have the correct permission if we're enabling a sensor. If the user doesn't grant
+        // it, don't enable it. Not super important, since NIH does not allow manually enabling
+        // sensors, but we should do it anyway in case we want to manually enable for testing
+        // (lower priority)
 
         Aware.setSetting(getApplicationContext(), key, value);
         Preference pref = findPreference(key);
@@ -296,9 +291,9 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     protected void onResume() {
         super.onResume();
 
-        permissions_ok = true;
+/*        permissions_ok = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String p : REQUIRED_PERMISSIONS) {
+            for (String p : PermissionUtils.getRequiredPermissions()) {
                 if (ContextCompat.checkSelfPermission(this, p) != PERMISSION_GRANTED) {
                     permissions_ok = false;
                     break;
@@ -310,12 +305,12 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             Log.d(Aware.TAG, "Requesting permissions...");
 
             Intent permissionsHandler = new Intent(this, PermissionsHandler.class);
-            permissionsHandler.putStringArrayListExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, REQUIRED_PERMISSIONS);
+            permissionsHandler.putStringArrayListExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, PermissionUtils.getRequiredPermissions());
             permissionsHandler.putExtra(PermissionsHandler.EXTRA_REDIRECT_ACTIVITY, getPackageName() + "/" + getClass().getName());
             permissionsHandler.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(permissionsHandler);
 
-        } else {
+        } else {*/
 
             if (prefs.getAll().isEmpty() && Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0) {
                 PreferenceManager.setDefaultValues(getApplicationContext(), "com.aware.phone", Context.MODE_PRIVATE, com.aware.R.xml.aware_preferences, true);
@@ -473,7 +468,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                     findPreference(Aware_Preferences.DEBUG_TAG),
                     findPreference(Aware_Preferences.ENFORCE_FREQUENCY_ALL)
             );
-        }
+
 
         if (Aware.isStudy(this)) {
             if (Aware.getSetting(this, Aware_Preferences.INTERFACE_LOCKED).equals("true") ||

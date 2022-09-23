@@ -79,17 +79,24 @@ public class Aware_Sensor extends Service {
 
         registerReceiver(contextBroadcaster, filter);
 
-        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.GET_ACCOUNTS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_SYNC_SETTINGS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_SETTINGS);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_STATS);
+//        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+//        REQUIRED_PERMISSIONS.add(Manifest.permission.GET_ACCOUNTS);
+//        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_SYNC_SETTINGS);
+//        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_SETTINGS);
+//        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_STATS);
 
         Log.d(Aware.TAG, "created: " + getClass().getName() + " package: " + getPackageName());
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        //TODO Permissions 5: Delete all permission requesting from the sensors. Potentially we
+        // can still check if they are granted and throw an exception if not. This will be a
+        // clear indication to anyone working on this project that permissions need to be
+        // accepted before the sensors can be enabled/started. We should check what happens when a
+        // sensor is active and the user disables the permission from the Settings. If the
+        // services work in the background... this could be an issue...
         PERMISSIONS_OK = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             for (String p : REQUIRED_PERMISSIONS) {
