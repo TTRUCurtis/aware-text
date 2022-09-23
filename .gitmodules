@@ -9,7 +9,7 @@
 	url = https://github.com/wwbp-mobile/com.aware.plugin.contacts_list.git
 [submodule "com.aware.plugin.studentlife.audio"]
 	path = com.aware.plugin.studentlife.audio
-	url = https://github.com/wwbp-mobile/com.aware.plugin.studentlife.audio
+	url = https://github.com/wwbp-mobile/com.aware.plugin.studentlife.audio_final.git
 [submodule "com.aware.plugin.fitbit"]
 	path = com.aware.plugin.fitbit
 	url = https://github.com/wwbp-mobile/com.aware.plugin.fitbit

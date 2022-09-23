@@ -78,13 +78,12 @@
                 <data
                     android:scheme="https"
                     android:host="survey.wwbp.org"/>
-<!--            TODO Uncomment the 3 lines below to switch to online registration-->
-
+<!-- TODO Uncomment the 3 lines below to switch to online registration (undo to switch back) -->
 <!--                <action android:name="android.intent.action.MAIN" />-->
 <!--                <category android:name="android.intent.category.DEFAULT" />-->
 <!--                <category android:name="android.intent.category.LAUNCHER" />-->
             </intent-filter>
-<!--            TODO Uncomment the <intent-filter> below to switch to online registration-->
+<!-- TODO Uncomment the <intent-filter> below to switch to online registration (undo to switch back) -->
 <!--            <intent-filter>-->
 <!--                <action android:name="android.intent.action.MAIN" />-->
 <!--                <category android:name="android.intent.category.DEFAULT" />-->
@@ -100,7 +99,7 @@
             android:label="AWARE"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Aware">
-<!--            TODO Comment the <intent-filter> below to switch to in-person registration-->
+<!-- TODO Comment the <intent-filter> below to switch to online registration (undo to switch back) -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
