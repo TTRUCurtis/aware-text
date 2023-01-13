@@ -1,0 +1,1 @@
+include ':com.aware.plugin.esm.scheduler', ':com.aware.plugin.esm.scheduler.lib'
