@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aware.plugin.device_usage">
+
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+
+    <application>
+        <service
+            android:name="com.aware.plugin.device_usage.Plugin"
+            android:exported="true"
+            android:label="AWARE: Device Usage" />
+
+        <provider
+            android:name="com.aware.plugin.device_usage.Provider"
+            android:authorities="${applicationId}.provider.device_usage"
+            android:exported="true"
+            android:label="@string/plugin_device_usage"
+            android:readPermission="com.aware.READ_CONTEXT_DATA"
+            android:syncable="true"
+            android:writePermission="com.aware.WRITE_CONTEXT_DATA" />
+
+        <activity
+            android:name="com.aware.plugin.device_usage.Settings"
+            android:label="AWARE: Device Usage"
+            android:exported="true" />
+
+        <service
+            android:name="com.aware.plugin.device_usage.syncadapters.Device_Usage_Sync"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/sync_device_usage" />
+        </service>
+
+    </application>
+</manifest>
