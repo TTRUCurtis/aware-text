@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="status_plugin_sensortag"
+        android:persistent="true"
+        android:summary="Enable/disable sensor tag plugin"
+        android:title="Active" />
+
+    <ListPreference
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:defaultValue="30"
+        android:entries="@array/hr_granularity_labels"
+        android:entryValues="@array/hr_granularity_values"
+        android:key="frequency_plugin_sensortag"
+        android:persistent="true"
+        android:summary="30 Hz"
+        android:title="Sampling Frequency (Hz)" />
+
+    <Preference
+        android:key="smarttags"
+        android:summary="Tap to pair with nearby SensorTags"
+        android:title="SmartTags">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.aware.plugin.sensortag.DevicePicker"
+            android:targetPackage="com.aware.plugin.sensortag" />
+    </Preference>
+
+</PreferenceScreen>

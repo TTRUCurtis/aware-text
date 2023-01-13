@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.aware.plugin.sensortag">
+
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+    <uses-feature
+            android:name="android.hardware.bluetooth_le"
+            android:required="false"/>
+
+    <application>
+
+        <service
+                android:name="com.aware.plugin.sensortag.Plugin"
+                android:exported="true"
+                android:label="AWARE: Sensor Tag"/>
+
+        <activity
+                android:name="com.aware.plugin.sensortag.Settings"
+                android:label="AWARE: TI SensorTag"
+                android:exported="true"/>
+
+        <provider
+                android:name="com.aware.plugin.sensortag.Provider"
+                android:authorities="${applicationId}.provider.sensortag"
+                android:exported="true"
+                android:label="@string/plugin_sensortag"
+                android:readPermission="com.aware.READ_CONTEXT_DATA"
+                android:syncable="true"
+                android:writePermission="com.aware.WRITE_CONTEXT_DATA"/>
+
+        <activity
+                android:name="com.aware.plugin.sensortag.DevicePicker"
+                android:exported="true"
+                android:theme="@style/Theme.AppCompat.Dialog"/>
+
+        <service
+                android:name="com.aware.plugin.sensortag.syncadapters.Sensortag_Sync"
+                android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter"/>
+            </intent-filter>
+            <meta-data
+                    android:name="android.content.SyncAdapter"
+                    android:resource="@xml/sync_sensortag"/>
+        </service>
+
+    </application>
+</manifest>

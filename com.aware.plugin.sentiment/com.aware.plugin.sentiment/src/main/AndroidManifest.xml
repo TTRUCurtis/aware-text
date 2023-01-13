@@ -1,0 +1,37 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aware.plugin.sentiment">
+
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
+
+    <application>
+        <service
+            android:name="com.aware.plugin.sentiment.Plugin"
+            android:label="AWARE: Sentiment"
+            android:exported="true" />
+
+        <provider
+            android:name="com.aware.plugin.sentiment.Provider"
+            android:authorities="${applicationId}.provider.sentiment"
+            android:exported="true"
+            android:label="@string/plugin_sentiment"
+            android:readPermission="com.aware.READ_CONTEXT_DATA"
+            android:syncable="true"
+            android:writePermission="com.aware.WRITE_CONTEXT_DATA" />
+
+        <activity
+            android:name="com.aware.plugin.sentiment.Settings"
+            android:label="AWARE: Sentiment"
+            android:exported="true" />
+
+        <service
+            android:name="com.aware.plugin.sentiment.syncadapters.Sentiment_Sync"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/sync_sentiment" />
+        </service>
+    </application>
+</manifest>

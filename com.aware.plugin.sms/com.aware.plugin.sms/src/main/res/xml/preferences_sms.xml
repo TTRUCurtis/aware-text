@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="status_plugin_sms"
+            android:persistent="true"
+            android:summary="Enable/disable plugin"
+            android:title="Active"/>
+    <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_send_received_data"
+            android:persistent="true"
+            android:summary="Should the plugin include received data as well as sent data? (Check to include, default 'false')"
+            android:title="Transfer Received data"
+            android:selectable="false"/>
+    <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_send_sms_history"
+            android:persistent="true"
+            android:summary="Send all SMS for selected time frame. (Should be checked initially, will uncheck upon completion.  Reselect to resend data."
+            android:title="Send All SMS Within Date Range"
+            android:selectable="false"/>
+    <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_send_mms_history"
+            android:persistent="true"
+            android:summary="Send all MMS for selected time frame. (Should be checked initially, will uncheck upon completion.  Reselect to resend data."
+            android:title="Send All MMS Within Date Range"
+            android:selectable="false"/>
+    <EditTextPreference
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_start_date"
+            android:persistent="true"
+            android:summary="Start date for pulling sms and mms data. If left empty, it will pull all sms and mms data on the phone from before the end date. If both start and end dates are empty, it will pull all data."
+            android:title="Start Date (YYYY-MM-DD)"
+            android:selectable="false"/>
+    <EditTextPreference
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_end_date"
+            android:persistent="true"
+            android:summary="End date for pulling sms and mms data. If left empty, it will pull all sms and mms data on the phone from after the start date.  If both start and end dates are empty, it will pull all data."
+            android:title="End Date (YYYY-MM-DD)"
+            android:selectable="false"/>
+    <EditTextPreference
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_last_sync_date"
+            android:persistent="true"
+            android:summary="Date of Last Local Message Pull (YYYY-MM-DDTHH:MM:SS.sss)"
+            android:title="Last Local Message Sync"
+            android:selectable="false"/>
+    <EditTextPreference
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_sync_frequency"
+            android:persistent="true"
+            android:summary="How many minutes between each local data check. (Default 1)"
+            android:title="Server data Sync Frequency"
+            android:defaultValue="1"
+            android:selectable="false"/>
+    <EditTextPreference
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_message_batch_limit"
+            android:persistent="true"
+            android:summary="How many messages to sync with database at a time (to not lag phone)"
+            android:title="Server Batch Sync Message Limit"
+            android:defaultValue="0"
+            android:selectable="false"/>
+    <EditTextPreference
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_message_single_upload_limit"
+            android:persistent="true"
+            android:summary="How many messages to POST to server at a time (to not overrun server buffer)"
+            android:title="Server Batch Sync Message Limit"
+            android:defaultValue="200"
+            android:selectable="false"/>
+    <EditTextPreference
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_current_offset"
+            android:persistent="true"
+            android:summary="Current offset into batch message upload"
+            android:title="Current Message Upload Progress"
+            android:defaultValue="0"
+            android:selectable="false"/>
+    <EditTextPreference
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_last_server_sync_timestamp"
+            android:persistent="true"
+            android:summary="Timestamp of Last Server Sync (Numeric)"
+            android:title="Last Sever Sync Timestamp"
+            android:defaultValue="0"
+            android:selectable="false"/>
+    <EditTextPreference
+            android:dependency="status_plugin_sms"
+            android:key="plugin_sms_server_sync_frequency"
+            android:persistent="true"
+            android:summary="How many minutes between each server sync. (Default 5, +/- 5 min)"
+            android:title="Server data Sync Frequency"
+            android:defaultValue="6"
+            android:selectable="false"/>
+</PreferenceScreen>

@@ -1,0 +1,5 @@
+dependencies {
+    compileOnly fileTree(dir: 'libs', include: ['.jar', '.so'])
+    implementation files('libs/armeabi.jar')
+    api project(":aware-core")
+}
