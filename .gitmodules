@@ -1,9 +1,6 @@
 [submodule "com.aware.plugin.device_usage"]
 	path = com.aware.plugin.device_usage
 	url = https://github.com/wwbp-mobile/com.aware.plugin.device_usage.git
-[submodule "com.aware.plugin.contacts_list"]
-	path = com.aware.plugin.contacts_list
-	url = https://github.com/wwbp-mobile/com.aware.plugin.contacts_list.git
 [submodule "com.aware.plugin.studentlife.audio"]
 	path = com.aware.plugin.studentlife.audio
 	url = https://github.com/wwbp-mobile/com.aware.plugin.studentlife.audio_final.git
