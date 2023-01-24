@@ -2,9 +2,14 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main" ]
+  # Need to figure out how to block direct pushes to these branches
+    branches:
+      - main
+      - pre-release
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+      - pre-release
 
 jobs:
   build:
