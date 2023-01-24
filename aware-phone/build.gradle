@@ -1,4 +1,7 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
+apply plugin: 'com.google.firebase.firebase-perf'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
@@ -115,6 +118,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.2.0-alpha01'
     implementation 'androidx.appcompat:appcompat:1.3.1'
 
+    implementation platform('com.google.firebase:firebase-bom:31.1.1')
+    implementation 'com.google.firebase:firebase-crashlytics'
+    implementation 'com.google.firebase:firebase-perf'
 
     api (project(':aware-core'))
     api (project(":com.aware.plugin.ambient_noise"))
