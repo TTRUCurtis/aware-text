@@ -1,0 +1,44 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aware.plugin.google.auth">
+
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+
+    <application>
+
+        <service
+            android:name="com.aware.plugin.google.auth.Plugin"
+            android:label="AWARE: Google Auth"
+            android:exported="true" />
+
+        <activity
+            android:name="com.aware.plugin.google.auth.Settings"
+            android:label="AWARE: Google Auth"
+            android:exported="true" />
+
+        <activity
+            android:name="com.aware.plugin.google.auth.SignInActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.AppCompat"/>
+
+        <provider
+            android:name="com.aware.plugin.google.auth.Provider"
+            android:label="@string/plugin_google_authentication"
+            android:authorities="${applicationId}.provider.google_login"
+            android:exported="true"
+            android:syncable="true"
+            android:readPermission="com.aware.READ_CONTEXT_DATA"
+            android:writePermission="com.aware.WRITE_CONTEXT_DATA" />
+
+        <service
+            android:name="com.aware.plugin.google.auth.syncadapters.Google_Auth_Sync"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data android:name="android.content.SyncAdapter" android:resource="@xml/sync_google_auth" />
+        </service>
+
+    </application>
+
+</manifest>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/google_photo"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:maxHeight="60dp"
+            android:maxWidth="60dp"
+            android:adjustViewBounds="true"
+            android:minHeight="60dp"
+            android:minWidth="60dp"
+            android:scaleType="fitXY"
+            android:layout_margin="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/google_name"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/google_photo"
+            android:layout_toEndOf="@+id/google_photo"
+            android:textColor="#000000"
+            android:layout_marginTop="10dp"
+            android:textSize="25dp" />
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:id="@+id/google_email"
+                android:layout_below="@+id/google_name"
+                android:layout_toRightOf="@+id/google_photo"
+                android:layout_toEndOf="@+id/google_photo"
+                android:textColor="#0A0A0A"/>
+    </RelativeLayout>
+</LinearLayout>

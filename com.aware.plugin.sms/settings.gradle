@@ -1,0 +1,1 @@
+include ':com.aware.plugin.sms', ':com.aware.plugin.sms.lib'

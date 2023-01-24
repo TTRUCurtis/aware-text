@@ -1,0 +1,46 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aware.plugin.google.activity_recognition">
+
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+
+    <application>
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <service
+            android:name="com.aware.plugin.google.activity_recognition.Algorithm"
+            android:exported="true"
+            android:label="AWARE: Google Activity Recognition API" />
+
+        <activity
+            android:name="com.aware.plugin.google.activity_recognition.Settings"
+            android:label="AWARE: Google Activity Recognition"
+            android:exported="true" />
+
+        <provider
+            android:name="com.aware.plugin.google.activity_recognition.Google_AR_Provider"
+            android:label="@string/plugin_google_activity_recognition"
+            android:authorities="${applicationId}.provider.gar"
+            android:exported="true"
+            android:readPermission="com.aware.READ_CONTEXT_DATA"
+            android:writePermission="com.aware.WRITE_CONTEXT_DATA" />
+
+        <service
+            android:name="com.aware.plugin.google.activity_recognition.Plugin"
+            android:exported="true"
+            android:label="AWARE: Google Activity Recognition" />
+
+        <service
+            android:name="com.aware.plugin.google.activity_recognition.syncadapters.Google_AR_Sync"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data android:name="android.content.SyncAdapter" android:resource="@xml/sync_google_activity_recognition" />
+        </service>
+
+    </application>
+
+</manifest>

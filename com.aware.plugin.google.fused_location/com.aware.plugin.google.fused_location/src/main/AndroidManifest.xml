@@ -1,0 +1,66 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aware.plugin.google.fused_location">
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+
+    <application>
+        <service
+            android:name="com.aware.plugin.google.fused_location.Plugin"
+            android:label="AWARE: Google Fused Location"
+            android:exported="true" />
+
+        <service
+            android:name="com.aware.plugin.google.fused_location.Algorithm"
+            android:label="AWARE: Google Fused Location Sync"
+            android:exported="true" />
+
+        <service
+            android:name="com.aware.plugin.google.fused_location.GeofencesTracker"
+            android:label="AWARE: Geofences"
+            android:exported="true" />
+
+        <activity
+            android:name="com.aware.plugin.google.fused_location.Settings"
+            android:exported="true"
+            android:label="AWARE: Google Fused Location" />
+
+        <activity
+            android:name="com.aware.plugin.google.fused_location.GeofenceMap"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleInstance"
+            android:theme="@style/Theme.AppCompat.Dialog" />
+
+        <provider
+            android:name="com.aware.plugin.google.fused_location.Provider"
+            android:authorities="${applicationId}.provider.geofences"
+            android:label="@string/plugin_google_fused_location"
+            android:exported="true"
+            android:syncable="true"
+            android:readPermission="com.aware.READ_CONTEXT_DATA"
+            android:writePermission="com.aware.WRITE_CONTEXT_DATA" />
+
+        <service
+            android:name="com.aware.plugin.google.fused_location.syncadapters.Google_Fused_Sync"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data android:name="android.content.SyncAdapter" android:resource="@xml/sync_google_fused_location" />
+        </service>
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCJZ_4CQxNrwybTXZMS-2FGuCCnAJG78z4" />
+
+    </application>
+
+</manifest>

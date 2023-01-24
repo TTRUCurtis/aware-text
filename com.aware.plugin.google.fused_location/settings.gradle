@@ -1,0 +1,1 @@
+include ':com.aware.plugin.google.fused_location', ':com.aware.plugin.google.fused_location.lib'

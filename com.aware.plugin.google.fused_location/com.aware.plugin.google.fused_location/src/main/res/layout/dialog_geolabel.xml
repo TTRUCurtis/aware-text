@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+        android:id="@+id/location_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:hint="Name this location"
+        android:lines="1"
+        android:textColor="#FFF"
+        android:textColorHint="#CCC"
+        android:layout_toLeftOf="@+id/save_label"
+        android:layout_toStartOf="@+id/save_label" />
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/location_radius"
+        android:layout_below="@+id/location_label"
+        android:layout_centerHorizontal="true"
+        android:max="200"
+        android:progress="50"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:scrollIndicators="bottom" />
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:map="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="com.haltian.snowfox.family.GeofenceMap"
+        android:layout_below="@+id/location_radius"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentRight="false"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentEnd="false" />
+
+    <Button
+        android:id="@+id/save_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/location_radius"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:text="Save" />
+
+</RelativeLayout>
