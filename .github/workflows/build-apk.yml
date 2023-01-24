@@ -55,5 +55,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
-          name: apk
-          path: app/build/outputs/apk/debug/aware-debug.apk
+          name: Aware
+          path: aware-phone/build/outputs/apk/debug/*.apk
