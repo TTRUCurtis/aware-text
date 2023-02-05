@@ -1,6 +1,8 @@
 
 package com.aware;
 
+import static com.aware.utils.SettingsKt.setSettingAsync;
+
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -35,9 +37,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.PermissionChecker;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Transformations;
 
 import com.aware.providers.Aware_Provider;
 import com.aware.providers.Aware_Provider.Aware_Device;
@@ -1033,6 +1039,23 @@ public class Aware extends Service {
         }
     }
 
+    private static @Nullable LiveData<Map<String, String>> settingsLD = null;
+
+    private static @Nullable Map<String, String> settings = null;
+
+    public static void setSettingsLD(@NonNull LiveData<Map<String, String>> settingsLD) {
+        Aware.settingsLD = settingsLD;
+    }
+
+    @Nullable
+    public static LiveData<Map<String, String>> getSettingsLD() {
+        return settingsLD;
+    }
+
+    public static void setSettings(@NonNull Map<String, String> settings) {
+        Aware.settings = settings;
+    }
+
     /**
      * Retrieve setting value given key.
      *
@@ -1040,6 +1063,10 @@ public class Aware extends Service {
      * @return value
      */
     public static String getSetting(Context context, String key) {
+
+        if (canGetSettingFromMemory(context, key)) {
+            return settings.get(key) != null ? settings.get(key) : "";
+        }
 
         boolean is_global;
 
@@ -1084,6 +1111,15 @@ public class Aware extends Service {
         return value;
     }
 
+    private static boolean canGetSettingFromMemory(Context context, String key) {
+        if (settings != null) {
+            return true;
+        } else {
+            throw new NullPointerException("getSetting called too early! Need to wait for " +
+                    "settings to be loaded in memory!");
+        }
+    }
+
     /**
      * Retrieve setting value given a key of a plugin's settings
      *
@@ -1093,6 +1129,11 @@ public class Aware extends Service {
      * @return value
      */
     public static String getSetting(Context context, String key, String package_name) {
+
+        if (canGetSettingFromMemory(context, key)) {
+            return settings.get(key) != null ? settings.get(key) : "";
+        }
+
         if (context.getResources().getBoolean(R.bool.standalone))
             package_name = context.getPackageName(); //use the package name from the context
 
@@ -1114,6 +1155,9 @@ public class Aware extends Service {
      * @param value
      */
     public static void setSetting(Context context, String key, Object value) {
+        if (settings != null) {
+            settings.put(key, value.toString());
+        }
         boolean is_global;
 
         ArrayList<String> global_settings = new ArrayList<String>();
@@ -1147,18 +1191,23 @@ public class Aware extends Service {
         if (context.getResources().getBoolean(R.bool.standalone))
             is_global = false;
 
-        //We already have a Device ID, do nothing!
+        //We already have a Device ID, do nothing! //TODO throw an exception
         if (key.equals(Aware_Preferences.DEVICE_ID) && Aware.getSetting(context, Aware_Preferences.DEVICE_ID).length() > 0) {
             Log.d(Aware.TAG, "AWARE UUID: " + Aware.getSetting(context, Aware_Preferences.DEVICE_ID) + " in " + context.getPackageName());
             return;
         }
 
+        //TODO this should be moved onto a background thread
         if (key.equals(Aware_Preferences.DEVICE_LABEL) && ((String) value).length() > 0) {
             ContentValues newLabel = new ContentValues();
             newLabel.put(Aware_Provider.Aware_Device.LABEL, (String) value);
             context.getApplicationContext().getContentResolver().update(Aware_Provider.Aware_Device.CONTENT_URI, newLabel, Aware_Provider.Aware_Device.DEVICE_ID + " LIKE '" + Aware.getSetting(context, Aware_Preferences.DEVICE_ID) + "'", null);
         }
 
+        setSettingAsync(context, key, value, (is_global) ? "com.aware.phone" :
+                context.getPackageName());
+
+        /*
         ContentValues setting = new ContentValues();
         setting.put(Aware_Settings.SETTING_KEY, key);
         setting.put(Aware_Settings.SETTING_VALUE, value.toString());
@@ -1193,6 +1242,7 @@ public class Aware extends Service {
             }
         }
         if (qry != null && !qry.isClosed()) qry.close();
+         */
     }
 
     /**
@@ -1203,6 +1253,9 @@ public class Aware extends Service {
      * @param package_name
      */
     public static void setSetting(Context context, String key, Object value, String package_name) {
+
+        if (settings != null) settings.put(key, value.toString());
+
         if (context.getResources().getBoolean(R.bool.standalone)) //use the package name from the context
             package_name = context.getPackageName();
 
@@ -1218,6 +1271,8 @@ public class Aware extends Service {
             context.getContentResolver().update(Aware_Provider.Aware_Device.CONTENT_URI, newLabel, Aware_Provider.Aware_Device.DEVICE_ID + " LIKE '" + Aware.getSetting(context, Aware_Preferences.DEVICE_ID) + "'", null);
         }
 
+        setSettingAsync(context, key, value, package_name);
+        /*
         ContentValues setting = new ContentValues();
         setting.put(Aware_Settings.SETTING_KEY, key);
         setting.put(Aware_Settings.SETTING_VALUE, value.toString());
@@ -1250,6 +1305,7 @@ public class Aware extends Service {
             }
         }
         if (qry != null && !qry.isClosed()) qry.close();
+         */
     }
 
     /**

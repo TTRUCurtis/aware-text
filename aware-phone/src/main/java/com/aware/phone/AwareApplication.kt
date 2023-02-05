@@ -10,6 +10,7 @@ import android.os.Build
 import android.preference.PreferenceManager
 import com.aware.Aware
 import com.aware.Aware_Preferences
+import com.aware.utils.loadSettings
 import dagger.hilt.android.HiltAndroidApp
 import java.util.*
 
@@ -24,68 +25,8 @@ class AwareApplication : Application() {
     }
 
     private fun initializeSettings(prefs: SharedPreferences) {
-        if (prefs.all.isEmpty() && Aware.getSetting(
-                applicationContext,
-                Aware_Preferences.DEVICE_ID
-            ).isEmpty()
-        ) {
-            PreferenceManager.setDefaultValues(
-                applicationContext,
-                "com.aware.phone",
-                MODE_PRIVATE,
-                com.aware.R.xml.aware_preferences,
-                true
-            )
-            prefs.edit().apply()
-        } else {
-            PreferenceManager.setDefaultValues(
-                applicationContext,
-                "com.aware.phone",
-                MODE_PRIVATE,
-                R.xml.aware_preferences,
-                false
-            )
-        }
-        val defaults = prefs.all
-        for ((key, value) in defaults) {
-            if (Aware.getSetting(applicationContext, key, "com.aware.phone").isEmpty()) {
-                Aware.setSetting(
-                    applicationContext,
-                    key,
-                    value,
-                    "com.aware.phone"
-                ) //default AWARE settings
-            }
-        }
-        if (Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID).isEmpty()) {
-            val uuid = UUID.randomUUID()
-            Aware.setSetting(
-                applicationContext,
-                Aware_Preferences.DEVICE_ID,
-                uuid.toString(),
-                "com.aware.phone"
-            )
-        }
-        if (Aware.getSetting(applicationContext, Aware_Preferences.WEBSERVICE_SERVER).isEmpty()) {
-            Aware.setSetting(
-                applicationContext,
-                Aware_Preferences.WEBSERVICE_SERVER,
-                "https://api.awareframework.com/index.php"
-            )
-        }
-        try {
-            val awareInfo = applicationContext.packageManager.getPackageInfo(
-                applicationContext.packageName,
-                PackageManager.GET_ACTIVITIES
-            )
-            Aware.setSetting(
-                applicationContext,
-                Aware_Preferences.AWARE_VERSION,
-                awareInfo.versionName
-            )
-        } catch (e: PackageManager.NameNotFoundException) {
-            e.printStackTrace()
-        }
+        val settingsLD = loadSettings(this, prefs)
+        Aware.setSettingsLD(settingsLD)
 
         //Android 8 specific: create notification channels for AWARE
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
