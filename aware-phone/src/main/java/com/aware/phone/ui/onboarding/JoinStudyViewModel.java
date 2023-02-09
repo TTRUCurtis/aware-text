@@ -18,8 +18,6 @@ import java.util.ArrayList;
 
 public class JoinStudyViewModel extends AndroidViewModel {
 
-    final static String PHONE_NUMBER_FOR_STUDY_LINK = "***REMOVED***";
-
     private final MutableLiveData<LoadingIndicator> loadingIndicator = new MutableLiveData<>();
     private final MutableLiveData<ArrayList<String>> requiredPermissions = new MutableLiveData<>();
     private final MutableLiveData<StudyMetadata> studyMetadataLiveData = new MutableLiveData<>();
