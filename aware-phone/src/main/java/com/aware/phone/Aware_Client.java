@@ -197,7 +197,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         protected void onProgressUpdate(Preference... values) {
             super.onProgressUpdate(values);
 
-            Aware.getSettingsLD().observe(Aware_Client.this, settings -> {
+            Aware.getSettingsLiveData().observe(Aware_Client.this, settings -> {
 
                 Preference pref = values[0];
 
@@ -323,12 +323,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
 
         } else {*/
 
-        Aware.getSettingsLD().observe(this, settings -> {
-            Log.d(TAG, "printing Settings!!! Settings size " + settings.size());
-            for (String key : settings.keySet()) {
-                Log.d(TAG, "for key: " + key + " value: " + settings.get(key));
-            }
-
+        Aware.getSettingsLiveData().observe(this, settings -> {
             if (prefs.getAll()
                     .isEmpty() && Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID)
                     .length() == 0) {
@@ -342,14 +337,14 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             // here?
             Map<String, ?> defaults = prefs.getAll();
             for (Map.Entry<String, ?> entry : defaults.entrySet()) {
-                if (Aware.getSetting(getApplicationContext(), entry.getKey(), "com.aware.phone").length() == 0) {
-                    Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue(), "com.aware.phone"); //default AWARE settings
+                if (Aware.getSetting(getApplicationContext(), entry.getKey()).length() == 0) {
+                    Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue()); //default AWARE settings
                 }
             }
 
             if (Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0) {
                 UUID uuid = UUID.randomUUID();
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString(), "com.aware.phone");
+                Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString());
             }
 
             if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
@@ -491,7 +486,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                     findPreference(Aware_Preferences.ENFORCE_FREQUENCY_ALL)
             );
 
-        Aware.getSettingsLD().observe(this, stringStringMap -> {
+        Aware.getSettingsLiveData().observe(this, stringStringMap -> {
 
             if (Aware.isStudy(this)) {
                 if (Aware.getSetting(this, Aware_Preferences.INTERFACE_LOCKED).equals("true") ||

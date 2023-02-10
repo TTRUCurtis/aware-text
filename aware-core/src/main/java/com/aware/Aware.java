@@ -1,8 +1,6 @@
 
 package com.aware;
 
-import static com.aware.utils.SettingsKt.setSettingAsync;
-
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -43,8 +41,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.PermissionChecker;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Transformations;
 
+import com.aware.data.Setting;
+import com.aware.data.SettingsRepository;
 import com.aware.providers.Aware_Provider;
 import com.aware.providers.Aware_Provider.Aware_Device;
 import com.aware.providers.Aware_Provider.Aware_Plugins;
@@ -679,14 +678,14 @@ public class Aware extends Service {
             //this sets the default settings to all plugins too
             Map<String, ?> defaults = prefs.getAll();
             for (Map.Entry<String, ?> entry : defaults.entrySet()) {
-                if (Aware.getSetting(getApplicationContext(), entry.getKey(), "com.aware.phone").length() == 0) {
-                    Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue(), "com.aware.phone"); //default AWARE settings
+                if (Aware.getSetting(getApplicationContext(), entry.getKey()).length() == 0) {
+                    Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue()); //default AWARE settings
                 }
             }
 
             if (Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0) {
                 UUID uuid = UUID.randomUUID();
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString(), "com.aware.phone");
+                Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString());
             }
 
             if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
@@ -1039,113 +1038,57 @@ public class Aware extends Service {
         }
     }
 
-    private static @Nullable LiveData<Map<String, String>> settingsLD = null;
+    //TODO Once every reference to Aware.getSetting and Aware.setSetting is removed, we can also
+    // remove settingsRepository and the settings Map.
+    private static SettingsRepository settingsRepository;
+    private static @Nullable Map<String, Setting> settings = null;
 
-    private static @Nullable Map<String, String> settings = null;
-
-    public static void setSettingsLD(@NonNull LiveData<Map<String, String>> settingsLD) {
-        Aware.settingsLD = settingsLD;
+    /**
+     * @deprecated See com.aware.Aware#getSettingsLiveData()
+     */
+    @Deprecated()
+    public static void setSettingsRepository(SettingsRepository settingsRepository) {
+        Aware.settingsRepository = settingsRepository;
+        settingsRepository.getSettings().observeForever(settings -> {
+            Aware.settings = settings;
+        });
     }
 
-    @Nullable
-    public static LiveData<Map<String, String>> getSettingsLD() {
-        return settingsLD;
-    }
-
-    public static void setSettings(@NonNull Map<String, String> settings) {
-        Aware.settings = settings;
+    /**
+     * Need this for those that need settings potentially before it can be loaded. Cannot inject
+     * {@link SettingsRepository} into the Activities in the aware-phone module since
+     * {@link android.preference.PreferenceActivity} is not supported by Hilt
+     * @deprecated Once PreferenceActivity is replaced by one that is supported, inject
+     * SettingsRepository directly where it is needed
+     * TODO Change the activity's base class to reference a non-deprecated activity class that's supported by Hilt, so we can directly inject the SettingsRepository
+     */
+    @Deprecated()
+    public static LiveData<Map<String, Setting>> getSettingsLiveData() {
+        return settingsRepository.getSettings();
     }
 
     /**
      * Retrieve setting value given key.
      *
-     * @param key
+     * @param key the name of the setting
      * @return value
-     */
-    public static String getSetting(Context context, String key) {
-
-        if (canGetSettingFromMemory(context, key)) {
-            return settings.get(key) != null ? settings.get(key) : "";
-        }
-
-        boolean is_global;
-
-        ArrayList<String> global_settings = new ArrayList<>();
-        global_settings.add(Aware_Preferences.DEBUG_FLAG);
-        global_settings.add(Aware_Preferences.DEBUG_TAG);
-        global_settings.add(Aware_Preferences.DEVICE_ID);
-        global_settings.add(Aware_Preferences.DEVICE_LABEL);
-        global_settings.add(Aware_Preferences.STATUS_WEBSERVICE);
-        global_settings.add(Aware_Preferences.FREQUENCY_WEBSERVICE);
-        global_settings.add(Aware_Preferences.WEBSERVICE_WIFI_ONLY);
-        global_settings.add(Aware_Preferences.WEBSERVICE_SERVER);
-        global_settings.add(Aware_Preferences.WEBSERVICE_SIMPLE);
-        global_settings.add(Aware_Preferences.WEBSERVICE_REMOVE_DATA);
-        global_settings.add(Aware_Preferences.WEBSERVICE_SILENT);
-        global_settings.add(Aware_Preferences.STATUS_APPLICATIONS);
-        global_settings.add(Applications.STATUS_AWARE_ACCESSIBILITY);
-
-        if (context.getResources().getBoolean(R.bool.standalone)) {
-            global_settings.add(Aware_Preferences.STATUS_MQTT);
-            global_settings.add(Aware_Preferences.MQTT_USERNAME);
-            global_settings.add(Aware_Preferences.MQTT_PASSWORD);
-            global_settings.add(Aware_Preferences.MQTT_SERVER);
-            global_settings.add(Aware_Preferences.MQTT_PORT);
-            global_settings.add(Aware_Preferences.MQTT_KEEP_ALIVE);
-            global_settings.add(Aware_Preferences.MQTT_QOS);
-        }
-
-        is_global = global_settings.contains(key);
-
-        if (context.getResources().getBoolean(R.bool.standalone))
-            is_global = false;
-
-        String value = "";
-        Cursor qry = context.getContentResolver().query(Aware_Settings.CONTENT_URI, null,
-                Aware_Settings.SETTING_KEY + " LIKE '" + key + "' AND " + Aware_Settings.SETTING_PACKAGE_NAME + " LIKE " + ((is_global) ? "'com.aware.phone'" : "'" + context.getPackageName() + "'"),
-                null, null);
-        if (qry != null && qry.moveToFirst()) {
-            value = qry.getString(qry.getColumnIndex(Aware_Settings.SETTING_VALUE));
-        }
-        if (qry != null && !qry.isClosed()) qry.close();
-        return value;
-    }
-
-    private static boolean canGetSettingFromMemory(Context context, String key) {
-        if (settings != null) {
-            return true;
-        } else {
-            throw new NullPointerException("getSetting called too early! Need to wait for " +
-                    "settings to be loaded in memory!");
-        }
-    }
-
-    /**
-     * Retrieve setting value given a key of a plugin's settings
      *
-     * @param context
-     * @param key
-     * @param package_name
-     * @return value
+     * @deprecated We should not be using
+     * static methods for non-static data as they do not allow for ease of
+     * testing, refactoring, or scalability. Inject the Singleton
+     * {@link com.aware.data.SettingsRepository}
+     * and use {@link SettingsRepository#getSetting(String)} instead.
+     * TODO Inject SettingsRepository into every class that needs to use it and remove references
+     * to this method
      */
-    public static String getSetting(Context context, String key, String package_name) {
-
-        if (canGetSettingFromMemory(context, key)) {
-            return settings.get(key) != null ? settings.get(key) : "";
+    @Deprecated()
+    public static String getSetting(Context context, String key) {
+        if (settings != null) {
+            return settings.get(key) != null ? settings.get(key).getValue() : "";
+        } else {
+            throw new NullPointerException("Aware.getSetting was called too early. Settings not" +
+                    " loaded in memory.");
         }
-
-        if (context.getResources().getBoolean(R.bool.standalone))
-            package_name = context.getPackageName(); //use the package name from the context
-
-        String value = "";
-        Cursor qry = context.getContentResolver().query(Aware_Settings.CONTENT_URI, null,
-                Aware_Settings.SETTING_KEY + " LIKE '" + key + "' AND " + Aware_Settings.SETTING_PACKAGE_NAME + " LIKE '" + package_name + "'",
-                null, null);
-        if (qry != null && qry.moveToFirst()) {
-            value = qry.getString(qry.getColumnIndex(Aware_Settings.SETTING_VALUE));
-        }
-        if (qry != null && !qry.isClosed()) qry.close();
-        return value;
     }
 
     /**
@@ -1153,159 +1096,23 @@ public class Aware extends Service {
      *
      * @param key
      * @param value
-     */
-    public static void setSetting(Context context, String key, Object value) {
-        if (settings != null) {
-            settings.put(key, value.toString());
-        }
-        boolean is_global;
-
-        ArrayList<String> global_settings = new ArrayList<String>();
-        global_settings.add(Aware_Preferences.DEBUG_FLAG);
-        global_settings.add(Aware_Preferences.DEBUG_TAG);
-        global_settings.add(Aware_Preferences.DEVICE_ID);
-        global_settings.add(Aware_Preferences.DEVICE_LABEL);
-        global_settings.add(Aware_Preferences.STATUS_WEBSERVICE);
-        global_settings.add(Aware_Preferences.FREQUENCY_WEBSERVICE);
-        global_settings.add(Aware_Preferences.WEBSERVICE_WIFI_ONLY);
-        global_settings.add(Aware_Preferences.WEBSERVICE_SERVER);
-        global_settings.add(Aware_Preferences.WEBSERVICE_SIMPLE);
-        global_settings.add(Aware_Preferences.WEBSERVICE_REMOVE_DATA);
-        global_settings.add(Aware_Preferences.WEBSERVICE_SILENT);
-        global_settings.add(Aware_Preferences.STATUS_APPLICATIONS);
-        global_settings.add(Applications.STATUS_AWARE_ACCESSIBILITY);
-
-        //allow standalone apps to react to MQTT
-        if (context.getResources().getBoolean(R.bool.standalone)) {
-            global_settings.add(Aware_Preferences.STATUS_MQTT);
-            global_settings.add(Aware_Preferences.MQTT_USERNAME);
-            global_settings.add(Aware_Preferences.MQTT_PASSWORD);
-            global_settings.add(Aware_Preferences.MQTT_SERVER);
-            global_settings.add(Aware_Preferences.MQTT_PORT);
-            global_settings.add(Aware_Preferences.MQTT_KEEP_ALIVE);
-            global_settings.add(Aware_Preferences.MQTT_QOS);
-        }
-
-        is_global = global_settings.contains(key);
-
-        if (context.getResources().getBoolean(R.bool.standalone))
-            is_global = false;
-
-        //We already have a Device ID, do nothing! //TODO throw an exception
-        if (key.equals(Aware_Preferences.DEVICE_ID) && Aware.getSetting(context, Aware_Preferences.DEVICE_ID).length() > 0) {
-            Log.d(Aware.TAG, "AWARE UUID: " + Aware.getSetting(context, Aware_Preferences.DEVICE_ID) + " in " + context.getPackageName());
-            return;
-        }
-
-        //TODO this should be moved onto a background thread
-        if (key.equals(Aware_Preferences.DEVICE_LABEL) && ((String) value).length() > 0) {
-            ContentValues newLabel = new ContentValues();
-            newLabel.put(Aware_Provider.Aware_Device.LABEL, (String) value);
-            context.getApplicationContext().getContentResolver().update(Aware_Provider.Aware_Device.CONTENT_URI, newLabel, Aware_Provider.Aware_Device.DEVICE_ID + " LIKE '" + Aware.getSetting(context, Aware_Preferences.DEVICE_ID) + "'", null);
-        }
-
-        setSettingAsync(context, key, value, (is_global) ? "com.aware.phone" :
-                context.getPackageName());
-
-        /*
-        ContentValues setting = new ContentValues();
-        setting.put(Aware_Settings.SETTING_KEY, key);
-        setting.put(Aware_Settings.SETTING_VALUE, value.toString());
-        if (is_global) {
-            setting.put(Aware_Settings.SETTING_PACKAGE_NAME, "com.aware.phone");
-        } else {
-            setting.put(Aware_Settings.SETTING_PACKAGE_NAME, context.getPackageName());
-        }
-
-        Cursor qry = context.getApplicationContext().getContentResolver().query(Aware_Settings.CONTENT_URI, null, Aware_Settings.SETTING_KEY + " LIKE '" + key + "' AND " + Aware_Settings.SETTING_PACKAGE_NAME + " LIKE " + ((is_global) ? "'com.aware.phone'" : "'" + context.getPackageName() + "'"), null, null);
-        //update
-        if (qry != null && qry.moveToFirst()) {
-            try {
-                if (!qry.getString(qry.getColumnIndex(Aware_Settings.SETTING_VALUE)).equals(value.toString())) {
-                    context.getApplicationContext().getContentResolver().update(Aware_Settings.CONTENT_URI, setting, Aware_Settings.SETTING_ID + "=" + qry.getInt(qry.getColumnIndex(Aware_Settings.SETTING_ID)), null);
-                    if (Aware.DEBUG) Log.d(Aware.TAG, "Updated: " + key + "=" + value);
-                }
-            } catch (SQLiteException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            } catch (SQLException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            }
-            //insert
-        } else {
-            try {
-                context.getApplicationContext().getContentResolver().insert(Aware_Settings.CONTENT_URI, setting);
-                if (Aware.DEBUG) Log.d(Aware.TAG, "Added: " + key + "=" + value);
-            } catch (SQLiteException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            } catch (SQLException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            }
-        }
-        if (qry != null && !qry.isClosed()) qry.close();
-         */
-    }
-
-    /**
-     * Insert / Update settings of a plugin
      *
-     * @param key
-     * @param value
-     * @param package_name
+     * @deprecated We should not be using
+     * static methods for non-static data as they do not allow for ease of
+     * testing, refactoring, or scalability. Inject the Singleton {@link com.aware.data.SettingsRepository}
+     * and use {@link SettingsRepository#setSettingInStorage(Setting)()} instead.
+     * TODO Inject SettingsRepository into every class that needs to use it and remove references
+     * to this method
      */
-    public static void setSetting(Context context, String key, Object value, String package_name) {
-
-        if (settings != null) settings.put(key, value.toString());
-
-        if (context.getResources().getBoolean(R.bool.standalone)) //use the package name from the context
-            package_name = context.getPackageName();
-
-        //We already have a device ID, bail-out!
-        if (key.equals(Aware_Preferences.DEVICE_ID) && Aware.getSetting(context, Aware_Preferences.DEVICE_ID).length() > 0) {
-            Log.d(Aware.TAG, "AWARE UUID: " + Aware.getSetting(context, Aware_Preferences.DEVICE_ID) + " in " + package_name);
-            return;
+    @Deprecated()
+    public static void setSetting(Context context, String key, Object value) {
+        //First, update in-memory settings
+        if (settings != null) {
+            settings.put(key, new Setting(key, value.toString()));
         }
 
-        if (key.equals(Aware_Preferences.DEVICE_LABEL) && ((String) value).length() > 0) {
-            ContentValues newLabel = new ContentValues();
-            newLabel.put(Aware_Provider.Aware_Device.LABEL, (String) value);
-            context.getContentResolver().update(Aware_Provider.Aware_Device.CONTENT_URI, newLabel, Aware_Provider.Aware_Device.DEVICE_ID + " LIKE '" + Aware.getSetting(context, Aware_Preferences.DEVICE_ID) + "'", null);
-        }
-
-        setSettingAsync(context, key, value, package_name);
-        /*
-        ContentValues setting = new ContentValues();
-        setting.put(Aware_Settings.SETTING_KEY, key);
-        setting.put(Aware_Settings.SETTING_VALUE, value.toString());
-        setting.put(Aware_Settings.SETTING_PACKAGE_NAME, package_name);
-
-        Cursor qry = context.getContentResolver().query(Aware_Settings.CONTENT_URI, null, Aware_Settings.SETTING_KEY + " LIKE '" + key + "' AND " + Aware_Settings.SETTING_PACKAGE_NAME + " LIKE '" + package_name + "'", null, null);
-        //update
-        if (qry != null && qry.moveToFirst()) {
-            try {
-                if (!qry.getString(qry.getColumnIndex(Aware_Settings.SETTING_VALUE)).equals(value.toString())) {
-                    context.getContentResolver().update(Aware_Settings.CONTENT_URI, setting, Aware_Settings.SETTING_ID + "=" + qry.getInt(qry.getColumnIndex(Aware_Settings.SETTING_ID)), null);
-                    if (Aware.DEBUG)
-                        Log.d(Aware.TAG, "Updated: " + key + "=" + value + " in " + package_name);
-                }
-            } catch (SQLiteException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            } catch (SQLException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            }
-            //insert
-        } else {
-            try {
-                context.getContentResolver().insert(Aware_Settings.CONTENT_URI, setting);
-                if (Aware.DEBUG)
-                    Log.d(Aware.TAG, "Added: " + key + "=" + value + " in " + package_name);
-            } catch (SQLiteException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            } catch (SQLException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            }
-        }
-        if (qry != null && !qry.isClosed()) qry.close();
-         */
+        //Then update the database
+        settingsRepository.setSettingInStorage(new Setting(key, value.toString()));
     }
 
     /**
@@ -1391,9 +1198,9 @@ public class Aware extends Service {
                         try {
                             JSONObject sensor_config = enabled.getJSONObject(i);
                             if (sensor_config.getString("setting").contains("status")) {
-                                Aware.setSetting(c, sensor_config.getString("setting"), true, "com.aware.phone");
+                                Aware.setSetting(c, sensor_config.getString("setting"), true);
                             } else
-                                Aware.setSetting(c, sensor_config.getString("setting"), sensor_config.getString("value"), "com.aware.phone");
+                                Aware.setSetting(c, sensor_config.getString("setting"), sensor_config.getString("value"));
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -1404,9 +1211,9 @@ public class Aware extends Service {
                         try {
                             JSONObject sensor_config = disabled.getJSONObject(i);
                             if (sensor_config.getString("setting").contains("status")) {
-                                Aware.setSetting(c, sensor_config.getString("setting"), false, "com.aware.phone");
+                                Aware.setSetting(c, sensor_config.getString("setting"), false);
                             } else
-                                Aware.setSetting(c, sensor_config.getString("setting"), sensor_config.getString("value"), "com.aware.phone");
+                                Aware.setSetting(c, sensor_config.getString("setting"), sensor_config.getString("value"));
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -1460,9 +1267,9 @@ public class Aware extends Service {
                             for (int j = 0; j < plugin_settings.length(); j++) {
                                 JSONObject plugin_set = plugin_settings.getJSONObject(j);
                                 if (plugin_set.getString("setting").contains("status")) {
-                                    Aware.setSetting(c, plugin_set.getString("setting"), true, package_name);
+                                    Aware.setSetting(c, plugin_set.getString("setting"), true);
                                 } else
-                                    Aware.setSetting(c, plugin_set.getString("setting"), plugin_set.getString("value"), package_name);
+                                    Aware.setSetting(c, plugin_set.getString("setting"), plugin_set.getString("value"));
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -1478,9 +1285,9 @@ public class Aware extends Service {
                             for (int j = 0; j < plugin_settings.length(); j++) {
                                 JSONObject plugin_set = plugin_settings.getJSONObject(j);
                                 if (plugin_set.getString("setting").contains("status")) {
-                                    Aware.setSetting(c, plugin_set.getString("setting"), false, package_name);
+                                    Aware.setSetting(c, plugin_set.getString("setting"), false);
                                 } else
-                                    Aware.setSetting(c, plugin_set.getString("setting"), plugin_set.getString("value"), package_name);
+                                    Aware.setSetting(c, plugin_set.getString("setting"), plugin_set.getString("value"));
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -1849,7 +1656,7 @@ public class Aware extends Service {
                                 String package_name = "com.aware.phone";
                                 if (getApplicationContext().getResources().getBoolean(R.bool.standalone))
                                     package_name = getApplicationContext().getPackageName();
-                                Aware.setSetting(getApplicationContext(), sensor_config.getString("setting"), sensor_config.get("value"), package_name);
+                                Aware.setSetting(getApplicationContext(), sensor_config.getString("setting"), sensor_config.get("value"));
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -1867,7 +1674,7 @@ public class Aware extends Service {
                                     JSONObject plugin_setting = plugin_settings.getJSONObject(j);
                                     if (getApplicationContext().getResources().getBoolean(R.bool.standalone))
                                         package_name = getApplicationContext().getPackageName();
-                                    Aware.setSetting(getApplicationContext(), plugin_setting.getString("setting"), plugin_setting.get("value"), package_name);
+                                    Aware.setSetting(getApplicationContext(), plugin_setting.getString("setting"), plugin_setting.get("value"));
                                     if (plugin_setting.getString("setting").contains("status_") && plugin_setting.get("value").equals("true")) {
                                         enabled_plugins.add(package_name);
                                     }
@@ -1942,12 +1749,12 @@ public class Aware extends Service {
 
         Map<String, ?> defaults = prefs.getAll();
         for (Map.Entry<String, ?> entry : defaults.entrySet()) {
-            Aware.setSetting(context, entry.getKey(), entry.getValue(), "com.aware.phone");
+            Aware.setSetting(context, entry.getKey(), entry.getValue());
         }
 
         //Keep previous AWARE Device ID and label
-        Aware.setSetting(context, Aware_Preferences.DEVICE_ID, device_id, "com.aware.phone");
-        Aware.setSetting(context, Aware_Preferences.DEVICE_LABEL, device_label, "com.aware.phone");
+        Aware.setSetting(context, Aware_Preferences.DEVICE_ID, device_id);
+        Aware.setSetting(context, Aware_Preferences.DEVICE_LABEL, device_label);
 
         ContentValues update_label = new ContentValues();
         update_label.put(Aware_Device.LABEL, device_label);
