@@ -2,14 +2,16 @@ name: Aware Build
 
 on:
   push:
-  # Need to figure out how to block direct pushes to these branches
+  #TODO Need to figure out how to block direct pushes to these branches
     branches:
       - main
       - pre-release
+      - develop
   pull_request:
     branches:
       - main
       - pre-release
+      - develop
       
 jobs:
   build:
