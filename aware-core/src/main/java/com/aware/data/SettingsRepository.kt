@@ -42,7 +42,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val app
 
             val sharedPrefs = appContext.getSharedPreferences(packageName, Application.MODE_PRIVATE)
             if (sharedPrefs.all.isEmpty() && settings[Aware_Preferences.DEVICE_ID] == null) {
-                PreferenceManager.setDefaultValues(
+                PreferenceManager.setDefaultValues( //TODO remove this once we switch to https://developer.android.com/develop/ui/views/components/settings
                     appContext,
                     packageName,
                     Application.MODE_PRIVATE,
@@ -140,7 +140,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val app
         val setting = ContentValues()
         setting.put(Aware_Settings.SETTING_KEY, key)
         setting.put(Aware_Settings.SETTING_VALUE, value.toString())
-        setting.put(Aware_Settings.SETTING_PACKAGE_NAME, packageName)
+        setting.put(Aware_Settings.SETTING_PACKAGE_NAME, packageName) //TODO shouldn't need this anymore
 
         val qry = appContext.contentResolver.query(
             Aware_Settings.CONTENT_URI,
