@@ -60,7 +60,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val app
                 )
             }
             val defaults = sharedPrefs.all
-            for ((key, value) in defaults) {
+            for ((key, value) in defaults) { //TODO we shouldn't need to do this everytime, right? Just use database, no need to use preferences except the first time
                 if (settings[key] == null) {
                     settings[key] = Setting(key, value.toString())
                     setSettingInStorage(

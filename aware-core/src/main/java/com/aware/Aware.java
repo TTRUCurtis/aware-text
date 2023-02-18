@@ -1086,10 +1086,23 @@ public class Aware extends Service {
         if (settings != null) {
             return settings.get(key) != null ? settings.get(key).getValue() : "";
         } else {
-            throw new NullPointerException("Aware.getSetting was called too early. Settings not" +
-                    " loaded in memory.");
+            return getSettingFromStorage(context, key);
         }
     }
+
+    private static String getSettingFromStorage(Context context, String key) {
+        String value = "";
+        Cursor qry =
+                context.getContentResolver().query(Aware_Provider.Aware_Settings.CONTENT_URI, null,
+                        Aware_Provider.Aware_Settings.SETTING_KEY + " LIKE '" + key + "'",
+                        null, null);
+        if (qry != null && qry.moveToFirst()) {
+            value = qry.getString(qry.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_VALUE));
+        }
+        if (qry != null && !qry.isClosed()) qry.close();
+        return value;
+    }
+
 
     /**
      * Insert / Update settings of the framework

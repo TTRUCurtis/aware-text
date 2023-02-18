@@ -156,12 +156,6 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                 value = String.valueOf(sharedPreferences.getInt(key, 0));
         }
 
-        //TODO Permissions 6: This is where the sensors get manually enabled/disabled. Let's check
-        // here we have the correct permission if we're enabling a sensor. If the user doesn't grant
-        // it, don't enable it. Not super important, since NIH does not allow manually enabling
-        // sensors, but we should do it anyway in case we want to manually enable for testing
-        // (lower priority)
-
         Aware.setSetting(getApplicationContext(), key, value);
         Preference pref = findPreference(key);
         if (CheckBoxPreference.class.isInstance(pref)) {
@@ -301,27 +295,6 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     @Override
     protected void onResume() {
         super.onResume();
-
-/*        permissions_ok = true;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String p : PermissionUtils.getRequiredPermissions()) {
-                if (ContextCompat.checkSelfPermission(this, p) != PERMISSION_GRANTED) {
-                    permissions_ok = false;
-                    break;
-                }
-            }
-        }
-
-        if (!permissions_ok) {
-            Log.d(Aware.TAG, "Requesting permissions...");
-
-            Intent permissionsHandler = new Intent(this, PermissionsHandler.class);
-            permissionsHandler.putStringArrayListExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, PermissionUtils.getRequiredPermissions());
-            permissionsHandler.putExtra(PermissionsHandler.EXTRA_REDIRECT_ACTIVITY, getPackageName() + "/" + getClass().getName());
-            permissionsHandler.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(permissionsHandler);
-
-        } else {*/
 
         Aware.getSettingsLiveData().observe(this, settings -> {
             if (prefs.getAll()
