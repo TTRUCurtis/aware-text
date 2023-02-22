@@ -29,29 +29,40 @@ public class Provider extends ContentProvider {
 
     private static final int SMS = 1;
     private static final int SMS_ID = 2;
+    private static final int SENTIMENT = 3;
+    private static final int SENTIMENT_ID = 4;
 
     public static final String DATABASE_NAME = "plugin_sms.db";
 
     public static final String[] DATABASE_TABLES = {
-            "plugin_sms"
+            "plugin_sms",
+            "sentiment_analysis"
     };
 
     public static final String[] TABLES_FIELDS = {
-                    Sms_Data._ID + " integer primary key autoincrement," +
-                    Sms_Data.RETRIEVAL_TIMESTAMP + " real default 0," +
-                    Sms_Data.DEVICE_ID + " text default ''," +
-                    Sms_Data.MESSAGE_TIMESTAMP + " BIGINT default 0," +
-                    Sms_Data.MSG_TYPE + " text default ''," +
-                    Sms_Data.MSG_THREAD_ID + " text default ''," +
-                    Sms_Data.MSG_ADDRESS + " text default ''," +
-                    Sms_Data.MSG_BODY + " text default ''"
+            Sms_Data._ID + " integer primary key autoincrement," +
+                Sms_Data.RETRIEVAL_TIMESTAMP + " real default 0," +
+                Sms_Data.DEVICE_ID + " text default ''," +
+                Sms_Data.MESSAGE_TIMESTAMP + " BIGINT default 0," +
+                Sms_Data.MSG_TYPE + " text default ''," +
+                Sms_Data.MSG_THREAD_ID + " text default ''," +
+                Sms_Data.MSG_ADDRESS + " text default ''," +
+                Sms_Data.MSG_BODY + " text default ''",
+            Sentiment_Analysis._ID + " integer primary key autoincrement," +
+                    Sentiment_Analysis.DEVICE_ID + " text default ''," +
+                    Sentiment_Analysis.TIMESTAMP + " real default 0," +
+                    Sentiment_Analysis.CATEGORY + " text default ''," +
+                    Sentiment_Analysis.TOTAL_WORDS + " integer default 0," +
+                    Sentiment_Analysis.DICTIONARY_WORDS + " integer default 0," +
+                    Sentiment_Analysis.SCORE + " real default 0," +
+                    Sentiment_Analysis.ADDRESS + " text default ''," +
+                    Sentiment_Analysis.TYPE + " text default ''"
+
     };
 
     public static final class Sms_Data implements BaseColumns {
         private Sms_Data() {
         }
-
-        ;
 
         public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/plugin_sms");
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.aware.plugin.sms";
@@ -73,8 +84,29 @@ public class Provider extends ContentProvider {
         public static final String MSG_BODY = "body";
     }
 
+    public static final class Sentiment_Analysis implements BaseColumns {
+        private Sentiment_Analysis(){
+        }
+
+        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/sentiment_analysis");
+        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.aware.sentiment.analysis";
+        public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.aware.sentiment.analysis";
+
+        public static final String _ID = "_id";
+        public static final String DEVICE_ID = "device_id";
+        public static final String TIMESTAMP = "timestamp";
+        public static final String CATEGORY = "category";
+        public static final String TOTAL_WORDS = "total_words";
+        public static final String DICTIONARY_WORDS = "dictionary_words";
+        public static final String SCORE = "score";
+        public static final String ADDRESS = "address";
+        public static final String TYPE = "type";
+    }
+
+
     private static UriMatcher URIMatcher;
     private static HashMap<String, String> databaseMap;
+    private static HashMap<String, String> sentimentMap;
 
     /**
      * Returns the provider authority that is dynamic
@@ -95,6 +127,8 @@ public class Provider extends ContentProvider {
         URIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         URIMatcher.addURI(AUTHORITY, DATABASE_TABLES[0], SMS);
         URIMatcher.addURI(AUTHORITY, DATABASE_TABLES[0] + "/#", SMS_ID);
+        URIMatcher.addURI(AUTHORITY, DATABASE_TABLES[1], SENTIMENT);
+        URIMatcher.addURI(AUTHORITY, DATABASE_TABLES[1] + "/#", SENTIMENT_ID);
 
         databaseMap = new HashMap<>();
         databaseMap.put(Sms_Data._ID, Sms_Data._ID);
@@ -105,6 +139,17 @@ public class Provider extends ContentProvider {
         databaseMap.put(Sms_Data.MSG_THREAD_ID, Sms_Data.MSG_THREAD_ID);
         databaseMap.put(Sms_Data.MSG_ADDRESS, Sms_Data.MSG_ADDRESS);
         databaseMap.put(Sms_Data.MSG_BODY, Sms_Data.MSG_BODY);
+
+        sentimentMap = new HashMap<>();
+        sentimentMap.put(Sentiment_Analysis._ID, Sentiment_Analysis._ID);
+        sentimentMap.put(Sentiment_Analysis.DEVICE_ID, Sentiment_Analysis.DEVICE_ID);
+        sentimentMap.put(Sentiment_Analysis.TIMESTAMP, Sentiment_Analysis.TIMESTAMP);
+        sentimentMap.put(Sentiment_Analysis.CATEGORY, Sentiment_Analysis.CATEGORY);
+        sentimentMap.put(Sentiment_Analysis.TOTAL_WORDS, Sentiment_Analysis.TOTAL_WORDS);
+        sentimentMap.put(Sentiment_Analysis.DICTIONARY_WORDS, Sentiment_Analysis.DICTIONARY_WORDS);
+        sentimentMap.put(Sentiment_Analysis.SCORE, Sentiment_Analysis.SCORE);
+        sentimentMap.put(Sentiment_Analysis.ADDRESS, Sentiment_Analysis.ADDRESS);
+        sentimentMap.put(Sentiment_Analysis.TYPE, Sentiment_Analysis.TYPE);
 
         return true;
     }
@@ -130,6 +175,9 @@ public class Provider extends ContentProvider {
             case SMS:
                 count = database.delete(DATABASE_TABLES[0], selection, selectionArgs);
                 break;
+            case SENTIMENT:
+                count = database.delete(DATABASE_TABLES[1], selection, selectionArgs);
+                break;
             default:
                 database.endTransaction();
                 throw new IllegalArgumentException("Unknown URI " + uri);
@@ -149,6 +197,10 @@ public class Provider extends ContentProvider {
                 return Sms_Data.CONTENT_TYPE;
             case SMS_ID:
                 return Sms_Data.CONTENT_ITEM_TYPE;
+            case SENTIMENT:
+                return Sentiment_Analysis.CONTENT_TYPE;
+            case SENTIMENT_ID:
+                return Sentiment_Analysis.CONTENT_ITEM_TYPE;
             default:
                 throw new IllegalArgumentException("Unknown URI " + uri);
         }
@@ -177,6 +229,19 @@ public class Provider extends ContentProvider {
                 }
                 database.endTransaction();
                 throw new SQLException("Failed to insert row into " + uri);
+            case SENTIMENT:
+                long sentiment_id = database.insertWithOnConflict(DATABASE_TABLES[1], Sentiment_Analysis.DEVICE_ID, values, SQLiteDatabase.CONFLICT_IGNORE);
+                if(sentiment_id > 0){
+                    Uri new_uri = ContentUris.withAppendedId(
+                            Sentiment_Analysis.CONTENT_URI,
+                            sentiment_id);
+                    getContext().getContentResolver().notifyChange(new_uri, null, false);
+                    database.setTransactionSuccessful();
+                    database.endTransaction();
+                    return new_uri;
+                }
+                database.endTransaction();
+                throw new SQLException("Failed to insert row into " + uri);
             default:
                 database.endTransaction();
                 throw new IllegalArgumentException("Unknown URI " + uri);
@@ -193,6 +258,10 @@ public class Provider extends ContentProvider {
             case SMS:
                 qb.setTables(DATABASE_TABLES[0]);
                 qb.setProjectionMap(databaseMap);
+                break;
+            case SENTIMENT:
+                qb.setTables(DATABASE_TABLES[1]);
+                qb.setProjectionMap(sentimentMap);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI " + uri);
@@ -221,6 +290,10 @@ public class Provider extends ContentProvider {
         switch (URIMatcher.match(uri)) {
             case SMS:
                 count = database.update(DATABASE_TABLES[0], values, selection,
+                        selectionArgs);
+                break;
+            case SENTIMENT:
+                count = database.update(DATABASE_TABLES[1], values, selection,
                         selectionArgs);
                 break;
             default:

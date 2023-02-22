@@ -24,9 +24,11 @@ public class Sms_Sync extends Service {
             if (sSyncAdapter == null) {
                 sSyncAdapter = new SMSAwareSyncAdapter(getApplicationContext(), true, true);
                 sSyncAdapter.init(
-                        Provider.DATABASE_TABLES, Provider.TABLES_FIELDS,
+                        Provider.DATABASE_TABLES,
+                        Provider.TABLES_FIELDS,
                         new Uri[]{
-                                Provider.Sms_Data.CONTENT_URI
+                                Provider.Sms_Data.CONTENT_URI,
+                                Provider.Sentiment_Analysis.CONTENT_URI
                         }
                 );
             }

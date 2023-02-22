@@ -11,6 +11,7 @@ import com.aware.Aware_Preferences
 import com.aware.providers.Applications_Provider
 import com.aware.providers.Keyboard_Provider
 import com.aware.utils.Aware_Plugin
+import com.aware.SentimentAnalysis
 
 open class Plugin : Aware_Plugin() {
 
@@ -84,10 +85,11 @@ open class Plugin : Aware_Plugin() {
                 Aware.startKeyboard(this);
 
                 //load dictionary
-                val Sentiment = SentimentAnalysis(this).getInstance();
+                //val Sentiment = SentimentAnalysis(this).getInstance();
+                val SA = SentimentAnalysis(this, 2).getInstance()
                 Log.i("ABTest", "Sentiment object is ");
 
-                Log.i("ABTest", Sentiment.dictionaryAsString);
+                //Log.i("ABTest", Sentiment.dictionaryAsString);
                 //val testHash = Sentiment.getScoreFromInput("day hello1 there");
                 //for ((key, value) in testHash) {
                 //    Log.i("ABTest", key.toString() + " " + value.toString())
@@ -138,7 +140,10 @@ open class Plugin : Aware_Plugin() {
                                 var interstring2 = interstring1.replace("]", "");
                                 Log.i("ABTest", "After corrections prev text is");
                                 Log.i("ABTest", interstring2);
-                                val testHash = Sentiment.getScoreFromInput(interstring2);
+                                //val testHash = Sentiment.getScoreFromInput(interstring2);
+                                val tokens = SA.tokenizer(interstring1)
+                                SA.getScores(tokens)
+                                val testHash = SA.getSentimentMap()
                             }
                             textBufferNew = tempCurrTextBuffer;
                             prevTextBuffer = tempTextBuffer;
@@ -158,9 +163,11 @@ open class Plugin : Aware_Plugin() {
                             var interstring2 = interstring1.replace("]", "");
 
                             Log.i("ABTest", "Echoed before reset" + interstring2);
-
-                            val testHash = Sentiment.getScoreFromInput(interstring2);
-
+                            val tokens = SA.tokenizer(interstring2)
+                            //val testHash = Sentiment.getScoreFromInput(interstring2);
+                            SA.getScores(tokens)
+                            val testHash = SA.getSentimentMap()
+                                testHash.put("total_words", tokens.size.toDouble() )
                             val contentValues = ContentValues()
                             contentValues.put(Provider.Sentiment_Data.TIMESTAMP, System.currentTimeMillis())
                             contentValues.put(Provider.Sentiment_Data.DEVICE_ID, Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID))
@@ -184,7 +191,7 @@ open class Plugin : Aware_Plugin() {
                             prevTextBuffer = "";
                             keyboardInApp = ""
                             //reset score as well
-                            Sentiment.resetScore();
+                            SA.resetScore()
                         }
                     }
                 })

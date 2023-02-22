@@ -151,7 +151,7 @@ public class Applications extends AccessibilityService {
             boolean same_app = false;
             Cursor last_foreground = getContentResolver().query(Applications_Foreground.CONTENT_URI, null, null, null, Applications_Foreground.TIMESTAMP + " DESC LIMIT 1");
             if (last_foreground != null && last_foreground.moveToFirst()) {
-                if (last_foreground.getString(last_foreground.getColumnIndex(Applications_Foreground.PACKAGE_NAME)).equals(event.getPackageName())) {
+                if (last_foreground.getString(last_foreground.getColumnIndexOrThrow(Applications_Foreground.PACKAGE_NAME)).equals(event.getPackageName())) {
                     same_app = true;
                 }
             }
@@ -728,12 +728,12 @@ public class Applications extends AccessibilityService {
                             } catch (SQLException e) {
                                 if (DEBUG) Log.d(TAG, e.getMessage());
                             }
-                        } else if (appUnclosed.getInt(appUnclosed.getColumnIndex(Applications_History.PROCESS_IMPORTANCE)) != app.importance) {
+                        } else if (appUnclosed.getInt(appUnclosed.getColumnIndexOrThrow(Applications_History.PROCESS_IMPORTANCE)) != app.importance) {
                             //Close last importance
                             ContentValues rowData = new ContentValues();
                             rowData.put(Applications_History.END_TIMESTAMP, System.currentTimeMillis());
                             try {
-                                getContentResolver().update(Applications_History.CONTENT_URI, rowData, Applications_History._ID + "=" + appUnclosed.getInt(appUnclosed.getColumnIndex(Applications_History._ID)), null);
+                                getContentResolver().update(Applications_History.CONTENT_URI, rowData, Applications_History._ID + "=" + appUnclosed.getInt(appUnclosed.getColumnIndexOrThrow(Applications_History._ID)), null);
                             } catch (SQLiteException e) {
                                 if (DEBUG) Log.d(TAG, e.getMessage());
                             } catch (SQLException e) {
@@ -775,7 +775,7 @@ public class Applications extends AccessibilityService {
                                 ContentValues rowData = new ContentValues();
                                 rowData.put(Applications_History.END_TIMESTAMP, System.currentTimeMillis());
                                 try {
-                                    getContentResolver().update(Applications_History.CONTENT_URI, rowData, Applications_History._ID + "=" + appsOpened.getInt(appsOpened.getColumnIndex(Applications_History._ID)), null);
+                                    getContentResolver().update(Applications_History.CONTENT_URI, rowData, Applications_History._ID + "=" + appsOpened.getInt(appsOpened.getColumnIndexOrThrow(Applications_History._ID)), null);
                                 } catch (SQLiteException e) {
                                     if (DEBUG) Log.d(TAG, e.getMessage());
                                 } catch (SQLException e) {

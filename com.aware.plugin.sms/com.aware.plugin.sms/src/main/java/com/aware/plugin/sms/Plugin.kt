@@ -125,8 +125,24 @@ open class Plugin : Aware_Plugin() {
                             val joinedList = ArrayList<Message>()
                             joinedList.addAll(smsList)
                             joinedList.addAll(mmsList)
-
                             serverSync.syncMessages(joinedList)
+
+                            // If setting sentiment over sms is turned on we do the following
+
+                            val sentimentAnalysis = Sentiment(applicationContext, joinedList).getInstance()
+                            val sentimentDataList: ArrayList<SentimentData> = sentimentAnalysis.getList()
+                            serverSync.syncSentiment(sentimentDataList)
+//                            for(sentiment in sentimentDataList){
+//                                Log.i("SENTIMENTDATA::", "timestamp ${sentiment.timestamp}")
+//                                Log.i("SENTIMENTDATA::", "category: ${sentiment.category}")
+//                                Log.i("SENTIMENTDATA::", "totalWords: ${sentiment.totalWords.toString()}")
+//                                Log.i("SENTIMENTDATA::", "wordCount: ${sentiment.wordCount.toString()}")
+//                                Log.i("SENTIMENTDATA::", "score: ${sentiment.score.toString()}")
+//                                Log.i("SENTIMENTDATA::", "address: ${sentiment.address}")
+//                                Log.i("SENTIMENTDATA::", "type: ${sentiment.type}")
+//                                Log.i("SENTIMENTDATA::", " ")
+//                                Log.i("SENTIMENTDATA::", " ")
+//                            }
                             // If this is the first run, save off the current time in case we need to be in
                             // batch mode
                             // If not pulling Full history:
