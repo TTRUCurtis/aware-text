@@ -13,33 +13,16 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.LayoutRes;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.*;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.LifecycleRegistry;
 
 /**
  * Created by denzil on 09/10/15.
  * Inspired by this: https://gist.github.com/StelianMorariu/fcc4db7f677660316a8f
  */
-public abstract class AppCompatPreferenceActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, LifecycleOwner {
-    private LifecycleRegistry mLifecycleRegistry;
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        mLifecycleRegistry.setCurrentState(Lifecycle.State.STARTED);
-    }
-
-    @NonNull
-    @Override
-    public Lifecycle getLifecycle() {
-        return mLifecycleRegistry;
-    }
+public abstract class AppCompatPreferenceActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private AppCompatDelegate mDelegate;
 
@@ -82,8 +65,6 @@ public abstract class AppCompatPreferenceActivity extends PreferenceActivity imp
         getDelegate().installViewFactory();
         getDelegate().onCreate(savedInstanceState);
         super.onCreate(savedInstanceState);
-        mLifecycleRegistry = new LifecycleRegistry(this);
-        mLifecycleRegistry.setCurrentState(Lifecycle.State.CREATED);
     }
 
     public PreferenceGroup getPreferenceParent(Preference preference) {

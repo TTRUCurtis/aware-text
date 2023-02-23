@@ -10,9 +10,6 @@ import android.database.SQLException
 import android.database.sqlite.SQLiteException
 import android.preference.PreferenceManager
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
-import androidx.lifecycle.liveData
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.R
@@ -31,13 +28,11 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val app
 
     private val packageName = appContext.packageName
 
-    fun getSetting(key: String): LiveData<String> {
-        return Transformations.map(settings) { it[key]?.value ?: "" }
+    fun getSetting(key: String): String {
+        return settings[key]?.value ?: ""
     }
 
-    val settings: LiveData<Map<String, Setting>> =
-        liveData(Dispatchers.IO) {
-
+    val settings by lazy {
             val settings = getSettingsFromStorage() ?: HashMap()
 
             val sharedPrefs = appContext.getSharedPreferences(packageName, Application.MODE_PRIVATE)
@@ -61,7 +56,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val app
             }
             val defaults = sharedPrefs.all
             for ((key, value) in defaults) { //TODO we shouldn't need to do this everytime, right? Just use database, no need to use preferences except the first time
-                if (settings[key] == null) {
+                if (settings[key] == null || settings[key]?.value.isNullOrEmpty()) {
                     settings[key] = Setting(key, value.toString())
                     setSettingInStorage(
                         key,
@@ -97,7 +92,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val app
             } catch (e: PackageManager.NameNotFoundException) {
                 e.printStackTrace()
             }
-            emit(settings)
+            settings
         }
 
     @SuppressLint("Range")
@@ -120,13 +115,13 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val app
                 if (setting.isNotEmpty()) {
                     Log.d(Aware.TAG, "AWARE UUID: $setting")
                 }
-            } catch (e: NullPointerException) {
+            } catch (e: IllegalStateException) {
                 Log.i(Aware.TAG, "This will be thrown the first time through since settings are not yet loaded in memory", e)
             }
         }
         if (key == Aware_Preferences.DEVICE_LABEL && (value as String).isNotEmpty()) {
             val newLabel = ContentValues()
-            newLabel.put(Aware_Provider.Aware_Device.LABEL, value as String)
+            newLabel.put(Aware_Provider.Aware_Device.LABEL, value)
             appContext.applicationContext.contentResolver.update(
                 Aware_Provider.Aware_Device.CONTENT_URI,
                 newLabel,

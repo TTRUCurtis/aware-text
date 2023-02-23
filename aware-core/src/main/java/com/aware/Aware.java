@@ -35,12 +35,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.PermissionChecker;
-import androidx.lifecycle.LiveData;
 
 import com.aware.data.Setting;
 import com.aware.data.SettingsRepository;
@@ -666,32 +664,6 @@ public class Aware extends Service {
 
             if (Aware.DEBUG) Log.d(TAG, "AWARE framework is active...");
 
-            //this sets the default settings to all plugins too
-            SharedPreferences prefs = getSharedPreferences("com.aware.phone", Context.MODE_PRIVATE);
-            if (prefs.getAll().isEmpty() && Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0) {
-                PreferenceManager.setDefaultValues(getApplicationContext(), "com.aware.phone", Context.MODE_PRIVATE, R.xml.aware_preferences, true);
-                prefs.edit().commit(); //commit changes
-            } else {
-                PreferenceManager.setDefaultValues(getApplicationContext(), "com.aware.phone", Context.MODE_PRIVATE, R.xml.aware_preferences, false);
-            }
-
-            //this sets the default settings to all plugins too
-            Map<String, ?> defaults = prefs.getAll();
-            for (Map.Entry<String, ?> entry : defaults.entrySet()) {
-                if (Aware.getSetting(getApplicationContext(), entry.getKey()).length() == 0) {
-                    Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue()); //default AWARE settings
-                }
-            }
-
-            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0) {
-                UUID uuid = UUID.randomUUID();
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString());
-            }
-
-            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER, "https://api.awareframework.com/index.php");
-            }
-
             DEBUG = Aware.getSetting(this, Aware_Preferences.DEBUG_FLAG).equals("true");
             TAG = Aware.getSetting(this, Aware_Preferences.DEBUG_TAG).length() > 0 ? Aware.getSetting(this, Aware_Preferences.DEBUG_TAG) : TAG;
 
@@ -1044,27 +1016,12 @@ public class Aware extends Service {
     private static @Nullable Map<String, Setting> settings = null;
 
     /**
-     * @deprecated See com.aware.Aware#getSettingsLiveData()
+     * @deprecated Inject SettingsRepository into the classes where it's used
      */
     @Deprecated()
     public static void setSettingsRepository(SettingsRepository settingsRepository) {
         Aware.settingsRepository = settingsRepository;
-        settingsRepository.getSettings().observeForever(settings -> {
-            Aware.settings = settings;
-        });
-    }
-
-    /**
-     * Need this for those that need settings potentially before it can be loaded. Cannot inject
-     * {@link SettingsRepository} into the Activities in the aware-phone module since
-     * {@link android.preference.PreferenceActivity} is not supported by Hilt
-     * @deprecated Once PreferenceActivity is replaced by one that is supported, inject
-     * SettingsRepository directly where it is needed
-     * TODO Change the activity's base class to reference a non-deprecated activity class that's supported by Hilt, so we can directly inject the SettingsRepository
-     */
-    @Deprecated()
-    public static LiveData<Map<String, Setting>> getSettingsLiveData() {
-        return settingsRepository.getSettings();
+        Aware.settings = settingsRepository.getSettings();
     }
 
     /**
@@ -1086,23 +1043,10 @@ public class Aware extends Service {
         if (settings != null) {
             return settings.get(key) != null ? settings.get(key).getValue() : "";
         } else {
-            return getSettingFromStorage(context, key);
+            throw new IllegalStateException("Settings should not be null since they are loaded " +
+                    "synchronously in AwareApplication.onCreate");
         }
     }
-
-    private static String getSettingFromStorage(Context context, String key) {
-        String value = "";
-        Cursor qry =
-                context.getContentResolver().query(Aware_Provider.Aware_Settings.CONTENT_URI, null,
-                        Aware_Provider.Aware_Settings.SETTING_KEY + " LIKE '" + key + "'",
-                        null, null);
-        if (qry != null && qry.moveToFirst()) {
-            value = qry.getString(qry.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_VALUE));
-        }
-        if (qry != null && !qry.isClosed()) qry.close();
-        return value;
-    }
-
 
     /**
      * Insert / Update settings of the framework
@@ -1122,6 +1066,9 @@ public class Aware extends Service {
         //First, update in-memory settings
         if (settings != null) {
             settings.put(key, new Setting(key, value.toString()));
+        } else {
+            throw new IllegalStateException("Settings should not be null since they are loaded " +
+                    "synchronously in AwareApplication.onCreate");
         }
 
         //Then update the database

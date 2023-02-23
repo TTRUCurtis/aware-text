@@ -6,10 +6,8 @@ import android.app.NotificationManager
 import android.graphics.Color
 import android.os.Build
 import com.aware.Aware
-import com.aware.data.Setting
 import com.aware.data.SettingsRepository
 import dagger.hilt.android.HiltAndroidApp
-import java.util.*
 import javax.inject.Inject
 
 /*

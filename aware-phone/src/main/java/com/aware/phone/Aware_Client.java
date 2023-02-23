@@ -1,8 +1,6 @@
 
 package com.aware.phone;
 
-import static com.aware.Aware.TAG;
-
 import android.Manifest;
 import android.app.Dialog;
 import android.app.NotificationChannel;
@@ -191,103 +189,92 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         protected void onProgressUpdate(Preference... values) {
             super.onProgressUpdate(values);
 
-            Aware.getSettingsLiveData().observe(Aware_Client.this, settings -> {
+            Preference pref = values[0];
 
-                Preference pref = values[0];
-
-                if (CheckBoxPreference.class.isInstance(pref)) {
-                    CheckBoxPreference check = (CheckBoxPreference) findPreference(pref.getKey());
-                    check.setChecked(Aware.getSetting(getApplicationContext(), pref.getKey())
-                            .equals("true"));
-                    if (check.isChecked()) {
-                        if (pref.getKey().equalsIgnoreCase(Aware_Preferences.AWARE_DONATE_USAGE)) {
-                            Toast.makeText(getApplicationContext(), "Thanks!", Toast.LENGTH_SHORT)
-                                    .show();
-                            new AsyncPing().execute();
+            if (CheckBoxPreference.class.isInstance(pref)) {
+                CheckBoxPreference check = (CheckBoxPreference) findPreference(pref.getKey());
+                check.setChecked(Aware.getSetting(getApplicationContext(), pref.getKey()).equals("true"));
+                if (check.isChecked()) {
+                    if (pref.getKey().equalsIgnoreCase(Aware_Preferences.AWARE_DONATE_USAGE)) {
+                        Toast.makeText(getApplicationContext(), "Thanks!", Toast.LENGTH_SHORT).show();
+                        new AsyncPing().execute();
+                    }
+                    if (pref.getKey().equalsIgnoreCase(Aware_Preferences.STATUS_WEBSERVICE)) {
+                        if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
+                            Toast.makeText(getApplicationContext(), "Study URL missing...", Toast.LENGTH_SHORT).show();
+                        } else if (!Aware.isStudy(getApplicationContext())) {
+                            //Shows UI to allow the user to join study
+                            Intent joinStudy = new Intent(getApplicationContext(), Aware_Join_Study.class);
+                            joinStudy.putExtra(Aware_Join_Study.EXTRA_STUDY_URL, Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER));
+                            startActivity(joinStudy);
                         }
-                        if (pref.getKey().equalsIgnoreCase(Aware_Preferences.STATUS_WEBSERVICE)) {
-                            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER)
-                                    .length() == 0) {
-                                Toast.makeText(getApplicationContext(), "Study URL missing...", Toast.LENGTH_SHORT)
-                                        .show();
-                            } else if (!Aware.isStudy(getApplicationContext())) {
-                                //Shows UI to allow the user to join study
-                                Intent joinStudy =
-                                        new Intent(getApplicationContext(), Aware_Join_Study.class);
-                                joinStudy.putExtra(Aware_Join_Study.EXTRA_STUDY_URL, Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER));
-                                startActivity(joinStudy);
+                    }
+                    if (pref.getKey().equalsIgnoreCase(Aware_Preferences.FOREGROUND_PRIORITY)) {
+                        sendBroadcast(new Intent(Aware.ACTION_AWARE_PRIORITY_FOREGROUND));
+                    }
+                } else {
+                    if (pref.getKey().equalsIgnoreCase(Aware_Preferences.FOREGROUND_PRIORITY)) {
+                        sendBroadcast(new Intent(Aware.ACTION_AWARE_PRIORITY_BACKGROUND));
+                    }
+                }
+            }
+
+            if (EditTextPreference.class.isInstance(pref)) {
+                EditTextPreference text = (EditTextPreference) findPreference(pref.getKey());
+                text.setText(Aware.getSetting(getApplicationContext(), pref.getKey()));
+                text.setSummary(Aware.getSetting(getApplicationContext(), pref.getKey()));
+            }
+
+            if (ListPreference.class.isInstance(pref)) {
+                ListPreference list = (ListPreference) findPreference(pref.getKey());
+                list.setValue(Aware.getSetting(getApplicationContext(), pref.getKey()));
+                list.setSummary(list.getEntry());
+            }
+
+            if (PreferenceScreen.class.isInstance(getPreferenceParent(pref))) {
+                PreferenceScreen parent = (PreferenceScreen) getPreferenceParent(pref);
+                ListAdapter children = parent.getRootAdapter();
+                boolean is_active = false;
+                for (int i = 0; i < children.getCount(); i++) {
+                    Object obj = children.getItem(i);
+                    if (CheckBoxPreference.class.isInstance(obj)) {
+                        CheckBoxPreference child = (CheckBoxPreference) obj;
+                        if (child.getKey().contains("status_")) {
+                            if (child.isChecked()) {
+                                is_active = true;
+                                break;
                             }
-                        }
-                        if (pref.getKey().equalsIgnoreCase(Aware_Preferences.FOREGROUND_PRIORITY)) {
-                            sendBroadcast(new Intent(Aware.ACTION_AWARE_PRIORITY_FOREGROUND));
-                        }
-                    } else {
-                        if (pref.getKey().equalsIgnoreCase(Aware_Preferences.FOREGROUND_PRIORITY)) {
-                            sendBroadcast(new Intent(Aware.ACTION_AWARE_PRIORITY_BACKGROUND));
                         }
                     }
                 }
-
-                if (EditTextPreference.class.isInstance(pref)) {
-                    EditTextPreference text = (EditTextPreference) findPreference(pref.getKey());
-                    text.setText(Aware.getSetting(getApplicationContext(), pref.getKey()));
-                    text.setSummary(Aware.getSetting(getApplicationContext(), pref.getKey()));
-                }
-
-                if (ListPreference.class.isInstance(pref)) {
-
-                    ListPreference list = (ListPreference) findPreference(pref.getKey());
-                    list.setValue(Aware.getSetting(getApplicationContext(), pref.getKey()));
-                    list.setSummary(list.getEntry());
-                }
-
-                if (PreferenceScreen.class.isInstance(getPreferenceParent(pref))) {
-                    PreferenceScreen parent = (PreferenceScreen) getPreferenceParent(pref);
-                    ListAdapter children = parent.getRootAdapter();
-                    boolean is_active = false;
-                    for (int i = 0; i < children.getCount(); i++) {
-                        Object obj = children.getItem(i);
-                        if (CheckBoxPreference.class.isInstance(obj)) {
-                            CheckBoxPreference child = (CheckBoxPreference) obj;
-                            if (child.getKey().contains("status_")) {
-                                if (child.isChecked()) {
-                                    is_active = true;
-                                    break;
-                                }
-                            }
+                if (is_active) {
+                    try {
+                        Class res = R.drawable.class;
+                        Field field = res.getField("ic_action_" + parent.getKey());
+                        int icon_id = field.getInt(null);
+                        Drawable category_icon = ContextCompat.getDrawable(getApplicationContext(), icon_id);
+                        if (category_icon != null) {
+                            category_icon.setColorFilter(new PorterDuffColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.accent), PorterDuff.Mode.SRC_IN));
+                            parent.setIcon(category_icon);
+                            onContentChanged();
                         }
+                    } catch (NoSuchFieldException | IllegalAccessException e) {
                     }
-                    if (is_active) {
-                        try {
-                            Class res = R.drawable.class;
-                            Field field = res.getField("ic_action_" + parent.getKey());
-                            int icon_id = field.getInt(null);
-                            Drawable category_icon =
-                                    ContextCompat.getDrawable(getApplicationContext(), icon_id);
-                            if (category_icon != null) {
-                                category_icon.setColorFilter(new PorterDuffColorFilter(ContextCompat.getColor(getApplicationContext(), R.color.accent), PorterDuff.Mode.SRC_IN));
-                                parent.setIcon(category_icon);
-                                onContentChanged();
-                            }
-                        } catch (NoSuchFieldException | IllegalAccessException e) {
+                } else {
+                    try {
+                        Class res = R.drawable.class;
+                        Field field = res.getField("ic_action_" + parent.getKey());
+                        int icon_id = field.getInt(null);
+                        Drawable category_icon = ContextCompat.getDrawable(getApplicationContext(), icon_id);
+                        if (category_icon != null) {
+                            category_icon.clearColorFilter();
+                            parent.setIcon(category_icon);
+                            onContentChanged();
                         }
-                    } else {
-                        try {
-                            Class res = R.drawable.class;
-                            Field field = res.getField("ic_action_" + parent.getKey());
-                            int icon_id = field.getInt(null);
-                            Drawable category_icon =
-                                    ContextCompat.getDrawable(getApplicationContext(), icon_id);
-                            if (category_icon != null) {
-                                category_icon.clearColorFilter();
-                                parent.setIcon(category_icon);
-                                onContentChanged();
-                            }
-                        } catch (NoSuchFieldException | IllegalAccessException e) {
-                        }
+                    } catch (NoSuchFieldException | IllegalAccessException e) {
                     }
                 }
-            });
+            }
         }
     }
 
@@ -295,49 +282,12 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     @Override
     protected void onResume() {
         super.onResume();
-
-        Aware.getSettingsLiveData().observe(this, settings -> {
-            if (prefs.getAll()
-                    .isEmpty() && Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID)
-                    .length() == 0) {
-                PreferenceManager.setDefaultValues(getApplicationContext(), "com.aware.phone", Context.MODE_PRIVATE, com.aware.R.xml.aware_preferences, true);
-                prefs.edit().commit();
-            } else {
-                PreferenceManager.setDefaultValues(getApplicationContext(), "com.aware.phone", Context.MODE_PRIVATE, R.xml.aware_preferences, false);
-            }
-
-            //TODO this is done already in the Application class. Why do we need to do it again
-            // here?
-            Map<String, ?> defaults = prefs.getAll();
-            for (Map.Entry<String, ?> entry : defaults.entrySet()) {
-                if (Aware.getSetting(getApplicationContext(), entry.getKey()).length() == 0) {
-                    Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue()); //default AWARE settings
-                }
-            }
-
-            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0) {
-                UUID uuid = UUID.randomUUID();
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString());
-            }
-
-            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER, "https://api.awareframework.com/index.php");
-            }
-        });
-
             Set<String> keys = optionalSensors.keySet();
             for (String optionalSensor : keys) {
                 Preference pref = findPreference(optionalSensor);
                 PreferenceGroup parent = getPreferenceParent(pref);
                 if (pref.getKey().equalsIgnoreCase(optionalSensor) && !listSensorType.containsKey(optionalSensors.get(optionalSensor)))
                     parent.setEnabled(false);
-            }
-
-            try {
-                PackageInfo awareInfo = getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(), PackageManager.GET_ACTIVITIES);
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.AWARE_VERSION, awareInfo.versionName);
-            } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
             }
 
             //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
@@ -459,18 +409,15 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                     findPreference(Aware_Preferences.ENFORCE_FREQUENCY_ALL)
             );
 
-        Aware.getSettingsLiveData().observe(this, stringStringMap -> {
 
-            if (Aware.isStudy(this)) {
-                if (Aware.getSetting(this, Aware_Preferences.INTERFACE_LOCKED).equals("true") ||
-                        Aware.getSetting(this, "ui_mode")
-                                .equals("1") || Aware.getSetting(this, "ui_mode").equals("2")
-                ) {
-                    finish();
-                    startActivity(new Intent(this, Aware_Participant.class));
-                }
+        if (Aware.isStudy(this)) {
+            if (Aware.getSetting(this, Aware_Preferences.INTERFACE_LOCKED).equals("true") ||
+                    Aware.getSetting(this, "ui_mode").equals("1") || Aware.getSetting(this, "ui_mode").equals("2")
+            ) {
+                finish();
+                startActivity(new Intent(this, Aware_Participant.class));
             }
-        });
+        }
     }
 
     @Override
