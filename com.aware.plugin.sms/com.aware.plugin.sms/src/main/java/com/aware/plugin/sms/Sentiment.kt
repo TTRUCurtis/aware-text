@@ -28,7 +28,7 @@ class Sentiment(
     init{
         this.context = context
         sentimentList = ArrayList()
-        sentimentAnalysis = SentimentAnalysis(context, 1)
+        sentimentAnalysis = SentimentAnalysis(context)
         startSentimentAnalysis(messages)
     }
 
@@ -41,7 +41,7 @@ class Sentiment(
             val tokens: List<Token> = sentimentAnalysis.tokenizer(text)
             totalWords = tokens.size
             sentimentAnalysis.getScores(tokens)
-            val scores = sentimentAnalysis.getSmsMap()
+            val scores = sentimentAnalysis.getSentimentMap()
             scores.map { (category, pair) ->
                 if(pair.first != 0.0){
                     sentimentList.add(

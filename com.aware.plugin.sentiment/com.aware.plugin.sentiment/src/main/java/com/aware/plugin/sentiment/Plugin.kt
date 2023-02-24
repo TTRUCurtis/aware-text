@@ -12,6 +12,7 @@ import com.aware.providers.Applications_Provider
 import com.aware.providers.Keyboard_Provider
 import com.aware.utils.Aware_Plugin
 import com.aware.SentimentAnalysis
+import org.jetbrains.annotations.Nullable
 
 open class Plugin : Aware_Plugin() {
 
@@ -86,7 +87,7 @@ open class Plugin : Aware_Plugin() {
 
                 //load dictionary
                 //val Sentiment = SentimentAnalysis(this).getInstance();
-                val SA = SentimentAnalysis(this, 2).getInstance()
+                val sentimentAnalysis = SentimentAnalysis(this).getInstance()
                 Log.i("ABTest", "Sentiment object is ");
 
                 //Log.i("ABTest", Sentiment.dictionaryAsString);
@@ -141,9 +142,9 @@ open class Plugin : Aware_Plugin() {
                                 Log.i("ABTest", "After corrections prev text is");
                                 Log.i("ABTest", interstring2);
                                 //val testHash = Sentiment.getScoreFromInput(interstring2);
-                                val tokens = SA.tokenizer(interstring1)
-                                SA.getScores(tokens)
-                                val testHash = SA.getSentimentMap()
+                                val tokens = sentimentAnalysis.tokenizer(interstring1)
+                                sentimentAnalysis.getScores(tokens)
+                                val testHash = sentimentAnalysis.getSentimentMap()
                             }
                             textBufferNew = tempCurrTextBuffer;
                             prevTextBuffer = tempTextBuffer;
@@ -162,27 +163,26 @@ open class Plugin : Aware_Plugin() {
                             var interstring1 = textBufferNew.replace("[", "");
                             var interstring2 = interstring1.replace("]", "");
 
-                            Log.i("ABTest", "Echoed before reset" + interstring2);
-                            val tokens = SA.tokenizer(interstring2)
+                            Log.i("ABTest", "Echoed before reset $interstring2");
+                            val tokens = sentimentAnalysis.tokenizer(interstring2)
                             //val testHash = Sentiment.getScoreFromInput(interstring2);
-                            SA.getScores(tokens)
-                            val testHash = SA.getSentimentMap()
-                                testHash.put("total_words", tokens.size.toDouble() )
+                            sentimentAnalysis.getScores(tokens)
+                            val testHash = sentimentAnalysis.getSentimentMap()
                             val contentValues = ContentValues()
-                            contentValues.put(Provider.Sentiment_Data.TIMESTAMP, System.currentTimeMillis())
                             contentValues.put(Provider.Sentiment_Data.DEVICE_ID, Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID))
-                            contentValues.put(Provider.Sentiment_Data.APP_NAME, keyboardInApp)
+                            contentValues.put(Provider.Sentiment_Data.TIMESTAMP, System.currentTimeMillis())
+                            contentValues.put(Provider.Sentiment_Data.TYPE, keyboardInApp)
+                            contentValues.put(Provider.Sentiment_Data.TOTAL_WORDS, tokens.size)
 
-                            for ((category, score) in testHash) {
-                                contentValues.put(Provider.Sentiment_Data.WORD_CATEGORY, category as String)
-                                contentValues.put(Provider.Sentiment_Data.SENTIMENT_SCORE, score as Double)
-                                //save data only if score for category >0
-                                if (score > 0.0) {
+
+                            for ((category, pair) in testHash) {
+                                if(pair.second > 0){
+                                    contentValues.put(Provider.Sentiment_Data.CATEGORY, category)
+                                    contentValues.put(Provider.Sentiment_Data.SCORE, pair.first)
+                                    contentValues.put(Provider.Sentiment_Data.DICTIONARY_WORDS, pair.second)
                                     contentResolver.insert(Provider.Sentiment_Data.CONTENT_URI, contentValues) //does the actual data insert
-
                                     Log.i("ABTest", "Inserted into database: $contentValues")
                                 }
-
                                 awareSensor?.onTextContextChanged(contentValues)
                             }
 
@@ -191,7 +191,7 @@ open class Plugin : Aware_Plugin() {
                             prevTextBuffer = "";
                             keyboardInApp = ""
                             //reset score as well
-                            SA.resetScore()
+                            sentimentAnalysis.resetScore()
                         }
                     }
                 })
