@@ -10,7 +10,7 @@ import com.aware.plugin.sentiment.Settings
 
 class TestSentiment : AwareTest {
     override fun test(context: Context?) {
-        Aware.setSetting(context, Settings.PLUGIN_SENTIMENT_PACKAGES, "com.whatsapp", "com.aware.plugin.sentiment")
+        Aware.setSetting(context, Settings.PLUGIN_SENTIMENT_PACKAGES, "com.whatsapp")
         Aware.startPlugin(context, "com.aware.plugin.sentiment")
         Plugin.setSensorObserver(object : Plugin.Companion.AWARESensorObserver {
             override fun onTextContextChanged(data: ContentValues) {

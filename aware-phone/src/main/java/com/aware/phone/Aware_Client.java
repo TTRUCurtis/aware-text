@@ -1,8 +1,6 @@
 
 package com.aware.phone;
 
-import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
-
 import android.Manifest;
 import android.app.Dialog;
 import android.app.NotificationChannel;
@@ -156,12 +154,6 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                 value = String.valueOf(sharedPreferences.getInt(key, 0));
         }
 
-        //TODO Permissions 6: This is where the sensors get manually enabled/disabled. Let's check
-        // here we have the correct permission if we're enabling a sensor. If the user doesn't grant
-        // it, don't enable it. Not super important, since NIH does not allow manually enabling
-        // sensors, but we should do it anyway in case we want to manually enable for testing
-        // (lower priority)
-
         Aware.setSetting(getApplicationContext(), key, value);
         Preference pref = findPreference(key);
         if (CheckBoxPreference.class.isInstance(pref)) {
@@ -290,64 +282,12 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     @Override
     protected void onResume() {
         super.onResume();
-
-/*        permissions_ok = true;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String p : PermissionUtils.getRequiredPermissions()) {
-                if (ContextCompat.checkSelfPermission(this, p) != PERMISSION_GRANTED) {
-                    permissions_ok = false;
-                    break;
-                }
-            }
-        }
-
-        if (!permissions_ok) {
-            Log.d(Aware.TAG, "Requesting permissions...");
-
-            Intent permissionsHandler = new Intent(this, PermissionsHandler.class);
-            permissionsHandler.putStringArrayListExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, PermissionUtils.getRequiredPermissions());
-            permissionsHandler.putExtra(PermissionsHandler.EXTRA_REDIRECT_ACTIVITY, getPackageName() + "/" + getClass().getName());
-            permissionsHandler.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(permissionsHandler);
-
-        } else {*/
-
-            if (prefs.getAll().isEmpty() && Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0) {
-                PreferenceManager.setDefaultValues(getApplicationContext(), "com.aware.phone", Context.MODE_PRIVATE, com.aware.R.xml.aware_preferences, true);
-                prefs.edit().commit();
-            } else {
-                PreferenceManager.setDefaultValues(getApplicationContext(), "com.aware.phone", Context.MODE_PRIVATE, R.xml.aware_preferences, false);
-            }
-
-            Map<String, ?> defaults = prefs.getAll();
-            for (Map.Entry<String, ?> entry : defaults.entrySet()) {
-                if (Aware.getSetting(getApplicationContext(), entry.getKey(), "com.aware.phone").length() == 0) {
-                    Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue(), "com.aware.phone"); //default AWARE settings
-                }
-            }
-
-            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0) {
-                UUID uuid = UUID.randomUUID();
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString(), "com.aware.phone");
-            }
-
-            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER, "https://api.awareframework.com/index.php");
-            }
-
             Set<String> keys = optionalSensors.keySet();
             for (String optionalSensor : keys) {
                 Preference pref = findPreference(optionalSensor);
                 PreferenceGroup parent = getPreferenceParent(pref);
                 if (pref.getKey().equalsIgnoreCase(optionalSensor) && !listSensorType.containsKey(optionalSensors.get(optionalSensor)))
                     parent.setEnabled(false);
-            }
-
-            try {
-                PackageInfo awareInfo = getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(), PackageManager.GET_ACTIVITIES);
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.AWARE_VERSION, awareInfo.versionName);
-            } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
             }
 
             //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)

@@ -635,7 +635,7 @@ public class Applications extends AccessibilityService {
         }
 
         //Keep the global setting up-to-date
-        Aware.setSetting(context, Applications.STATUS_AWARE_ACCESSIBILITY, enabled, "com.aware.phone");
+        Aware.setSetting(context, Applications.STATUS_AWARE_ACCESSIBILITY, enabled);
 
         return enabled;
     }
