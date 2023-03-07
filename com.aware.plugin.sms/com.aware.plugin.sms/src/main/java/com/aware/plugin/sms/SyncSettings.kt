@@ -34,13 +34,17 @@ class SyncSettings @Inject constructor(
         }
     }
 
-    fun isPluginEnabled(): Boolean {
-        return if (Aware.getSetting(applicationContext, Settings.STATUS_PLUGIN_SMS)
+    fun isSettingChecked(setting: String): Boolean{
+        return Aware.getSetting(applicationContext, setting).isNotEmpty()
+    }
+
+    fun isPluginEnabled(setting: String): Boolean {
+        return if (Aware.getSetting(applicationContext, setting)
                 .isEmpty()
         ) {
-            Aware.setSetting(applicationContext, Settings.STATUS_PLUGIN_SMS, true)
+            Aware.setSetting(applicationContext, setting, true)
             true
-        } else if (Aware.getSetting(applicationContext, Settings.STATUS_PLUGIN_SMS)
+        } else if (Aware.getSetting(applicationContext, setting)
                 .equals("true", ignoreCase = true)
         ) {
             true
@@ -108,11 +112,11 @@ class SyncSettings @Inject constructor(
     fun retrieveOnlySentMessages(): Boolean {
         return (Aware.getSetting(
             applicationContext,
-            Settings.PLUGIN_SMS_SEND_RECEIVED_DATA
+            Settings.STATUS_PLUGIN_SMS_RECEIVED
         ).isEmpty()) ||
                 Aware.getSetting(
                     applicationContext,
-                    Settings.PLUGIN_SMS_SEND_RECEIVED_DATA
+                    Settings.STATUS_PLUGIN_SMS_RECEIVED
                 ) != "true"
 
     }
@@ -225,7 +229,7 @@ class SyncSettings @Inject constructor(
     }
 
     fun disablePlugin() {
-        Aware.setSetting(applicationContext, Settings.STATUS_PLUGIN_SMS, false)
+        Aware.setSetting(applicationContext, Settings.STATUS_PLUGIN_SMS_SENT, false)
         Scheduler.removeSchedule(applicationContext, SCHEDULER_PLUGIN_SMS)
 
         ContentResolver.setSyncAutomatically(
@@ -294,5 +298,17 @@ class SyncSettings @Inject constructor(
             }
         }
         return offset
+    }
+
+    fun filterList(list: ArrayList<Message>, includeSentMessages: Boolean, includeReceivedMessages: Boolean): ArrayList<Message> {
+        val tempList = ArrayList<Message>()
+        for (l in list) {
+            if (includeSentMessages && l.type == "sent message") {
+                tempList.add(l)
+            } else if (includeReceivedMessages && l.type == "received message") {
+                tempList.add(l)
+            }
+        }
+        return tempList
     }
 }
