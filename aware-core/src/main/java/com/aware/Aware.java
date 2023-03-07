@@ -40,8 +40,8 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.PermissionChecker;
 
-import com.aware.data.Setting;
-import com.aware.data.SettingsRepository;
+import com.aware.data.settings.Setting;
+import com.aware.data.settings.SettingsRepository;
 import com.aware.providers.Aware_Provider;
 import com.aware.providers.Aware_Provider.Aware_Device;
 import com.aware.providers.Aware_Provider.Aware_Plugins;
@@ -1033,7 +1033,7 @@ public class Aware extends Service {
      * @deprecated We should not be using
      * static methods for non-static data as they do not allow for ease of
      * testing, refactoring, or scalability. Inject the Singleton
-     * {@link com.aware.data.SettingsRepository}
+     * {@link SettingsRepository}
      * and use {@link SettingsRepository#getSetting(String)} instead.
      * TODO Inject SettingsRepository into every class that needs to use it and remove references
      * to this method
@@ -1056,7 +1056,7 @@ public class Aware extends Service {
      *
      * @deprecated We should not be using
      * static methods for non-static data as they do not allow for ease of
-     * testing, refactoring, or scalability. Inject the Singleton {@link com.aware.data.SettingsRepository}
+     * testing, refactoring, or scalability. Inject the Singleton {@link SettingsRepository}
      * and use {@link SettingsRepository#setSettingInStorage(Setting)()} instead.
      * TODO Inject SettingsRepository into every class that needs to use it and remove references
      * to this method

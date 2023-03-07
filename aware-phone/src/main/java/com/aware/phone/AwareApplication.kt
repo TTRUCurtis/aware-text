@@ -6,7 +6,7 @@ import android.app.NotificationManager
 import android.graphics.Color
 import android.os.Build
 import com.aware.Aware
-import com.aware.data.SettingsRepository
+import com.aware.data.settings.SettingsRepository
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
