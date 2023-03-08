@@ -87,5 +87,6 @@ dependencies {
 
     testImplementation "junit:junit:$jUnitVersion"
     testImplementation "org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion"
+    testImplementation 'org.mockito:mockito-inline:2.13.0'
 }
 
