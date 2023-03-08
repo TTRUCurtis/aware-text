@@ -3,21 +3,33 @@ package com.aware.data.settings
 import org.junit.Assert.*
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.Mock
+import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 
-/*
-* TODO: Might help to write out what each test is going to test...
-* Then you can see which functions are doing more than one thing
-*/
+@RunWith(MockitoJUnitRunner::class)
 class SettingsRepositoryTest {
 
-    /*
-    * Here we need to make sure of the following
-    *   - if a key is passed in that *does* exist, we are getting the correct value
-    *   - if a key is passed in that *doesn't* exist, we are getting "" as the value
-    */
+    @Mock
+    private lateinit var mockSettingsInitializer: SettingsInitializer
+
+    @Mock
+    private lateinit var mockSettingsDao: SettingsDao
+
+    private val FAKE_SETTINGS = hashMapOf(
+        "aware_version" to Setting("aware_version", "4.0.817.bundle"),
+        "webservice_silent" to Setting("webservice_silent", "false"),
+        "status_bluetooth" to Setting("status_bluetooth", "false")
+    )
+
     @Test
     fun getSetting() {
+        val mockSettingsDao = mock<SettingsDao> {
+            on { getSettingsFromStorage() } doReturn FAKE_SETTINGS
+        }
     }
 
     /*

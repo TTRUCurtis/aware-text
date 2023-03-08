@@ -16,7 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.HashMap
 import javax.inject.Inject
-
+/*
+* Data Access Object for settings database operations
+*/
 class SettingsDao @Inject constructor(@ApplicationContext private val appContext: Context) {
 
     @SuppressLint("Range")
