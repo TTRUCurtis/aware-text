@@ -15,9 +15,13 @@ import javax.inject.Inject
 class SyncSettings @Inject constructor(
     @ApplicationContext private val applicationContext: Context) {
 
-    val SCHEDULER_PLUGIN_SMS = "SCHEDULER_PLUGIN_SMS"
-    val ACTION_REFRESH_SMS = "ACTION_REFRESH_SMS"
-    private val TAG = SyncSettings::class.java.simpleName
+    object SyncKeys{
+        const val SCHEDULER_PLUGIN_SMS = "SCHEDULER_PLUGIN_SMS"
+        const val ACTION_REFRESH_SMS = "ACTION_REFRESH_SMS"
+        val TAG: String = SyncSettings::class.java.simpleName
+    }
+
+
 
     fun sendFullHistory() =
         Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_SEND_FULL_DATA).isNotEmpty() &&
@@ -27,38 +31,15 @@ class SyncSettings @Inject constructor(
                 ) == "true"
 
     fun getStartDateTime(): Long {
-        if (isStartDateSetByStudy()) {
-            return getStartDateFromSettings()
+        return if (isStartDateSetByStudy()) {
+            getStartDateFromSettings()
         } else {
-            return getParsedTime(Settings.PLUGIN_SMS_SYNC_MIN_SELECT_DATE)
+            getParsedTime(Settings.PLUGIN_SMS_SYNC_MIN_SELECT_DATE)
         }
     }
 
-    fun isPluginEnabled(): Boolean {
-        return if (Aware.getSetting(applicationContext, Settings.STATUS_PLUGIN_SMS)
-                .isEmpty()
-        ) {
-            Aware.setSetting(applicationContext, Settings.STATUS_PLUGIN_SMS, true)
-            true
-        } else if (Aware.getSetting(applicationContext, Settings.STATUS_PLUGIN_SMS)
-                .equals("true", ignoreCase = true)
-        ) {
-            true
-        } else {
-            Aware.stopPlugin(
-                applicationContext,
-                applicationContext.packageName //TODO is this the same package as com.aware.plugin.sms?
-            )
-            false
-        }
-    }
-
-    fun setLastSyncToDefault() {
-        Aware.setSetting(
-            applicationContext,
-            Settings.PLUGIN_SMS_LAST_SERVER_SYNC_TIMESTAMP,
-            Settings.PLUGIN_SMS_LAST_SERVER_SYNC_TIMESTAMP_DEFAULT.toString()
-        )
+    fun isSettingChecked(setting: String): Boolean{
+        return Aware.getSetting(applicationContext, setting).isNotEmpty()
     }
 
     private fun getStartDateFromSettings() = getParsedTime(
@@ -69,12 +50,11 @@ class SyncSettings @Inject constructor(
     )
 
     private fun isStartDateSetByStudy() =
-        !(Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_STARTDATE)
-            .isEmpty()) &&
+        Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_STARTDATE).isNotEmpty() &&
                 (Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_STARTDATE) != "")
 
 
-    fun getParsedTime(timeString: String): Long {
+    private fun getParsedTime(timeString: String): Long {
         var retVal: Long = 0
         val timePatterns = mapOf(
             "yyyy-MM-dd'T'HH:mm:ss.SSS" to 23,
@@ -85,14 +65,14 @@ class SyncSettings @Inject constructor(
             if (pattern.value == timeString.length) {
                 val timeParser = SimpleDateFormat(pattern.key)
                 try {
-                    retVal = timeParser.parse(timeString)!!.getTime()
+                    retVal = timeParser.parse(timeString)!!.time
                     return retVal
                 } catch (e: Exception) {
-                    // Faield to Parse, drop to Log and return 0L
+                    // Failed to Parse, drop to Log and return 0L
                 }
             }
         }
-        Log.e(TAG, "Failure to parse time string:" + timeString);
+        Log.e(SyncKeys.TAG, "Failure to parse time string:$timeString")
         return retVal
     }
 
@@ -105,18 +85,6 @@ class SyncSettings @Inject constructor(
         )
     }
 
-    fun retrieveOnlySentMessages(): Boolean {
-        return (Aware.getSetting(
-            applicationContext,
-            Settings.PLUGIN_SMS_SEND_RECEIVED_DATA
-        ).isEmpty()) ||
-                Aware.getSetting(
-                    applicationContext,
-                    Settings.PLUGIN_SMS_SEND_RECEIVED_DATA
-                ) != "true"
-
-    }
-
     fun getEndDateTime(): Long {
         return if (isEndDateSet()) {
             getEndDateFromSettings()
@@ -127,14 +95,14 @@ class SyncSettings @Inject constructor(
         }
     }
 
-    fun hasCurrentSmsOffset(): Boolean { //TODO where is this used and how to update?
+    private fun hasCurrentSmsOffset(): Boolean { //TODO where is this used and how to update?
         return (Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_CURRENT_OFFSET_SMS).isNotEmpty() &&
                 (Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_CURRENT_OFFSET_SMS)
                     .toLong() != Settings.PLUGIN_SMS_CURRENT_OFFSET_DEFAULT)) &&
                 (Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_SYNC_DATE).isNotEmpty())
     }
 
-    fun hasCurrentMmsOffset(): Boolean { //TODO where is this used and how to update?
+    private fun hasCurrentMmsOffset(): Boolean { //TODO where is this used and how to update?
         return (Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_CURRENT_OFFSET_SMS).isNotEmpty() &&
                 (Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_CURRENT_OFFSET_SMS)
                     .toLong() != Settings.PLUGIN_SMS_CURRENT_OFFSET_DEFAULT)) &&
@@ -142,11 +110,10 @@ class SyncSettings @Inject constructor(
     }
 
     private fun isEndDateSet() =
-        !(Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_ENDDATE)
-            .isEmpty()) &&
+        Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_ENDDATE).isNotEmpty() &&
                 (Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_ENDDATE) != "")
 
-    fun setParsedTime(inTime: Long): String {
+    private fun setParsedTime(inTime: Long): String {
         val timeParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
         return timeParser.format(inTime)
     }
@@ -154,7 +121,7 @@ class SyncSettings @Inject constructor(
 
     fun updateSchedule() {
         try {
-            var sms_sync = Scheduler.getSchedule(applicationContext, SCHEDULER_PLUGIN_SMS)
+            var smsSync = Scheduler.getSchedule(applicationContext, SyncKeys.SCHEDULER_PLUGIN_SMS)
             var checkInterval = Settings.PLUGIN_SMS_SYNC_FREQUENCY_DEFAULT
             try {
                 checkInterval =
@@ -163,14 +130,14 @@ class SyncSettings @Inject constructor(
             } catch (ex: NumberFormatException) {
 
             }
-            if (sms_sync == null || sms_sync.interval != checkInterval) {
-                sms_sync = Scheduler.Schedule(SCHEDULER_PLUGIN_SMS)
-                sms_sync.interval = checkInterval
-                sms_sync!!.actionType = Scheduler.ACTION_TYPE_SERVICE
-                sms_sync!!.actionIntentAction = ACTION_REFRESH_SMS
-                sms_sync!!.actionClass =
-                    applicationContext.packageName + "/" + Plugin::class.java.getName()
-                Scheduler.saveSchedule(applicationContext, sms_sync)
+            if (smsSync == null || smsSync.interval != checkInterval) {
+                smsSync = Scheduler.Schedule(SyncKeys.SCHEDULER_PLUGIN_SMS)
+                smsSync.interval = checkInterval
+                smsSync.actionType = Scheduler.ACTION_TYPE_SERVICE
+                smsSync.actionIntentAction = SyncKeys.ACTION_REFRESH_SMS
+                smsSync.actionClass =
+                    applicationContext.packageName + "/" + Plugin::class.java.name
+                Scheduler.saveSchedule(applicationContext, smsSync)
             }
         } catch (e: JSONException) {
             e.printStackTrace()
@@ -178,7 +145,7 @@ class SyncSettings @Inject constructor(
     }
 
     fun isSmsSyncDateSet() =
-        !(Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_SYNC_DATE).isEmpty()) &&
+        Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_SYNC_DATE).isNotEmpty() &&
                 (Aware.getSetting(applicationContext, Settings.PLUGIN_SMS_SYNC_DATE) != "")
 
     private fun getSmsSyncDateFromSettings(): Long {
@@ -212,12 +179,12 @@ class SyncSettings @Inject constructor(
                         .toInt()
             } catch (e: IllegalArgumentException) {
                 Log.e(
-                    TAG,
+                    SyncKeys.TAG,
                     "Failure to parse Message Batch Limit" + Aware.getSetting(
                         applicationContext,
                         Settings.PLUGIN_SMS_MESSAGE_BATCH_LIMIT
                     )
-                );
+                )
                 limit = 0
             }
         }
@@ -225,8 +192,8 @@ class SyncSettings @Inject constructor(
     }
 
     fun disablePlugin() {
-        Aware.setSetting(applicationContext, Settings.STATUS_PLUGIN_SMS, false)
-        Scheduler.removeSchedule(applicationContext, SCHEDULER_PLUGIN_SMS)
+        Aware.setSetting(applicationContext, Settings.STATUS_PLUGIN_SMS_SENT, false)
+        Scheduler.removeSchedule(applicationContext, SyncKeys.SCHEDULER_PLUGIN_SMS)
 
         ContentResolver.setSyncAutomatically(
             Aware.getAWAREAccount(applicationContext),
@@ -263,7 +230,7 @@ class SyncSettings @Inject constructor(
                     .toInt()
             } catch (e: IllegalArgumentException) {
                 Log.e(
-                    TAG,
+                    SyncKeys.TAG,
                     "Failure to parse SMS_CURRENT_OFFSET" + Aware.getSetting(
                         applicationContext,
                         Settings.PLUGIN_SMS_CURRENT_OFFSET_SMS
@@ -284,7 +251,7 @@ class SyncSettings @Inject constructor(
                     .toInt()
             } catch (e: IllegalArgumentException) {
                 Log.e(
-                    TAG,
+                    SyncKeys.TAG,
                     "Failure to parse SMS_CURRENT_OFFSET" + Aware.getSetting(
                         applicationContext,
                         Settings.PLUGIN_SMS_CURRENT_OFFSET_MMS
@@ -294,5 +261,17 @@ class SyncSettings @Inject constructor(
             }
         }
         return offset
+    }
+
+    fun filterList(list: ArrayList<Message>, includeSentMessages: Boolean, includeReceivedMessages: Boolean): ArrayList<Message> {
+        val tempList = ArrayList<Message>()
+        for (l in list) {
+            if (includeSentMessages && l.type == "sent message") {
+                tempList.add(l)
+            } else if (includeReceivedMessages && l.type == "received message") {
+                tempList.add(l)
+            }
+        }
+        return tempList
     }
 }

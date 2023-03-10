@@ -42,6 +42,42 @@ class ServerSync @Inject constructor(
         }
     }
 
+    fun syncSentiment(sentimentList: List<SentimentData>){
+        for(sentiment in sentimentList){
+            val sentimentInfo = ContentValues()
+            sentimentInfo.put(
+                Provider.Sentiment_Analysis.DEVICE_ID,
+                Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)
+            )
+            sentimentInfo.put(
+                Provider.Sentiment_Analysis.TIMESTAMP, sentiment.timestamp
+            )
+            sentimentInfo.put(
+                Provider.Sentiment_Analysis.CATEGORY, sentiment.category
+            )
+            sentimentInfo.put(
+                Provider.Sentiment_Analysis.TOTAL_WORDS, sentiment.totalWords
+            )
+            sentimentInfo.put(
+                Provider.Sentiment_Analysis.DICTIONARY_WORDS, sentiment.wordCount
+            )
+            sentimentInfo.put(
+                Provider.Sentiment_Analysis.SCORE, sentiment.score
+            )
+            sentimentInfo.put(
+                Provider.Sentiment_Analysis.ADDRESS, sentiment.address
+            )
+            sentimentInfo.put(
+                Provider.Sentiment_Analysis.TYPE, sentiment.type
+            )
+
+            applicationContext.contentResolver.insert(
+                Provider.Sentiment_Analysis.CONTENT_URI,
+                sentimentInfo
+            )
+        }
+    }
+
     // Copied from AwareSyncAdapter (and cut down for this purpose)
     // Need to get the last sync date for this table to
     // allow putting items into the sync queue only when previous items
