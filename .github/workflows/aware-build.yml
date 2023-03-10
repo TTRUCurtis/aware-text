@@ -2,7 +2,6 @@ name: Aware Build
 
 on:
   push:
-  #TODO Need to figure out how to block direct pushes to these branches
     branches:
       - main
       - pre-release
@@ -34,11 +33,11 @@ jobs:
     - name: Unit test
       run: ./gradlew test
 
-    - name: Build apk
-      run: bash ./gradlew assembleDebug --stacktrace
-      
-    - name: Upload apk
-      uses: actions/upload-artifact@v3
-      with:
-        name: Build Artifacts
-        path: aware-phone/build/outputs/apk/debug/*.apk
+#    - name: Build apk
+#      run: bash ./gradlew assembleDebug --stacktrace
+#
+#    - name: Upload apk
+#      uses: actions/upload-artifact@v3
+#      with:
+#        name: Build Artifacts
+#        path: aware-phone/build/outputs/apk/debug/*.apk
