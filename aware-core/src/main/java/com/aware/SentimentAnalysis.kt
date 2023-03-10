@@ -127,5 +127,5 @@ class SentimentAnalysis(
     fun getSentimentMap(): HashMap<String, Pair<Double, Int>>{
         return sentimentDataMap
     }
-    }
+}
 

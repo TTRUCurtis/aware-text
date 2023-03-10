@@ -63,7 +63,7 @@ open class Plugin : Aware_Plugin() {
                     Settings.STATUS_SENTIMENT_ANALYSIS_SENT
                 )
 
-                if(intent != null && intent.action.equals(
+                if(intent != null && intent.action != null && intent.action.equals(
                         Action.ACTION_REFRESH_SMS,
                         ignoreCase = true
                     )

@@ -85,19 +85,11 @@ open class Plugin : Aware_Plugin() {
                 Aware.setSetting(this, Aware_Preferences.STATUS_APPLICATIONS, true)
                 Aware.startKeyboard(this);
 
-                //load dictionary
-                //val Sentiment = SentimentAnalysis(this).getInstance();
-                val sentimentAnalysis = SentimentAnalysis(this).getInstance()
-                Log.i("ABTest", "Sentiment object is ");
 
-                //Log.i("ABTest", Sentiment.dictionaryAsString);
-                //val testHash = Sentiment.getScoreFromInput("day hello1 there");
-                //for ((key, value) in testHash) {
-                //    Log.i("ABTest", key.toString() + " " + value.toString())
-                //}
+                val sentimentAnalysis = SentimentAnalysis(this).getInstance()
+                Log.i("ABTest", "Sentiment object is ")
 
                 Applications.setSensorObserver(object : Applications.AWARESensorObserver {
-
                     override fun onCrash(data: ContentValues?) {}
                     override fun onNotification(data: ContentValues?) {}
                     override fun onBackground(data: ContentValues?) {}
@@ -141,7 +133,6 @@ open class Plugin : Aware_Plugin() {
                                 var interstring2 = interstring1.replace("]", "");
                                 Log.i("ABTest", "After corrections prev text is");
                                 Log.i("ABTest", interstring2);
-                                //val testHash = Sentiment.getScoreFromInput(interstring2);
                                 val tokens = sentimentAnalysis.tokenizer(interstring1)
                                 sentimentAnalysis.getScores(tokens)
                                 val testHash = sentimentAnalysis.getSentimentMap()
@@ -160,8 +151,8 @@ open class Plugin : Aware_Plugin() {
                         if (!textBuffer.isEmpty() && currentApp != keyboardInApp) { //we were using an app of interest and changed app
 
                             //replace the [ and ] with blanks
-                            var interstring1 = textBufferNew.replace("[", "");
-                            var interstring2 = interstring1.replace("]", "");
+                            val interstring1 = textBufferNew.replace("[", "");
+                            val interstring2 = interstring1.replace("]", "");
 
                             Log.i("ABTest", "Echoed before reset $interstring2");
                             val tokens = sentimentAnalysis.tokenizer(interstring2)
