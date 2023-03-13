@@ -38,29 +38,34 @@ public class Provider extends ContentProvider {
 
     public static final String[] TABLES_FIELDS = {
             Sentiment_Data._ID + " integer primary key autoincrement," +
-                    Sentiment_Data.TIMESTAMP + " real default 0," +
                     Sentiment_Data.DEVICE_ID + " text default ''," +
-                    Sentiment_Data.APP_NAME + " text default ''," +
-                    Sentiment_Data.WORD_CATEGORY + " text default ''," +
-                    Sentiment_Data.SENTIMENT_SCORE + " real default 0"
+                    Sentiment_Data.TIMESTAMP + " real default 0," +
+                    Sentiment_Data.CATEGORY + " text default ''," +
+                    Sentiment_Data.TOTAL_WORDS + " integer default 0," +
+                    Sentiment_Data.DICTIONARY_WORDS + " integer default 0," +
+                    Sentiment_Data.SCORE + " real default 0," +
+                    Sentiment_Data.ADDRESS + " text default ''," +
+                    Sentiment_Data.TYPE + " text default ''"
     };
 
     public static final class Sentiment_Data implements BaseColumns {
         private Sentiment_Data() {
         }
 
-        ;
-
         public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/plugin_sentiment");
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.aware.plugin.sentiment";
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.aware.plugin.sentiment";
 
         public static final String _ID = "_id";
-        public static final String TIMESTAMP = "timestamp";
         public static final String DEVICE_ID = "device_id";
-        public static final String APP_NAME = "app_name";
-        public static final String WORD_CATEGORY = "word_category";
-        public static final String SENTIMENT_SCORE = "double_sentiment_score";
+        public static final String TIMESTAMP = "timestamp";
+        public static final String CATEGORY = "category";
+        public static final String TOTAL_WORDS = "total_words";
+        public static final String DICTIONARY_WORDS = "dictionary_words";
+        public static final String SCORE = "score";
+        public static final String ADDRESS = "address";
+        public static final String TYPE = "type";
+
     }
 
     private static UriMatcher URIMatcher;
@@ -86,11 +91,14 @@ public class Provider extends ContentProvider {
 
         databaseMap = new HashMap<>();
         databaseMap.put(Sentiment_Data._ID, Sentiment_Data._ID);
-        databaseMap.put(Sentiment_Data.TIMESTAMP, Sentiment_Data.TIMESTAMP);
         databaseMap.put(Sentiment_Data.DEVICE_ID, Sentiment_Data.DEVICE_ID);
-        databaseMap.put(Sentiment_Data.APP_NAME, Sentiment_Data.APP_NAME);
-        databaseMap.put(Sentiment_Data.WORD_CATEGORY, Sentiment_Data.WORD_CATEGORY);
-        databaseMap.put(Sentiment_Data.SENTIMENT_SCORE, Sentiment_Data.SENTIMENT_SCORE);
+        databaseMap.put(Sentiment_Data.TIMESTAMP, Sentiment_Data.TIMESTAMP);
+        databaseMap.put(Sentiment_Data.CATEGORY, Sentiment_Data.CATEGORY);
+        databaseMap.put(Sentiment_Data.TOTAL_WORDS, Sentiment_Data.TOTAL_WORDS);
+        databaseMap.put(Sentiment_Data.DICTIONARY_WORDS, Sentiment_Data.DICTIONARY_WORDS);
+        databaseMap.put(Sentiment_Data.SCORE, Sentiment_Data.SCORE);
+        databaseMap.put(Sentiment_Data.ADDRESS, Sentiment_Data.ADDRESS);
+        databaseMap.put(Sentiment_Data.TYPE, Sentiment_Data.TYPE);
 
         return true;
     }

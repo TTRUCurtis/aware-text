@@ -301,7 +301,7 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
         if (Aware.getSetting(mContext, Aware_Preferences.WEBSERVICE_FALLBACK_NETWORK).length() > 0 && !Aware.getSetting(mContext, Aware_Preferences.WEBSERVICE_FALLBACK_NETWORK).equals("0")) {
             Cursor lastSynched = mContext.getContentResolver().query(Aware_Provider.Aware_Log.CONTENT_URI, null, Aware_Provider.Aware_Log.LOG_MESSAGE + " LIKE 'STUDY-SYNC: " + database_table + "'", null, Aware_Provider.Aware_Log.LOG_TIMESTAMP + " DESC LIMIT 1");
             if (lastSynched != null && lastSynched.moveToFirst()) {
-                long synched = lastSynched.getLong(lastSynched.getColumnIndex(Aware_Provider.Aware_Log.LOG_TIMESTAMP));
+                long synched = lastSynched.getLong(lastSynched.getColumnIndexOrThrow(Aware_Provider.Aware_Log.LOG_TIMESTAMP));
 
                 Log.d(Aware.TAG, "Checking forced sync over 3G...");
                 Log.d(Aware.TAG, "Last sync: " + synched + " elapsed: " + (System.currentTimeMillis() - synched) + " force: " + (System.currentTimeMillis() - synched >= Integer.parseInt(Aware.getSetting(mContext, Aware_Preferences.WEBSERVICE_FALLBACK_NETWORK)) * 60 * 60 * 1000));
@@ -356,7 +356,7 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
         if (lastSynced != null && lastSynced.moveToFirst()) {
             try {
 
-                JSONObject logSyncData = new JSONObject(lastSynced.getString(lastSynced.getColumnIndex(Aware_Provider.Aware_Log.LOG_MESSAGE)));
+                JSONObject logSyncData = new JSONObject(lastSynced.getString(lastSynced.getColumnIndexOrThrow(Aware_Provider.Aware_Log.LOG_MESSAGE)));
                 last_sync_timestamp = logSyncData.getLong("last_sync_timestamp");
 
                 if (exists(columnsStr, "double_end_timestamp")) {
@@ -425,7 +425,7 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
         if (Aware.isStudy(mContext)) {
             Cursor study = Aware.getStudy(mContext, Aware.getSetting(mContext, Aware_Preferences.WEBSERVICE_SERVER));
             if (study != null && study.moveToFirst()) {
-                study_condition += " AND timestamp >= " + study.getLong(study.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_JOINED));
+                study_condition += " AND timestamp >= " + study.getLong(study.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_JOINED));
             }
             if (study != null && !study.isClosed()) study.close();
         }
@@ -590,19 +590,19 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
                 for (String c_name : columns) {
                     if (c_name.equals("_id")) continue; //Skip local database ID
                     if (c_name.equals("timestamp") || c_name.contains("double")) {
-                        row.put(c_name, context_data.getDouble(context_data.getColumnIndex(c_name)));
+                        row.put(c_name, context_data.getDouble(context_data.getColumnIndexOrThrow(c_name)));
                     } else if (c_name.contains("float")) {
-                        row.put(c_name, context_data.getFloat(context_data.getColumnIndex(c_name)));
+                        row.put(c_name, context_data.getFloat(context_data.getColumnIndexOrThrow(c_name)));
                     } else if (c_name.contains("long")) {
-                        row.put(c_name, context_data.getLong(context_data.getColumnIndex(c_name)));
+                        row.put(c_name, context_data.getLong(context_data.getColumnIndexOrThrow(c_name)));
                     } else if (c_name.contains("blob")) {
-                        row.put(c_name, context_data.getBlob(context_data.getColumnIndex(c_name)));
+                        row.put(c_name, context_data.getBlob(context_data.getColumnIndexOrThrow(c_name)));
                     } else if (c_name.contains("integer")) {
-                        row.put(c_name, context_data.getInt(context_data.getColumnIndex(c_name)));
+                        row.put(c_name, context_data.getInt(context_data.getColumnIndexOrThrow(c_name)));
                     } else {
                         String str = "";
-                        if (!context_data.isNull(context_data.getColumnIndex(c_name))) { //fixes nulls and batch inserts not being possible
-                            str = context_data.getString(context_data.getColumnIndex(c_name));
+                        if (!context_data.isNull(context_data.getColumnIndexOrThrow(c_name))) { //fixes nulls and batch inserts not being possible
+                            str = context_data.getString(context_data.getColumnIndexOrThrow(c_name));
                         }
                         row.put(c_name, str);
                     }

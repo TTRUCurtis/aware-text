@@ -127,9 +127,9 @@ public class Battery extends Aware_Sensor {
                 boolean changed;
                 Cursor lastBattery = context.getContentResolver().query(Battery_Data.CONTENT_URI, null, null, null, Battery_Data.TIMESTAMP + " DESC LIMIT 1");
                 if (lastBattery != null && lastBattery.moveToFirst()) {
-                    changed = (extras.getInt(BatteryManager.EXTRA_LEVEL) != lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.LEVEL))) ||
-                            (extras.getInt(BatteryManager.EXTRA_PLUGGED) != lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.PLUG_ADAPTOR))) ||
-                            (extras.getInt(BatteryManager.EXTRA_STATUS) != lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.STATUS)));
+                    changed = (extras.getInt(BatteryManager.EXTRA_LEVEL) != lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.LEVEL))) ||
+                            (extras.getInt(BatteryManager.EXTRA_PLUGGED) != lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.PLUG_ADAPTOR))) ||
+                            (extras.getInt(BatteryManager.EXTRA_STATUS) != lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.STATUS)));
                 } else changed = true;
                 if (lastBattery != null) lastBattery.close();
 
@@ -185,9 +185,9 @@ public class Battery extends Aware_Sensor {
                 if (lastDischarge != null && lastDischarge.moveToFirst()) {
                     if (lastBattery != null && lastBattery.moveToFirst()) {
                         ContentValues rowData = new ContentValues();
-                        rowData.put(Battery_Discharges.BATTERY_END, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.LEVEL)));
+                        rowData.put(Battery_Discharges.BATTERY_END, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.LEVEL)));
                         rowData.put(Battery_Discharges.END_TIMESTAMP, System.currentTimeMillis());
-                        context.getContentResolver().update(Battery_Discharges.CONTENT_URI, rowData, Battery_Discharges._ID + "=" + lastDischarge.getInt(lastDischarge.getColumnIndex(Battery_Discharges._ID)), null);
+                        context.getContentResolver().update(Battery_Discharges.CONTENT_URI, rowData, Battery_Discharges._ID + "=" + lastDischarge.getInt(lastDischarge.getColumnIndexOrThrow(Battery_Discharges._ID)), null);
                     }
                 }
                 if (lastDischarge != null && !lastDischarge.isClosed()) lastDischarge.close();
@@ -196,7 +196,7 @@ public class Battery extends Aware_Sensor {
                     ContentValues rowData = new ContentValues();
                     rowData.put(Battery_Charges.TIMESTAMP, System.currentTimeMillis());
                     rowData.put(Battery_Charges.DEVICE_ID, Aware.getSetting(context, Aware_Preferences.DEVICE_ID));
-                    rowData.put(Battery_Charges.BATTERY_START, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.LEVEL)));
+                    rowData.put(Battery_Charges.BATTERY_START, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.LEVEL)));
                     context.getContentResolver().insert(Battery_Charges.CONTENT_URI, rowData);
                 }
                 if (lastBattery != null && !lastBattery.isClosed()) lastBattery.close();
@@ -214,9 +214,9 @@ public class Battery extends Aware_Sensor {
                 if (lastCharge != null && lastCharge.moveToFirst()) {
                     if (lastBattery != null && lastBattery.moveToFirst()) {
                         ContentValues rowData = new ContentValues();
-                        rowData.put(Battery_Charges.BATTERY_END, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.LEVEL)));
+                        rowData.put(Battery_Charges.BATTERY_END, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.LEVEL)));
                         rowData.put(Battery_Charges.END_TIMESTAMP, System.currentTimeMillis());
-                        context.getContentResolver().update(Battery_Charges.CONTENT_URI, rowData, Battery_Charges._ID + "=" + lastCharge.getInt(lastCharge.getColumnIndex(Battery_Charges._ID)), null);
+                        context.getContentResolver().update(Battery_Charges.CONTENT_URI, rowData, Battery_Charges._ID + "=" + lastCharge.getInt(lastCharge.getColumnIndexOrThrow(Battery_Charges._ID)), null);
                     }
                 }
                 if (lastCharge != null && !lastCharge.isClosed()) lastCharge.close();
@@ -225,7 +225,7 @@ public class Battery extends Aware_Sensor {
                     ContentValues rowData = new ContentValues();
                     rowData.put(Battery_Discharges.TIMESTAMP, System.currentTimeMillis());
                     rowData.put(Battery_Discharges.DEVICE_ID, Aware.getSetting(context, Aware_Preferences.DEVICE_ID));
-                    rowData.put(Battery_Discharges.BATTERY_START, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.LEVEL)));
+                    rowData.put(Battery_Discharges.BATTERY_START, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.LEVEL)));
                     context.getContentResolver().insert(Battery_Discharges.CONTENT_URI, rowData);
                 }
                 if (lastBattery != null && !lastBattery.isClosed()) lastBattery.close();
@@ -253,13 +253,13 @@ public class Battery extends Aware_Sensor {
                     rowData.put(Battery_Data.TIMESTAMP, System.currentTimeMillis());
                     rowData.put(Battery_Data.DEVICE_ID, Aware.getSetting(context, Aware_Preferences.DEVICE_ID));
                     rowData.put(Battery_Data.STATUS, STATUS_PHONE_SHUTDOWN);
-                    rowData.put(Battery_Data.LEVEL, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.LEVEL)));
-                    rowData.put(Battery_Data.SCALE, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.SCALE)));
-                    rowData.put(Battery_Data.VOLTAGE, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.VOLTAGE)));
-                    rowData.put(Battery_Data.TEMPERATURE, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.TEMPERATURE)));
-                    rowData.put(Battery_Data.PLUG_ADAPTOR, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.PLUG_ADAPTOR)));
-                    rowData.put(Battery_Data.HEALTH, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.HEALTH)));
-                    rowData.put(Battery_Data.TECHNOLOGY, lastBattery.getString(lastBattery.getColumnIndex(Battery_Data.TECHNOLOGY)));
+                    rowData.put(Battery_Data.LEVEL, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.LEVEL)));
+                    rowData.put(Battery_Data.SCALE, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.SCALE)));
+                    rowData.put(Battery_Data.VOLTAGE, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.VOLTAGE)));
+                    rowData.put(Battery_Data.TEMPERATURE, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.TEMPERATURE)));
+                    rowData.put(Battery_Data.PLUG_ADAPTOR, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.PLUG_ADAPTOR)));
+                    rowData.put(Battery_Data.HEALTH, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.HEALTH)));
+                    rowData.put(Battery_Data.TECHNOLOGY, lastBattery.getString(lastBattery.getColumnIndexOrThrow(Battery_Data.TECHNOLOGY)));
 
                     try {
                         context.getContentResolver().insert(Battery_Data.CONTENT_URI, rowData);
@@ -284,13 +284,13 @@ public class Battery extends Aware_Sensor {
                     rowData.put(Battery_Data.TIMESTAMP, System.currentTimeMillis());
                     rowData.put(Battery_Data.DEVICE_ID, Aware.getSetting(context, Aware_Preferences.DEVICE_ID));
                     rowData.put(Battery_Data.STATUS, STATUS_PHONE_REBOOT);
-                    rowData.put(Battery_Data.LEVEL, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.LEVEL)));
-                    rowData.put(Battery_Data.SCALE, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.SCALE)));
-                    rowData.put(Battery_Data.VOLTAGE, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.VOLTAGE)));
-                    rowData.put(Battery_Data.TEMPERATURE, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.TEMPERATURE)));
-                    rowData.put(Battery_Data.PLUG_ADAPTOR, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.PLUG_ADAPTOR)));
-                    rowData.put(Battery_Data.HEALTH, lastBattery.getInt(lastBattery.getColumnIndex(Battery_Data.HEALTH)));
-                    rowData.put(Battery_Data.TECHNOLOGY, lastBattery.getString(lastBattery.getColumnIndex(Battery_Data.TECHNOLOGY)));
+                    rowData.put(Battery_Data.LEVEL, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.LEVEL)));
+                    rowData.put(Battery_Data.SCALE, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.SCALE)));
+                    rowData.put(Battery_Data.VOLTAGE, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.VOLTAGE)));
+                    rowData.put(Battery_Data.TEMPERATURE, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.TEMPERATURE)));
+                    rowData.put(Battery_Data.PLUG_ADAPTOR, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.PLUG_ADAPTOR)));
+                    rowData.put(Battery_Data.HEALTH, lastBattery.getInt(lastBattery.getColumnIndexOrThrow(Battery_Data.HEALTH)));
+                    rowData.put(Battery_Data.TECHNOLOGY, lastBattery.getString(lastBattery.getColumnIndexOrThrow(Battery_Data.TECHNOLOGY)));
 
                     try {
                         context.getContentResolver().insert(Battery_Data.CONTENT_URI, rowData);
