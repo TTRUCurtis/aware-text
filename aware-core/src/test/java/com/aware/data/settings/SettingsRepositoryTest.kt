@@ -23,12 +23,6 @@ class SettingsRepositoryTest {
     @InjectMocks
     private lateinit var classUnderTest: SettingsRepository
 
-    private val fakeSettings = hashMapOf(
-        "aware_version" to Setting("aware_version", "4.0.817.bundle"),
-        "webservice_silent" to Setting("webservice_silent", "false"),
-        "status_bluetooth" to Setting("status_bluetooth", "false")
-    )
-
     @Test
     fun whenSettingsInitialized_getSetting_returnsSettingFromStorage() {
         whenever(mockSettingsDao.getSettingsFromStorage()).thenReturn(fakeSettings)
@@ -50,10 +44,15 @@ class SettingsRepositoryTest {
 
     @Test
     fun setSettingsInStorage() {
-        val fakeSetting = Setting("key", "value")
+        classUnderTest.setSettingInStorage("key", "value")
 
-        classUnderTest.setSettingInStorage(fakeSetting)
-
-        verify(mockSettingsDao).setSettingInStorage(fakeSetting)
+        verify(mockSettingsDao).insert("key", "value")
     }
 }
+
+
+private val fakeSettings = hashMapOf(
+    "aware_version" to "4.0.817.bundle",
+    "webservice_silent" to "false",
+    "status_bluetooth" to "false",
+)

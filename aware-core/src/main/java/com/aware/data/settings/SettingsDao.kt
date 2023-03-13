@@ -16,33 +16,41 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.HashMap
 import javax.inject.Inject
+
 /*
 * Data Access Object for settings database operations
 */
 class SettingsDao @Inject constructor(@ApplicationContext private val appContext: Context) {
 
-    @SuppressLint("Range")
-    fun setSettingInStorage(setting: Setting) {
-        val scope = CoroutineScope(Dispatchers.IO)
-        scope.launch {
-            setSettingInStorage(setting.key, setting.value)
+    fun insert(key: String, value: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            setSettingInStorage(key, value)
         }
     }
 
-    @SuppressLint("Range")
+    fun insertAll(settings: MutableMap<String, String>) {
+        for ((key, value) in settings) {
+            setSettingInStorage(key, value)
+        }
+    }
+
     private fun setSettingInStorage(
         key: String,
         value: Any
     ) {
         //Check if we already have a device ID
-        if (key == Aware_Preferences.DEVICE_ID){
+        if (key == Aware_Preferences.DEVICE_ID) {
             try {
                 val setting = Aware.getSetting(appContext, Aware_Preferences.DEVICE_ID)
                 if (setting.isNotEmpty()) {
                     Log.d(Aware.TAG, "AWARE UUID: $setting")
                 }
             } catch (e: IllegalStateException) {
-                Log.i(Aware.TAG, "This will be thrown the first time through since settings are not yet loaded in memory", e)
+                Log.i(
+                    Aware.TAG,
+                    "This will be thrown the first time through since settings are not yet loaded in memory",
+                    e
+                )
             }
         }
         if (key == Aware_Preferences.DEVICE_LABEL && (value as String).isNotEmpty()) {
@@ -72,16 +80,19 @@ class SettingsDao @Inject constructor(@ApplicationContext private val appContext
         //update
         if (qry != null && qry.moveToFirst()) {
             try {
-                if (qry.getString(qry.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_VALUE)) != value.toString()) {
+                if (qry.getString(qry.getColumnIndexOrThrow(Aware_Provider.Aware_Settings.SETTING_VALUE)) != value.toString()) {
                     appContext.contentResolver.update(
                         Aware_Provider.Aware_Settings.CONTENT_URI,
                         setting,
                         Aware_Provider.Aware_Settings.SETTING_ID + "=" + qry.getInt(
-                            qry.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_ID)
+                            qry.getColumnIndexOrThrow(Aware_Provider.Aware_Settings.SETTING_ID)
                         ),
                         null
                     )
-                    if (Aware.DEBUG) Log.d(Aware.TAG, "Updated: $key=$value in ${appContext.packageName}")
+                    if (Aware.DEBUG) Log.d(
+                        Aware.TAG,
+                        "Updated: $key=$value in ${appContext.packageName}"
+                    )
                 }
             } catch (e: SQLiteException) {
                 if (Aware.DEBUG) Log.d(Aware.TAG, e.message!!)
@@ -91,7 +102,10 @@ class SettingsDao @Inject constructor(@ApplicationContext private val appContext
             //insert
         } else {
             try {
-                appContext.contentResolver.insert(Aware_Provider.Aware_Settings.CONTENT_URI, setting)
+                appContext.contentResolver.insert(
+                    Aware_Provider.Aware_Settings.CONTENT_URI,
+                    setting
+                )
                 if (Aware.DEBUG) Log.d(Aware.TAG, "Added: $key=$value in ${appContext.packageName}")
             } catch (e: SQLiteException) {
                 if (Aware.DEBUG) Log.d(Aware.TAG, e.message!!)
@@ -102,23 +116,25 @@ class SettingsDao @Inject constructor(@ApplicationContext private val appContext
         if (qry != null && !qry.isClosed) qry.close()
     }
 
-    internal fun getSettingsFromStorage(): MutableMap<String, Setting>? {
+    internal fun getSettingsFromStorage(): MutableMap<String, String>? {
         val settingsCursor: Cursor? = appContext.contentResolver.query(
             Aware_Provider.Aware_Settings.CONTENT_URI, null, null,
             null, null
         )
 
-        val settings: MutableMap<String, Setting>?
+        val settings: MutableMap<String, String>?
         if (settingsCursor != null && settingsCursor.moveToFirst()) {
             val settingsCount = settingsCursor.count
             settings = HashMap(settingsCount)
-            val keyColumnIndex = settingsCursor.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_KEY)
-            val valueColumnIndex = settingsCursor.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_VALUE)
+            val keyColumnIndex =
+                settingsCursor.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_KEY)
+            val valueColumnIndex =
+                settingsCursor.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_VALUE)
             for (i in 0 until settingsCount) {
                 settingsCursor.moveToPosition(i)
                 val key = settingsCursor.getString(keyColumnIndex)
                 val value = settingsCursor.getString(valueColumnIndex)
-                settings[key] = Setting(key, value)
+                settings[key] = value
             }
             settingsCursor.close()
         } else settings = null
