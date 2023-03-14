@@ -1,7 +1,8 @@
 package com.aware.plugin.sms
 
 import android.content.Context
-import com.aware.SentimentAnalysis
+import com.aware.utils.sentiment.SentimentAnalysis
+import com.aware.utils.sentiment.SentimentDictionary
 import edu.emory.mathcs.nlp.component.tokenizer.token.Token
 
 
@@ -28,7 +29,7 @@ class Sentiment(
     init{
         this.context = context
         sentimentList = ArrayList()
-        sentimentAnalysis = SentimentAnalysis(context)
+        sentimentAnalysis = SentimentAnalysis(SentimentDictionary( context))
         startSentimentAnalysis(messages)
     }
 
@@ -40,8 +41,7 @@ class Sentiment(
             val text: String = message.msg.toString()
             val tokens: List<Token> = sentimentAnalysis.tokenizer(text)
             totalWords = tokens.size
-            sentimentAnalysis.getScores(tokens)
-            val scores = sentimentAnalysis.getSentimentMap()
+            val scores = sentimentAnalysis.getScores(tokens)
             scores.map { (category, pair) ->
                 if(pair.first != 0.0){
                     sentimentList.add(
@@ -57,7 +57,6 @@ class Sentiment(
                     )
                 }
             }
-            sentimentAnalysis.resetScore()
         }
     }
 }
