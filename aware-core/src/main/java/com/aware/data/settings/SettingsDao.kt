@@ -127,9 +127,9 @@ class SettingsDao @Inject constructor(@ApplicationContext private val appContext
             val settingsCount = settingsCursor.count
             settings = HashMap(settingsCount)
             val keyColumnIndex =
-                settingsCursor.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_KEY)
+                settingsCursor.getColumnIndexOrThrow(Aware_Provider.Aware_Settings.SETTING_KEY)
             val valueColumnIndex =
-                settingsCursor.getColumnIndex(Aware_Provider.Aware_Settings.SETTING_VALUE)
+                settingsCursor.getColumnIndexOrThrow(Aware_Provider.Aware_Settings.SETTING_VALUE)
             for (i in 0 until settingsCount) {
                 settingsCursor.moveToPosition(i)
                 val key = settingsCursor.getString(keyColumnIndex)
