@@ -9,7 +9,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import javax.inject.Inject
 
-
+@AndroidEntryPoint
 open class Plugin : Aware_Plugin() {
 
     object Action {

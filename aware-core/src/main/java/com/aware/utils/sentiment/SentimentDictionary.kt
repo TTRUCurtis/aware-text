@@ -46,7 +46,7 @@ class SentimentDictionary @Inject constructor(@ApplicationContext private val co
         try {
             val inputStream: InputStream
             val identifier =
-                context.resources.getIdentifier("sentiment_dictionary", "raw", context.packageName)
+                context.resources.getIdentifier("sentiment", "raw", context.packageName)
             inputStream = context.resources.openRawResource(identifier)
             val size = inputStream.available()
             val buffer = ByteArray(size)

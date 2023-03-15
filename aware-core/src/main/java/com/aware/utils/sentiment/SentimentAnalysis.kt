@@ -16,10 +16,10 @@ class SentimentAnalysis @Inject constructor(private val dictionary: SentimentDic
         val sentimentDataMap = HashMap<String, Pair<Double, Int>>()
         for (token in tokens) {
             dictionary.getCategories(token.toString())?.map { (category, score) ->
-                val currentScore: Double = sentimentDataMap[category]!!.first
+                val currentScore: Double = sentimentDataMap[category]?.first ?: 0.0
                 val newScore = currentScore.plus(score)
-                val newCount = sentimentDataMap[category]!!.second.plus(1)
-                sentimentDataMap.replace(category, Pair(newScore, newCount))
+                val newCount = sentimentDataMap[category]?.second?.plus(1) ?: 1
+                sentimentDataMap.put(category, Pair(newScore, newCount))
             }
         }
         return sentimentDataMap
