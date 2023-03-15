@@ -40,8 +40,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.PermissionChecker;
 
-import com.aware.data.Setting;
-import com.aware.data.SettingsRepository;
+import com.aware.data.settings.SettingsRepository;
 import com.aware.providers.Aware_Provider;
 import com.aware.providers.Aware_Provider.Aware_Device;
 import com.aware.providers.Aware_Provider.Aware_Plugins;
@@ -1013,7 +1012,7 @@ public class Aware extends Service {
     //TODO Once every reference to Aware.getSetting and Aware.setSetting is removed, we can also
     // remove settingsRepository and the settings Map.
     private static SettingsRepository settingsRepository;
-    private static @Nullable Map<String, Setting> settings = null;
+    private static @Nullable Map<String, String> settings = null;
 
     /**
      * @deprecated Inject SettingsRepository into the classes where it's used
@@ -1033,7 +1032,7 @@ public class Aware extends Service {
      * @deprecated We should not be using
      * static methods for non-static data as they do not allow for ease of
      * testing, refactoring, or scalability. Inject the Singleton
-     * {@link com.aware.data.SettingsRepository}
+     * {@link SettingsRepository}
      * and use {@link SettingsRepository#getSetting(String)} instead.
      * TODO Inject SettingsRepository into every class that needs to use it and remove references
      * to this method
@@ -1041,7 +1040,7 @@ public class Aware extends Service {
     @Deprecated()
     public static String getSetting(Context context, String key) {
         if (settings != null) {
-            return settings.get(key) != null ? settings.get(key).getValue() : "";
+            return settings.get(key) != null ? settings.get(key): "";
         } else {
             throw new IllegalStateException("Settings should not be null since they are loaded " +
                     "synchronously in AwareApplication.onCreate");
@@ -1056,8 +1055,8 @@ public class Aware extends Service {
      *
      * @deprecated We should not be using
      * static methods for non-static data as they do not allow for ease of
-     * testing, refactoring, or scalability. Inject the Singleton {@link com.aware.data.SettingsRepository}
-     * and use {@link SettingsRepository#setSettingInStorage(Setting)()} instead.
+     * testing, refactoring, or scalability. Inject the Singleton {@link SettingsRepository}
+     * instead.
      * TODO Inject SettingsRepository into every class that needs to use it and remove references
      * to this method
      */
@@ -1065,14 +1064,14 @@ public class Aware extends Service {
     public static void setSetting(Context context, String key, Object value) {
         //First, update in-memory settings
         if (settings != null) {
-            settings.put(key, new Setting(key, value.toString()));
+            settings.put(key, value.toString());
         } else {
             throw new IllegalStateException("Settings should not be null since they are loaded " +
                     "synchronously in AwareApplication.onCreate");
         }
 
         //Then update the database
-        settingsRepository.setSettingInStorage(new Setting(key, value.toString()));
+        settingsRepository.setSettingInStorage(key, value.toString());
     }
 
     /**

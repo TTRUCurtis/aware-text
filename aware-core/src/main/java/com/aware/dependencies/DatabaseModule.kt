@@ -1,7 +1,9 @@
 package com.aware.dependencies
 
 import android.content.Context
-import com.aware.data.SettingsRepository
+import com.aware.data.settings.SettingsDao
+import com.aware.data.settings.SettingsInitializer
+import com.aware.data.settings.SettingsRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,7 +23,7 @@ class DatabaseModule {
 
     @Singleton
     @Provides
-    fun provideSettings(@ApplicationContext appContext: Context): SettingsRepository {
-        return SettingsRepository(appContext)
+    fun provideSettings(settingsInitializer: SettingsInitializer, settingsDao: SettingsDao): SettingsRepository {
+        return SettingsRepository(settingsInitializer, settingsDao)
     }
 }
