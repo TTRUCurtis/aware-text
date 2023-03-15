@@ -12,8 +12,10 @@ import com.aware.providers.Applications_Provider
 import com.aware.providers.Keyboard_Provider
 import com.aware.utils.Aware_Plugin
 import com.aware.utils.sentiment.SentimentAnalysis
-import com.aware.utils.sentiment.SentimentDictionary
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 open class Plugin : Aware_Plugin() {
 
     companion object {
@@ -34,6 +36,9 @@ open class Plugin : Aware_Plugin() {
             return awareSensor!!
         }
     }
+
+    @Inject
+    lateinit var sentimentAnalysis: SentimentAnalysis
 
     /**
      * The package name of where the keyboard was interesting to track
@@ -86,7 +91,6 @@ open class Plugin : Aware_Plugin() {
                 Aware.startKeyboard(this);
 
 
-                val sentimentAnalysis = SentimentAnalysis(SentimentDictionary(this)).getInstance()
                 Log.i("ABTest", "Sentiment object is ")
 
                 Applications.setSensorObserver(object : Applications.AWARESensorObserver {

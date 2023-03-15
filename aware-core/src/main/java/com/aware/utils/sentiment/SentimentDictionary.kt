@@ -8,25 +8,21 @@ import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class SentimentDictionary @Inject constructor(@ApplicationContext private val context: Context) {
 
-    private lateinit var dictionaryMap: HashMap<String, HashMap<String, Double>>
-
-    init {
-        try {
-            buildDictionaryMap()
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
+    private val dictionaryMap by lazy {
+        buildDictionaryMap()
     }
 
     fun getCategories(token: String): HashMap<String, Double>? {
         return dictionaryMap[token]
     }
 
-    private fun buildDictionaryMap() {
-        dictionaryMap = HashMap()
+    private fun buildDictionaryMap(): HashMap<String, HashMap<String, Double>> {
+        val dictionaryHashMap = HashMap<String, HashMap<String, Double>>()
         val dictionaryJson = JSONObject(loadDictionary())
         val words: JSONObject = dictionaryJson.getJSONObject("words")
         val wordList: Iterator<String> = words.keys()
@@ -40,10 +36,10 @@ class SentimentDictionary @Inject constructor(@ApplicationContext private val co
                 val score: Double = categories.getDouble(category)
                 categoryAndScore[category] = score
             }
-            dictionaryMap[word] = categoryAndScore
+            dictionaryHashMap[word] = categoryAndScore
         }
+        return dictionaryHashMap
     }
-
 
     private fun loadDictionary(): String {
         val json: String
