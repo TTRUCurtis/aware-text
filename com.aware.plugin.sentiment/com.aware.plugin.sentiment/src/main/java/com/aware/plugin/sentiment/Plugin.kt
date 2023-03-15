@@ -11,9 +11,11 @@ import com.aware.Aware_Preferences
 import com.aware.providers.Applications_Provider
 import com.aware.providers.Keyboard_Provider
 import com.aware.utils.Aware_Plugin
-import com.aware.SentimentAnalysis
-import org.jetbrains.annotations.Nullable
+import com.aware.utils.sentiment.SentimentAnalysis
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 open class Plugin : Aware_Plugin() {
 
     companion object {
@@ -34,6 +36,9 @@ open class Plugin : Aware_Plugin() {
             return awareSensor!!
         }
     }
+
+    @Inject
+    lateinit var sentimentAnalysis: SentimentAnalysis
 
     /**
      * The package name of where the keyboard was interesting to track
@@ -86,7 +91,6 @@ open class Plugin : Aware_Plugin() {
                 Aware.startKeyboard(this);
 
 
-                val sentimentAnalysis = SentimentAnalysis(this).getInstance()
                 Log.i("ABTest", "Sentiment object is ")
 
                 Applications.setSensorObserver(object : Applications.AWARESensorObserver {
@@ -134,8 +138,7 @@ open class Plugin : Aware_Plugin() {
                                 Log.i("ABTest", "After corrections prev text is");
                                 Log.i("ABTest", interstring2);
                                 val tokens = sentimentAnalysis.tokenizer(interstring1)
-                                sentimentAnalysis.getScores(tokens)
-                                val testHash = sentimentAnalysis.getSentimentMap()
+                                val testHash = sentimentAnalysis.getScores(tokens)
                             }
                             textBufferNew = tempCurrTextBuffer;
                             prevTextBuffer = tempTextBuffer;
@@ -157,8 +160,7 @@ open class Plugin : Aware_Plugin() {
                             Log.i("ABTest", "Echoed before reset $interstring2");
                             val tokens = sentimentAnalysis.tokenizer(interstring2)
                             //val testHash = Sentiment.getScoreFromInput(interstring2);
-                            sentimentAnalysis.getScores(tokens)
-                            val testHash = sentimentAnalysis.getSentimentMap()
+                            val testHash = sentimentAnalysis.getScores(tokens)
                             val contentValues = ContentValues()
                             contentValues.put(Provider.Sentiment_Data.DEVICE_ID, Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID))
                             contentValues.put(Provider.Sentiment_Data.TIMESTAMP, System.currentTimeMillis())
@@ -181,8 +183,6 @@ open class Plugin : Aware_Plugin() {
                             textBufferNew = ""
                             prevTextBuffer = "";
                             keyboardInApp = ""
-                            //reset score as well
-                            sentimentAnalysis.resetScore()
                         }
                     }
                 })

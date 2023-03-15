@@ -27,6 +27,9 @@ open class Plugin : Aware_Plugin() {
     lateinit var repository: Repository
 
     @Inject
+    lateinit var sentiment: Sentiment
+
+    @Inject
     lateinit var serverSync: ServerSync
 
     @Inject
@@ -167,8 +170,7 @@ open class Plugin : Aware_Plugin() {
                         val finalMessageList = syncSettings.filterList(joinedList, pluginSmsSentMessages, pluginSMSReceivedMessages)
                         serverSync.syncMessages(finalMessageList)
                         val finalSentimentList = syncSettings.filterList(joinedList, sentimentAnalysisOnSent, sentimentAnalysisOnReceived)
-                        val sentimentAnalysis = Sentiment(applicationContext, finalSentimentList).getInstance()
-                        val sentimentDataList: ArrayList<SentimentData> = sentimentAnalysis.getList()
+                        val sentimentDataList: ArrayList<SentimentData> = sentiment.getList(finalSentimentList)
                         serverSync.syncSentiment(sentimentDataList)
 
                         /* If this is the first run, save off the current time in case we need to be

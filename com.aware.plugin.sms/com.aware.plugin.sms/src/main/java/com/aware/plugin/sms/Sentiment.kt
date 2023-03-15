@@ -1,47 +1,31 @@
 package com.aware.plugin.sms
 
 import android.content.Context
-import com.aware.SentimentAnalysis
+import com.aware.utils.sentiment.SentimentAnalysis
+import com.aware.utils.sentiment.SentimentDictionary
 import edu.emory.mathcs.nlp.component.tokenizer.token.Token
+import javax.inject.Inject
 
 
-class Sentiment(
-    context: Context,
-    messages: ArrayList<Message>
+class Sentiment @Inject constructor(
+    private val sentimentAnalysis: SentimentAnalysis
 ) {
-    private var sentimentList: ArrayList<SentimentData>
-    private var sentimentAnalysis: SentimentAnalysis
-    private var context: Context
+
     private var timestamp: String = ""
     private var totalWords: Int = 0
     private var address: String = ""
     private var type: String = ""
 
-    fun getInstance(): Sentiment{
-        return this
-    }
-
-    fun getList(): ArrayList<SentimentData>{
-        return sentimentList
-    }
-
-    init{
-        this.context = context
-        sentimentList = ArrayList()
-        sentimentAnalysis = SentimentAnalysis(context)
-        startSentimentAnalysis(messages)
-    }
-
-    private fun startSentimentAnalysis(messages: ArrayList<Message>) {
-        for(message in messages){
+    fun getList(messages: ArrayList<Message>): ArrayList<SentimentData> {
+        val sentimentList: ArrayList<SentimentData> = ArrayList()
+        for(message in messages) {
             timestamp = message.messageDate.toString()
             address = message.address.toString()
             type = message.type.toString()
             val text: String = message.msg.toString()
             val tokens: List<Token> = sentimentAnalysis.tokenizer(text)
             totalWords = tokens.size
-            sentimentAnalysis.getScores(tokens)
-            val scores = sentimentAnalysis.getSentimentMap()
+            val scores = sentimentAnalysis.getScores(tokens)
             scores.map { (category, pair) ->
                 if(pair.first != 0.0){
                     sentimentList.add(
@@ -57,8 +41,8 @@ class Sentiment(
                     )
                 }
             }
-            sentimentAnalysis.resetScore()
         }
+        return sentimentList
     }
 }
 
