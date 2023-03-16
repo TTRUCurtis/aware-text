@@ -10,14 +10,12 @@ import java.io.InputStream
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
-class SentimentAnalysis @Inject constructor(sentimentDictionary: SentimentDictionary) {
-
-    private val dictionary = sentimentDictionary.getDictionary()
+class SentimentAnalysis @Inject constructor(private val sentimentDictionary: SentimentDictionary) {
 
     fun getScores(tokens: List<Token>): HashMap<String, Pair<Double, Int>> {
         val sentimentDataMap = HashMap<String, Pair<Double, Int>>()
         for (token in tokens) {
-            dictionary.map { (dictionaryWord, map) ->
+            sentimentDictionary.getDictionary().map { (dictionaryWord, map) ->
                 if(isMatch(token.toString(), dictionaryWord)){
                     map.map { (category, score) ->
                         val currentScore: Double = sentimentDataMap[category]?.first ?: 0.0
