@@ -10,19 +10,35 @@ import java.io.InputStream
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
-class SentimentAnalysis @Inject constructor(private val dictionary: SentimentDictionary) {
+class SentimentAnalysis @Inject constructor(sentimentDictionary: SentimentDictionary) {
+
+    private val dictionary = sentimentDictionary.getDictionary()
 
     fun getScores(tokens: List<Token>): HashMap<String, Pair<Double, Int>> {
         val sentimentDataMap = HashMap<String, Pair<Double, Int>>()
         for (token in tokens) {
-            dictionary.getCategories(token.toString())?.map { (category, score) ->
-                val currentScore: Double = sentimentDataMap[category]?.first ?: 0.0
-                val newScore = currentScore.plus(score)
-                val newCount = sentimentDataMap[category]?.second?.plus(1) ?: 1
-                sentimentDataMap.put(category, Pair(newScore, newCount))
+            dictionary.map { (dictionaryWord, map) ->
+                if(isMatch(token.toString(), dictionaryWord)){
+                    map.map { (category, score) ->
+                        val currentScore: Double = sentimentDataMap[category]?.first ?: 0.0
+                        val newScore = currentScore.plus(score)
+                        val newCount = sentimentDataMap[category]?.second?.plus(1) ?: 1
+                        sentimentDataMap.put(category, Pair(newScore, newCount))
+                    }
+                }
             }
         }
         return sentimentDataMap
+    }
+
+    private fun isMatch(token: String, targetWord: String): Boolean {
+        return if (targetWord.contains("*")) {
+            val regexString = targetWord.replace("*", ".*")
+            val test: Boolean = token.matches("(?i:$regexString)".toRegex())
+            test
+        } else {
+            return token.equals(targetWord, ignoreCase = true)
+        }
     }
 
     fun tokenizer(text: String): MutableList<Token> {

@@ -1,4 +1,4 @@
-package com.aware.data.settings
+    package com.aware.data.settings
 
 import org.junit.Assert.*
 
