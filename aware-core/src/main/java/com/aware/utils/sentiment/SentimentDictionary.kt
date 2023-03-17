@@ -2,7 +2,6 @@ package com.aware.utils.sentiment
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream

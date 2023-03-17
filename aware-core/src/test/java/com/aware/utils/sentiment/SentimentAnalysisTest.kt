@@ -1,7 +1,7 @@
 package com.aware.utils.sentiment
 
 
-import edu.emory.mathcs.nlp.component.tokenizer.token.Token
+
 import org.junit.Assert.*
 
 import org.junit.Test
@@ -9,7 +9,6 @@ import org.junit.runner.RunWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.internal.createInstance
 import org.mockito.kotlin.whenever
 
 @RunWith(MockitoJUnitRunner::class)
@@ -91,7 +90,7 @@ class SentimentAnalysisTest {
         "interest" to 6.315,
         "sadness" to 5.362
     )
-    private val mockDictionaryMap = hashMapOf(
+    private val testDictionaryMap = hashMapOf(
         "hate" to wordOne,
         "lol" to wordTwo,
         "flower*" to wordThree,
@@ -102,7 +101,7 @@ class SentimentAnalysisTest {
     @Test
     fun whenNoCategoriesForToken_getScores_returnsEmptyHashMap() {
         //whenever mock dictionary get categories is called for token, then return null
-        whenever(mockDictionary.getDictionary()).thenReturn(mockDictionaryMap)
+        whenever(mockDictionary.getDictionary()).thenReturn(testDictionaryMap)
         //call get scores with input
         val text = "Hello Kitty"
         val tokens = classUnderTest.tokenizer(text)
@@ -114,11 +113,11 @@ class SentimentAnalysisTest {
     @Test
     fun whenTokenMatchesWordInDictionary() {
 
-        whenever(mockDictionary.getDictionary()).thenReturn(mockDictionaryMap)
+        whenever(mockDictionary.getDictionary()).thenReturn(testDictionaryMap)
         val text = "flower"
         val tokens = classUnderTest.tokenizer(text)
-        val map = classUnderTest.getScores(tokens)
-        val fakeMap = hashMapOf(
+        val actualMap = classUnderTest.getScores(tokens)
+        val expectedMap = hashMapOf(
             "adoration" to Pair(8.369, 1),
             "amusement" to Pair(-4.159, 1),
             "anger" to Pair(7.643, 1),
@@ -132,20 +131,7 @@ class SentimentAnalysisTest {
             "interest" to Pair(7.236, 1),
             "sadness" to Pair(-6.255, 1)
         )
-        assertEquals(fakeMap, map)
+        assertEquals(expectedMap, actualMap)
     }
-
-
-    @Test
-    fun whenMultipleCategoriesReturnedForTokensList_getScores_returnsValidHashmap() {
-        //whenever mock dictionary get categories is called for token1, then return categories1
-        //whenever mock dictionary get categories is called for token2, then return categories2
-        //whenever mock dictionary get categories is called for token3, then return categories1
-
-        //call get scores with input
-
-        //assert categories and word count are correct
-    }
-
 
 }
