@@ -100,13 +100,10 @@ class SentimentAnalysisTest {
 
     @Test
     fun whenNoCategoriesForToken_getScores_returnsEmptyHashMap() {
-        //whenever mock dictionary get categories is called for token, then return null
         whenever(mockDictionary.getDictionary()).thenReturn(testDictionaryMap)
-        //call get scores with input
         val text = "Hello Kitty"
         val tokens = classUnderTest.tokenizer(text)
         val map = classUnderTest.getScores(tokens)
-        //assert empty hashmap
         assertEquals(hashMapOf<String, HashMap<String, Pair<Double, Int>>>(), map)
     }
 
