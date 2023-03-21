@@ -2,7 +2,6 @@ package com.aware.utils.sentiment
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
@@ -17,11 +16,7 @@ class SentimentDictionary @Inject constructor(@ApplicationContext private val co
         buildDictionaryMap()
     }
 
-    fun getCategories(token: String): HashMap<String, Double>? {
-        return dictionaryMap[token]
-    }
-
-    private fun buildDictionaryMap(): HashMap<String, HashMap<String, Double>> {
+   private fun buildDictionaryMap(): HashMap<String, HashMap<String, Double>> {
         val dictionaryHashMap = HashMap<String, HashMap<String, Double>>()
         val dictionaryJson = JSONObject(loadDictionary())
         val words: JSONObject = dictionaryJson.getJSONObject("words")
@@ -59,5 +54,9 @@ class SentimentDictionary @Inject constructor(@ApplicationContext private val co
             return "" //or null (change return type to String?)
         }
         return json
+    }
+
+    fun getDictionary(): HashMap<String, HashMap<String, Double>> {
+        return dictionaryMap
     }
 }
