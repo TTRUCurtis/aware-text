@@ -95,7 +95,7 @@ class ServerSync @Inject constructor(
         if (lastSynced != null && lastSynced.moveToFirst()) {
             try {
                 lastSyncTimestamp =
-                    lastSynced.getDouble(lastSynced.getColumnIndex(Aware_Provider.Aware_Log.LOG_TIMESTAMP))
+                    lastSynced.getDouble(lastSynced.getColumnIndexOrThrow(Aware_Provider.Aware_Log.LOG_TIMESTAMP))
                 // Update latest Server Sync Timestamp
                 Aware.setSetting(
                     applicationContext,

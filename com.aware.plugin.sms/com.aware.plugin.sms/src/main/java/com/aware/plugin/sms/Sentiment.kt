@@ -18,8 +18,9 @@ class Sentiment @Inject constructor(
 
     fun getList(messages: ArrayList<Message>): ArrayList<SentimentData> {
         val sentimentList: ArrayList<SentimentData> = ArrayList()
+        val currentTime = System.currentTimeMillis()
         for(message in messages) {
-            timestamp = message.messageDate.toString()
+            timestamp = currentTime.toString()
             address = message.address.toString()
             type = message.type.toString()
             val text: String = message.msg.toString()
