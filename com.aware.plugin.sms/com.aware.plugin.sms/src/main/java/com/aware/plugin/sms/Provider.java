@@ -49,8 +49,9 @@ public class Provider extends ContentProvider {
                 Sms_Data.MSG_ADDRESS + " text default ''," +
                 Sms_Data.MSG_BODY + " text default ''",
             Sentiment_Analysis._ID + " integer primary key autoincrement," +
+                    Sentiment_Analysis.RETRIEVAL_TIMESTAMP + " real default 0," +
                     Sentiment_Analysis.DEVICE_ID + " text default ''," +
-                    Sentiment_Analysis.TIMESTAMP + " real default 0," +
+                    Sentiment_Analysis.MESSAGE_TIMESTAMP + " BIGINT default 0," +
                     Sentiment_Analysis.CATEGORY + " text default ''," +
                     Sentiment_Analysis.TOTAL_WORDS + " integer default 0," +
                     Sentiment_Analysis.DICTIONARY_WORDS + " integer default 0," +
@@ -93,8 +94,9 @@ public class Provider extends ContentProvider {
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.aware.sentiment.analysis";
 
         public static final String _ID = "_id";
+        public static final String RETRIEVAL_TIMESTAMP = "timestamp";  // Data pull time (for AWARE sync)
         public static final String DEVICE_ID = "device_id";
-        public static final String TIMESTAMP = "timestamp";
+        public static final String MESSAGE_TIMESTAMP = "message_timestamp";
         public static final String CATEGORY = "category";
         public static final String TOTAL_WORDS = "total_words";
         public static final String DICTIONARY_WORDS = "dictionary_words";
@@ -142,8 +144,9 @@ public class Provider extends ContentProvider {
 
         sentimentMap = new HashMap<>();
         sentimentMap.put(Sentiment_Analysis._ID, Sentiment_Analysis._ID);
+        sentimentMap.put(Sentiment_Analysis.RETRIEVAL_TIMESTAMP, Sentiment_Analysis.RETRIEVAL_TIMESTAMP);
         sentimentMap.put(Sentiment_Analysis.DEVICE_ID, Sentiment_Analysis.DEVICE_ID);
-        sentimentMap.put(Sentiment_Analysis.TIMESTAMP, Sentiment_Analysis.TIMESTAMP);
+        sentimentMap.put(Sentiment_Analysis.MESSAGE_TIMESTAMP, Sentiment_Analysis.MESSAGE_TIMESTAMP);
         sentimentMap.put(Sentiment_Analysis.CATEGORY, Sentiment_Analysis.CATEGORY);
         sentimentMap.put(Sentiment_Analysis.TOTAL_WORDS, Sentiment_Analysis.TOTAL_WORDS);
         sentimentMap.put(Sentiment_Analysis.DICTIONARY_WORDS, Sentiment_Analysis.DICTIONARY_WORDS);

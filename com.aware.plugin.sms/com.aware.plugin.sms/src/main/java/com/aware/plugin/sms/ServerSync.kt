@@ -46,11 +46,14 @@ class ServerSync @Inject constructor(
         for(sentiment in sentimentList){
             val sentimentInfo = ContentValues()
             sentimentInfo.put(
+                Provider.Sentiment_Analysis.RETRIEVAL_TIMESTAMP, sentiment.retrievalTimestamp
+            )
+            sentimentInfo.put(
                 Provider.Sentiment_Analysis.DEVICE_ID,
                 Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)
             )
             sentimentInfo.put(
-                Provider.Sentiment_Analysis.TIMESTAMP, sentiment.timestamp
+                Provider.Sentiment_Analysis.MESSAGE_TIMESTAMP, sentiment.messageTimestamp
             )
             sentimentInfo.put(
                 Provider.Sentiment_Analysis.CATEGORY, sentiment.category
