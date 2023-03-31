@@ -192,6 +192,7 @@ class SyncSettings @Inject constructor(
     }
 
     fun disablePlugin() {
+        //TODO check if we need to set other setting statuses to false as well
         Aware.setSetting(applicationContext, Settings.STATUS_PLUGIN_SMS_SENT, false)
         Scheduler.removeSchedule(applicationContext, SyncKeys.SCHEDULER_PLUGIN_SMS)
 
