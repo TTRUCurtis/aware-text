@@ -23,7 +23,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.*;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -619,8 +618,8 @@ public class Aware extends Service {
                 Aware_Provider.Aware_Studies.STUDY_TIMESTAMP + " DESC LIMIT 1");
 
         if (study != null && study.moveToFirst()) {
-            participant = (study.getDouble(study.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_EXIT)) == 0
-                    && study.getDouble(study.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_JOINED)) > 0); //joined and still enrolled
+            participant = (study.getDouble(study.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_EXIT)) == 0
+                    && study.getDouble(study.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_JOINED)) > 0); //joined and still enrolled
         }
         if (study != null && !study.isClosed()) study.close();
         return participant;
@@ -1039,11 +1038,10 @@ public class Aware extends Service {
      */
     @Deprecated()
     public static String getSetting(Context context, String key) {
-        if (settings != null) {
-            return settings.get(key) != null ? settings.get(key): "";
+        if (settingsRepository != null) {
+            return settingsRepository.getSetting(key);
         } else {
-            throw new IllegalStateException("Settings should not be null since they are loaded " +
-                    "synchronously in AwareApplication.onCreate");
+            throw new IllegalStateException("settingsRepository should not be null");
         }
     }
 
@@ -1054,24 +1052,18 @@ public class Aware extends Service {
      * @param value
      *
      * @deprecated We should not be using
-     * static methods for non-static data as they do not allow for ease of
-     * testing, refactoring, or scalability. Inject the Singleton {@link SettingsRepository}
+     * static methods for non-static data. Inject the Singleton {@link SettingsRepository}
      * instead.
      * TODO Inject SettingsRepository into every class that needs to use it and remove references
      * to this method
      */
     @Deprecated()
     public static void setSetting(Context context, String key, Object value) {
-        //First, update in-memory settings
-        if (settings != null) {
-            settings.put(key, value.toString());
+        if (settingsRepository != null) {
+            settingsRepository.setSetting(key, value.toString());
         } else {
-            throw new IllegalStateException("Settings should not be null since they are loaded " +
-                    "synchronously in AwareApplication.onCreate");
+            throw new IllegalStateException("settingsRepository should not be null");
         }
-
-        //Then update the database
-        settingsRepository.setSettingInStorage(key, value.toString());
     }
 
     /**
@@ -1123,8 +1115,9 @@ public class Aware extends Service {
         int study_id = 0;
         if (study != null && study.moveToFirst()) {
             try {
-                localConfig = new JSONArray(study.getString(study.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_CONFIG)));
-                study_id = study.getInt(study.getColumnIndex(Aware_Provider.Aware_Studies._ID));
+                localConfig =
+                        new JSONArray(study.getString(study.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_CONFIG)));
+                study_id = study.getInt(study.getColumnIndexOrThrow(Aware_Provider.Aware_Studies._ID));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -1692,39 +1685,19 @@ public class Aware extends Service {
     }
 
     public static void reset(Context context) {
-        String device_id = Aware.getSetting(context, Aware_Preferences.DEVICE_ID);
-        String device_label = Aware.getSetting(context, Aware_Preferences.DEVICE_LABEL);
-
-        //Remove all settings
-        context.getContentResolver().delete(Aware_Settings.CONTENT_URI, null, null);
+        //Clears all settings except device ID and label
+        settingsRepository.reset();
 
         //Remove all schedulers
         context.getContentResolver().delete(Scheduler_Provider.Scheduler_Data.CONTENT_URI, null, null);
-
-        //Read default client settings
-        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(context.getApplicationContext().getPackageName(), Context.MODE_PRIVATE);
-        PreferenceManager.setDefaultValues(context.getApplicationContext(), context.getApplicationContext().getPackageName(), Context.MODE_PRIVATE, R.xml.aware_preferences, true);
-        prefs.edit().commit();
-
-        Map<String, ?> defaults = prefs.getAll();
-        for (Map.Entry<String, ?> entry : defaults.entrySet()) {
-            Aware.setSetting(context, entry.getKey(), entry.getValue());
-        }
-
-        //Keep previous AWARE Device ID and label
-        Aware.setSetting(context, Aware_Preferences.DEVICE_ID, device_id);
-        Aware.setSetting(context, Aware_Preferences.DEVICE_LABEL, device_label);
-
-        ContentValues update_label = new ContentValues();
-        update_label.put(Aware_Device.LABEL, device_label);
-        context.getContentResolver().update(Aware_Device.CONTENT_URI, update_label, Aware_Device.DEVICE_ID + " LIKE '" + device_id + "'", null);
 
         //Turn off all active plugins
         ArrayList<String> active_plugins = new ArrayList<>();
         Cursor enabled_plugins = context.getContentResolver().query(Aware_Plugins.CONTENT_URI, null, Aware_Plugins.PLUGIN_STATUS + "=" + Aware_Plugin.STATUS_PLUGIN_ON, null, null);
         if (enabled_plugins != null && enabled_plugins.moveToFirst()) {
             do {
-                String package_name = enabled_plugins.getString(enabled_plugins.getColumnIndex(Aware_Plugins.PLUGIN_PACKAGE_NAME));
+                String package_name =
+                        enabled_plugins.getString(enabled_plugins.getColumnIndexOrThrow(Aware_Plugins.PLUGIN_PACKAGE_NAME));
                 active_plugins.add(package_name);
             } while (enabled_plugins.moveToNext());
         }
@@ -1778,7 +1751,8 @@ public class Aware extends Service {
                         Cursor studyInfo = Aware.getStudy(context, Aware.getSetting(context, Aware_Preferences.WEBSERVICE_SERVER));
                         if (studyInfo != null && studyInfo.moveToFirst()) {
                             try {
-                                JSONArray studyConfig = new JSONArray(studyInfo.getString(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_CONFIG)));
+                                JSONArray studyConfig =
+                                        new JSONArray(studyInfo.getString(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_CONFIG)));
                                 JSONArray plugins = new JSONArray();
                                 for (int i = 0; i < studyConfig.length(); i++) {
                                     try {
@@ -1799,14 +1773,14 @@ public class Aware extends Service {
                                         ContentValues complianceEntry = new ContentValues();
                                         complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_DEVICE_ID, Aware.getSetting(context, Aware_Preferences.DEVICE_ID));
                                         complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_TIMESTAMP, System.currentTimeMillis());
-                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_KEY, studyInfo.getInt(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_KEY)));
-                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_API, studyInfo.getString(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_API)));
-                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_URL, studyInfo.getString(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_URL)));
-                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_PI, studyInfo.getString(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_PI)));
-                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_CONFIG, studyInfo.getString(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_CONFIG)));
-                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_JOINED, studyInfo.getLong(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_JOINED)));
-                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_TITLE, studyInfo.getString(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_TITLE)));
-                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_DESCRIPTION, studyInfo.getString(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_DESCRIPTION)));
+                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_KEY, studyInfo.getInt(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_KEY)));
+                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_API, studyInfo.getString(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_API)));
+                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_URL, studyInfo.getString(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_URL)));
+                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_PI, studyInfo.getString(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_PI)));
+                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_CONFIG, studyInfo.getString(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_CONFIG)));
+                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_JOINED, studyInfo.getLong(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_JOINED)));
+                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_TITLE, studyInfo.getString(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE)));
+                                        complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_DESCRIPTION, studyInfo.getString(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_DESCRIPTION)));
                                         complianceEntry.put(Aware_Provider.Aware_Studies.STUDY_COMPLIANCE, "updated plugin: " + package_name);
 
                                         context.getContentResolver().insert(Aware_Provider.Aware_Studies.CONTENT_URI, complianceEntry);
@@ -1829,7 +1803,7 @@ public class Aware extends Service {
 
                     Cursor current_status = context.getContentResolver().query(Aware_Plugins.CONTENT_URI, new String[]{Aware_Plugins.PLUGIN_STATUS}, Aware_Plugins.PLUGIN_PACKAGE_NAME + " LIKE '" + packageName + "'", null, null);
                     if (current_status != null && current_status.moveToFirst()) {
-                        if (current_status.getInt(current_status.getColumnIndex(Aware_Plugins.PLUGIN_STATUS)) == PluginsManager.PLUGIN_UPDATED) { //was updated, set to active now
+                        if (current_status.getInt(current_status.getColumnIndexOrThrow(Aware_Plugins.PLUGIN_STATUS)) == PluginsManager.PLUGIN_UPDATED) { //was updated, set to active now
                             rowData.put(Aware_Plugins.PLUGIN_STATUS, Aware_Plugin.STATUS_PLUGIN_ON);
                         }
                     }
@@ -1868,7 +1842,8 @@ public class Aware extends Service {
                         Cursor studyInfo = Aware.getStudy(context, Aware.getSetting(context, Aware_Preferences.WEBSERVICE_SERVER));
                         if (studyInfo != null && studyInfo.moveToFirst()) {
                             try {
-                                JSONArray studyConfig = new JSONArray(studyInfo.getString(studyInfo.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_CONFIG)));
+                                JSONArray studyConfig =
+                                        new JSONArray(studyInfo.getString(studyInfo.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_CONFIG)));
                                 JSONArray plugins = new JSONArray();
                                 for (int i = 0; i < studyConfig.length(); i++) {
                                     try {

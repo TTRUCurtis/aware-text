@@ -1,8 +1,6 @@
 package com.aware.plugin.sms
 
-import android.content.Context
 import com.aware.utils.sentiment.SentimentAnalysis
-import com.aware.utils.sentiment.SentimentDictionary
 import edu.emory.mathcs.nlp.component.tokenizer.token.Token
 import javax.inject.Inject
 
@@ -11,16 +9,17 @@ class Sentiment @Inject constructor(
     private val sentimentAnalysis: SentimentAnalysis
 ) {
 
-    private var timestamp: String = ""
+    private var retrievalTimestamp: String = ""
+    private var messageTimestamp: String = ""
     private var totalWords: Int = 0
     private var address: String = ""
     private var type: String = ""
 
     fun getList(messages: ArrayList<Message>): ArrayList<SentimentData> {
         val sentimentList: ArrayList<SentimentData> = ArrayList()
-        val currentTime = System.currentTimeMillis()
         for(message in messages) {
-            timestamp = currentTime.toString()
+            retrievalTimestamp = System.currentTimeMillis().toString()
+            messageTimestamp = message.messageDate.toString()
             address = message.address.toString()
             type = message.type.toString()
             val text: String = message.msg.toString()
@@ -31,7 +30,8 @@ class Sentiment @Inject constructor(
                 if(pair.first != 0.0){
                     sentimentList.add(
                         SentimentData(
-                            timestamp,
+                            retrievalTimestamp,
+                            messageTimestamp,
                             category,
                             totalWords,
                             pair.second,
@@ -48,7 +48,8 @@ class Sentiment @Inject constructor(
 }
 
 data class SentimentData(
-    val timestamp: String,
+    val retrievalTimestamp: String,
+    val messageTimestamp: String,
     val category: String,
     val totalWords: Int,
     val wordCount: Int,
