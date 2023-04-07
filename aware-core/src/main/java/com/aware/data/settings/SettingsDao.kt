@@ -1,6 +1,5 @@
 package com.aware.data.settings
 
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
@@ -10,11 +9,11 @@ import android.util.Log
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.providers.Aware_Provider
+import com.aware.providers.Aware_Provider.Aware_Settings
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.HashMap
 import javax.inject.Inject
 
 /*
@@ -139,5 +138,9 @@ class SettingsDao @Inject constructor(@ApplicationContext private val appContext
             settingsCursor.close()
         } else settings = null
         return settings
+    }
+
+    fun clear() {
+        appContext.contentResolver.delete(Aware_Settings.CONTENT_URI, null, null)
     }
 }
