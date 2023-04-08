@@ -19,7 +19,7 @@ object PermissionUtils {
     private const val FITBIT = "com.aware.plugin.fitbit"
     private const val ACTIVITY_REC = "com.aware.plugin.google.activity_recognition"
     private const val AUTH = "com.aware.plugin.google.auth"
-    private const val FUSED_LOCATION = "com.aware.plugin.fused_location"
+    private const val FUSED_LOCATION = "com.aware.plugin.google.fused_location"
     private const val OPENWEATHER = "com.aware.plugin.openweather"
     private const val SENSORTAG = "com.aware.plugin.sensortag"
     private const val SENTIMENT = "com.aware.plugin.sentiment"
