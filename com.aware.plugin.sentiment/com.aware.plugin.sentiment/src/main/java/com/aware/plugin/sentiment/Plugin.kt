@@ -63,7 +63,11 @@ open class Plugin : Aware_Plugin() {
     override fun onCreate() {
         Log.i("ABTest", "This is echoed on create");
         super.onCreate()
+        AUTHORITY = Provider.getAuthority(this)
         TAG = "AWARE: Sentiment"
+
+        contextBroadcaster.setProvider(AUTHORITY)
+        contextBroadcaster.setTag(TAG)
 
         val usingInput = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         installedKeyboards = usingInput.enabledInputMethodList.toString()

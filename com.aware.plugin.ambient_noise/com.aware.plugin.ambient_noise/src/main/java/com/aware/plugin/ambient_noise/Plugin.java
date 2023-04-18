@@ -25,6 +25,8 @@ public class Plugin extends Aware_Plugin {
 
         AUTHORITY = Provider.getAuthority(this);
         TAG = "AWARE::Ambient Noise";
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
         REQUIRED_PERMISSIONS.add(Manifest.permission.RECORD_AUDIO);
     }
 

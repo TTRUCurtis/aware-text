@@ -3,6 +3,7 @@ package com.aware.plugin.sms
 import android.app.Service
 import android.content.Intent
 import android.util.Log
+import com.aware.Aware
 import com.aware.plugin.sms.Settings.Limit.NO_LIMIT_INDICATOR
 import com.aware.utils.Aware_Plugin
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,6 +43,8 @@ open class Plugin : Aware_Plugin() {
 
         Log.i(Logging.LOCAL_TAG, "This is echoed on create")
         AUTHORITY = Provider.getAuthority(this)
+        contextBroadcaster.setProvider(AUTHORITY)
+        contextBroadcaster.setTag(Logging.LOCAL_TAG)
     }
 
     //This function gets called by AWARE to make sure this plugin is still running.

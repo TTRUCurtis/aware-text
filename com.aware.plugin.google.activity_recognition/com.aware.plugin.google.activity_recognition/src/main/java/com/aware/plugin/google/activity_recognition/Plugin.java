@@ -38,6 +38,9 @@ public class Plugin extends Aware_Plugin implements GoogleApiClient.ConnectionCa
 
         TAG = "AWARE::Google Activity Recognition";
 
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
         CONTEXT_PRODUCER = new ContextProducer() {
             @Override
             public void onContext() {
