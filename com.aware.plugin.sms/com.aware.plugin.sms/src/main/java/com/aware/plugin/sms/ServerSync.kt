@@ -17,7 +17,7 @@ class ServerSync @Inject constructor(
     @ApplicationContext private val applicationContext: Context
 ){
     suspend fun syncMessages(messageList: List<Message>) {
-        return withContext(Dispatchers.IO) { //TODO inject dispatcher
+        withContext(Dispatchers.IO) { //TODO inject dispatcher
 
             for (message in messageList) {
                 val smsInfo = ContentValues()
@@ -43,8 +43,8 @@ class ServerSync @Inject constructor(
         }
     }
 
-    suspend fun syncSentiment(sentimentList: List<SentimentData>){
-        return withContext(Dispatchers.IO) { //TODO inject dispatcher
+    suspend fun syncSentiment(sentimentList: List<SentimentData>) {
+        withContext(Dispatchers.IO) { //TODO inject dispatcher
 
             for (sentiment in sentimentList) {
                 val sentimentInfo = ContentValues()

@@ -146,24 +146,6 @@ class Aware_Join_Study : AppCompatActivity() {
                 populateStudyInfo(study_configs!!)
             }
 
-            //TODO Permissions 2: Write a method to get all required permission Strings based on the
-            // active plugins/sensors (e.g. Manifest.permission.READ_SMS). Once we have the
-            // required permission Strings, we can request the permissions using the code
-            // outlined in this section: https://developer.android.com/training/permissions/requesting#allow-system-manage-request-code
-            // The plugins/sensors are listed in the 'study_configs' field populated from the
-            // server response. The source code for each sensor/plugin should have which
-            // permissions are required, but we need to find out the exact names sent from the server to map to
-            // the permissions
-
-            //TODO Permissions 3: Check and request permissions here
-            // (refer to https://developer.android.com/training/permissions/requesting#allow-system-manage-request-code).
-            // If they have been granted, do nothing, they can click btnAction to join the study.
-            // if a rationale should be shown, make up something generic. We can ask Sal if it's ok.
-            // If they have not been asked before, ask now.
-            // If they decline, show a dialog saying they cannot join the study without
-            // accepting the permissions and then return to the main screen (call finish() on the
-            // current Activity)
-
             btnPermissions!!.setOnClickListener {
                 startActivity(
                     Intent(

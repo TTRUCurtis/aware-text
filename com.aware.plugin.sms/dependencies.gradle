@@ -6,4 +6,5 @@ dependencies {
     api project(":aware-core")
 
     testImplementation "junit:junit:$jUnitVersion"
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4'
 }
