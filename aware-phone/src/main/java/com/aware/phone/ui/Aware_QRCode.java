@@ -105,6 +105,7 @@ public class Aware_QRCode extends Aware_Activity implements ZBarScannerView.Resu
         private ProgressDialog loader;
 
         private String study_url = "";
+        private String participant_id = null;
         private String study_api_key = "";
         private String study_id = "";
         private String study_config = "";
@@ -133,6 +134,20 @@ public class Aware_QRCode extends Aware_Activity implements ZBarScannerView.Resu
 
             Uri study_uri = Uri.parse(study_url);
             String protocol = study_uri.getScheme();
+
+            participant_id = study_uri.getQueryParameter("pid");
+            if (participant_id != null) {
+                if (Aware.DEBUG) Log.d(
+                        Aware.TAG,
+                        "AWARE Study participant ID detected: " + participant_id
+                );
+                Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, participant_id);
+            } else {
+                if (Aware.DEBUG) Log.d(
+                        Aware.TAG,
+                        "AWARE Study participant ID NOT detected!"
+                );
+            }
 
             List<String> path_segments = study_uri.getPathSegments();
 
