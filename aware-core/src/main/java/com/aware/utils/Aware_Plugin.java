@@ -92,13 +92,16 @@ public class Aware_Plugin extends Service {
                     PERMISSIONS_OK = false;
                     break;
                 }
+
+                PERMISSIONS_OK = true;
             }
         }
 
         if (!PERMISSIONS_OK) {
             Intent permissions = new Intent(this, PermissionsHandler.class);
             permissions.putExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, REQUIRED_PERMISSIONS);
-            permissions.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            permissions.putExtra(PermissionsHandler.EXTRA_SHOW_NOTIFICATION, true);
+            permissions.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_FROM_BACKGROUND);
             permissions.putExtra(PermissionsHandler.EXTRA_REDIRECT_SERVICE, getApplicationContext().getPackageName() + "/" + getClass().getName()); //restarts plugin once permissions are accepted
             startActivity(permissions);
         } else {

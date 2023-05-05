@@ -1,13 +1,20 @@
 package com.aware.ui;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+
 import com.aware.Aware;
+import com.aware.R;
 
 import java.util.ArrayList;
 
@@ -46,6 +53,10 @@ public class PermissionsHandler extends Activity {
 
     private Intent redirect_activity, redirect_service;
 
+    public static final String EXTRA_SHOW_NOTIFICATION = "show_notification";
+    public static final String EXTRA_REQUEST_PERMISSIONS = "request_permissions";
+    public static final String LOG_TAG = "Permissions:";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,21 +66,82 @@ public class PermissionsHandler extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        boolean check = getIntent() == null;
+        Log.d(LOG_TAG, String.valueOf(check));
         if (getIntent() != null && getIntent().getExtras() != null && getIntent().getSerializableExtra(EXTRA_REQUIRED_PERMISSIONS) != null) {
-            ArrayList<String> permissionsNeeded = (ArrayList<String>) getIntent().getSerializableExtra(EXTRA_REQUIRED_PERMISSIONS);
-            ActivityCompat.requestPermissions(PermissionsHandler.this, permissionsNeeded.toArray(new String[permissionsNeeded.size()]), RC_PERMISSIONS);
-            if (getIntent().hasExtra(EXTRA_REDIRECT_ACTIVITY)) {
-                redirect_activity = new Intent();
-                String[] component = getIntent().getStringExtra(EXTRA_REDIRECT_ACTIVITY).split("/");
-                redirect_activity.setComponent(new ComponentName(component[0], component[1]));
-                redirect_activity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            } else if (getIntent().hasExtra(EXTRA_REDIRECT_SERVICE)) {
-                redirect_service = new Intent();
-                redirect_service.setAction(ACTION_AWARE_PERMISSIONS_CHECK);
-                String[] component = getIntent().getStringExtra(EXTRA_REDIRECT_SERVICE).split("/");
-                redirect_service.setComponent(new ComponentName(component[0], component[1]));
+            if(getIntent().getBooleanExtra(EXTRA_SHOW_NOTIFICATION, true)) {
+                Log.d(LOG_TAG, "inside of EXTRA_SHOW_NOTIFICATIONS");
+                NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+                Intent requestPermissions = new Intent(this, PermissionsHandler.class);
+                requestPermissions.putExtra(
+                        EXTRA_REQUIRED_PERMISSIONS,
+                        (ArrayList<String>) getIntent().getSerializableExtra(EXTRA_REQUIRED_PERMISSIONS)
+                );
+                requestPermissions.putExtra(
+                        EXTRA_REDIRECT_SERVICE,
+                        getIntent().getStringExtra(EXTRA_REDIRECT_SERVICE)
+                );
+                requestPermissions.putExtra(
+                        EXTRA_REQUEST_PERMISSIONS,
+                        true)
+                ;
+                requestPermissions.putExtra(
+                        EXTRA_SHOW_NOTIFICATION,
+                        false
+                );
+                requestPermissions.setFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK |
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK |
+                        Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT
+                );
+
+                PendingIntent pi = PendingIntent.getActivity(
+                        getApplicationContext(),
+                        123,
+                        requestPermissions,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT
+                );
+
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
+                    .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
+                    .setContentTitle("Notification Title")
+                    .setContentText("Notification Text")
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setContentIntent(pi)
+                    .setAutoCancel(true)
+                    .setContentIntent(pi);
+
+                Aware.setNotificationProperties(builder, Aware.AWARE_NOTIFICATION_IMPORTANCE_GENERAL);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    builder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
+
+                try {
+                    notificationManager.notify(123, builder.build());
+                } catch (NullPointerException e) {
+                    if (Aware.DEBUG) Log.d(Aware.TAG, "Notification exception: " + e);
+                }
+            }else if (getIntent().getBooleanExtra(EXTRA_REQUEST_PERMISSIONS, true)) {
+                Log.d(LOG_TAG, "inside of EXTRA_REQUEST_PERMISSIONS");
+                ArrayList<String> permissionsNeeded = (ArrayList<String>) getIntent().getSerializableExtra(EXTRA_REQUIRED_PERMISSIONS);
+                ActivityCompat.requestPermissions(PermissionsHandler.this, permissionsNeeded.toArray(new String[permissionsNeeded.size()]), RC_PERMISSIONS);
+                if (getIntent().hasExtra(EXTRA_REDIRECT_ACTIVITY)) {
+                    redirect_activity = new Intent();
+                    String[] component = getIntent().getStringExtra(EXTRA_REDIRECT_ACTIVITY).split("/");
+                    redirect_activity.setComponent(new ComponentName(component[0], component[1]));
+                    redirect_activity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                } else if (getIntent().hasExtra(EXTRA_REDIRECT_SERVICE)) {
+                    redirect_service = new Intent();
+                    redirect_service.setAction(ACTION_AWARE_PERMISSIONS_CHECK);
+                    String[] component = getIntent().getStringExtra(EXTRA_REDIRECT_SERVICE).split("/");
+                    Log.d(LOG_TAG, component[0]);
+                    Log.d(LOG_TAG, component[1]);
+                    redirect_service.setComponent(new ComponentName(component[0], component[1]));
+                }
             }
         } else {
+            Log.d(LOG_TAG, "inside of else");
             Intent activity = new Intent();
             setResult(Activity.RESULT_OK, activity);
             finish();

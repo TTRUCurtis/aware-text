@@ -1,5 +1,6 @@
 package com.aware.plugin.sms
 
+import android.Manifest
 import android.app.Service
 import android.content.Intent
 import android.util.Log
@@ -42,6 +43,7 @@ open class Plugin : Aware_Plugin() {
 
         Log.i(Logging.LOCAL_TAG, "This is echoed on create")
         AUTHORITY = Provider.getAuthority(this)
+        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SMS)
     }
 
     //This function gets called by AWARE to make sure this plugin is still running.
@@ -228,7 +230,7 @@ open class Plugin : Aware_Plugin() {
                 serverSync.updateServerSyncSettings()
             }
         } else {
-            throw IllegalStateException(TAG + "SMS Plugin does not have the required permissions")
+            //throw IllegalStateException(TAG + "SMS Plugin does not have the required permissions")
         }
         return Service.START_STICKY
     }
