@@ -2,6 +2,8 @@
 package com.aware.utils;
 
 import android.Manifest;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.*;
 import android.os.Build;
@@ -9,10 +11,12 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.PermissionChecker;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
+import com.aware.R;
 import com.aware.ui.PermissionsHandler;
 
 import java.util.ArrayList;
@@ -89,6 +93,7 @@ public class Aware_Plugin extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             for (String p : REQUIRED_PERMISSIONS) {
                 if (ContextCompat.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
+                    Log.d("Permissions:", "permissions not granted!");
                     PERMISSIONS_OK = false;
                     break;
                 }
@@ -98,14 +103,58 @@ public class Aware_Plugin extends Service {
         }
 
         if (!PERMISSIONS_OK) {
-            Intent permissions = new Intent(this, PermissionsHandler.class);
-            permissions.putExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, REQUIRED_PERMISSIONS);
-            permissions.putExtra(PermissionsHandler.EXTRA_SHOW_NOTIFICATION, true);
-            permissions.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_FROM_BACKGROUND);
-            permissions.putExtra(PermissionsHandler.EXTRA_REDIRECT_SERVICE, getApplicationContext().getPackageName() + "/" + getClass().getName()); //restarts plugin once permissions are accepted
-            startActivity(permissions);
-        } else {
 
+            Log.d("Permissions:", "inside of !PERMISSIONS_OK");
+
+            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+            Intent requestPermissions = new Intent(getApplicationContext(), PermissionsHandler.class);
+            requestPermissions.putExtra(
+                    PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS,
+                    REQUIRED_PERMISSIONS
+            );
+            requestPermissions.putExtra(
+                    PermissionsHandler.EXTRA_REQUEST_PERMISSIONS,
+                    true
+            );
+            requestPermissions.putExtra(
+                    PermissionsHandler.EXTRA_REDIRECT_SERVICE,
+                    getApplicationContext().getPackageName() + "/" + getClass().getName()
+            );
+            requestPermissions.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+            );
+
+            PendingIntent pi = PendingIntent.getActivity(
+                    getApplicationContext(),
+                    123,
+                    requestPermissions,
+                    PendingIntent.FLAG_UPDATE_CURRENT |
+                    PendingIntent.FLAG_ONE_SHOT |
+                    PendingIntent.FLAG_IMMUTABLE |
+                    PendingIntent.FLAG_CANCEL_CURRENT
+            );
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
+                    .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
+                    .setContentTitle("Notification Title")
+                    .setContentText("Notification Text")
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
+                    .setContentIntent(pi);
+
+            Aware.setNotificationProperties(builder, Aware.AWARE_NOTIFICATION_IMPORTANCE_GENERAL);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                builder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
+
+            try {
+                notificationManager.notify(123, builder.build());
+            } catch (NullPointerException e) {
+                if (Aware.DEBUG) Log.d(Aware.TAG, "Notification exception: " + e);
+            }
+        } else {
+            Log.d("Permissions:", "Permissions are ok!");
             PERMISSIONS_OK = true;
 
             if (Aware.getSetting(this, Aware_Preferences.STATUS_WEBSERVICE).equals("true")) {
