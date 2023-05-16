@@ -4,117 +4,89 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.content.SyncRequest
-import android.database.Cursor
 import android.os.Bundle
 import com.aware.Aware
 import com.aware.Aware_Preferences
-import com.aware.providers.Aware_Provider
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.json.JSONException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.max
 
 class ServerSync @Inject constructor(
     @ApplicationContext private val applicationContext: Context
 ){
-    fun syncMessages(messageList: List<Message>) {
+    suspend fun syncMessages(messageList: List<Message>) {
+        withContext(Dispatchers.IO) { //TODO inject dispatcher
 
-        for (message in messageList) {
-            val smsInfo = ContentValues()
-            smsInfo.put(
-                Provider.Sms_Data.RETRIEVAL_TIMESTAMP,
-                message.retrievalDate
-            )
-            smsInfo.put(
-                Provider.Sms_Data.DEVICE_ID,
-                Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)
-            )
-            smsInfo.put(Provider.Sms_Data.MESSAGE_TIMESTAMP, message.messageDate)
-            smsInfo.put(Provider.Sms_Data.MSG_TYPE, message.type)
-            smsInfo.put(Provider.Sms_Data.MSG_THREAD_ID, message.threadId)
-            smsInfo.put(Provider.Sms_Data.MSG_ADDRESS, message.address)
-            smsInfo.put(Provider.Sms_Data.MSG_BODY, message.msg)
-
-            applicationContext.contentResolver.insert(
-                Provider.Sms_Data.CONTENT_URI,
-                smsInfo
-            )
-        }
-    }
-
-    fun syncSentiment(sentimentList: List<SentimentData>){
-        for(sentiment in sentimentList){
-            val sentimentInfo = ContentValues()
-            sentimentInfo.put(
-                Provider.Sentiment_Analysis.RETRIEVAL_TIMESTAMP, sentiment.retrievalTimestamp
-            )
-            sentimentInfo.put(
-                Provider.Sentiment_Analysis.DEVICE_ID,
-                Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)
-            )
-            sentimentInfo.put(
-                Provider.Sentiment_Analysis.MESSAGE_TIMESTAMP, sentiment.messageTimestamp
-            )
-            sentimentInfo.put(
-                Provider.Sentiment_Analysis.CATEGORY, sentiment.category
-            )
-            sentimentInfo.put(
-                Provider.Sentiment_Analysis.TOTAL_WORDS, sentiment.totalWords
-            )
-            sentimentInfo.put(
-                Provider.Sentiment_Analysis.DICTIONARY_WORDS, sentiment.wordCount
-            )
-            sentimentInfo.put(
-                Provider.Sentiment_Analysis.SCORE, sentiment.score
-            )
-            sentimentInfo.put(
-                Provider.Sentiment_Analysis.ADDRESS, sentiment.address
-            )
-            sentimentInfo.put(
-                Provider.Sentiment_Analysis.TYPE, sentiment.type
-            )
-
-            applicationContext.contentResolver.insert(
-                Provider.Sentiment_Analysis.CONTENT_URI,
-                sentimentInfo
-            )
-        }
-    }
-
-    // Copied from AwareSyncAdapter (and cut down for this purpose)
-    // Need to get the last sync date for this table to
-    // allow putting items into the sync queue only when previous items
-    // were sync'd to server
-
-    fun getLatestSMSServerSync(): Double {
-        var lastSyncTimestamp = 0.0
-        val lastSynced: Cursor? = applicationContext.getContentResolver().query(
-            Aware_Provider.Aware_Log.CONTENT_URI,
-            null,
-            Aware_Provider.Aware_Log.LOG_MESSAGE + " LIKE '{\"table\":\"" + "plugin_sms" + "\",\"last_sync_timestamp\":%'",
-            null,
-            Aware_Provider.Aware_Log.LOG_TIMESTAMP + " DESC LIMIT 1"
-        )
-        if (lastSynced != null && lastSynced.moveToFirst()) {
-            try {
-                lastSyncTimestamp =
-                    lastSynced.getDouble(lastSynced.getColumnIndexOrThrow(Aware_Provider.Aware_Log.LOG_TIMESTAMP))
-                // Update latest Server Sync Timestamp
-                Aware.setSetting(
-                    applicationContext,
-                    Settings.PLUGIN_SMS_LAST_SERVER_SYNC_TIMESTAMP,
-                    lastSyncTimestamp.toString()
+            for (message in messageList) {
+                val smsInfo = ContentValues()
+                smsInfo.put(
+                    Provider.Sms_Data.RETRIEVAL_TIMESTAMP,
+                    message.retrievalDate
                 )
-            } catch (e: JSONException) {
-                e.printStackTrace()
+                smsInfo.put(
+                    Provider.Sms_Data.DEVICE_ID,
+                    Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)
+                )
+                smsInfo.put(Provider.Sms_Data.MESSAGE_TIMESTAMP, message.messageDate)
+                smsInfo.put(Provider.Sms_Data.MSG_TYPE, message.type)
+                smsInfo.put(Provider.Sms_Data.MSG_THREAD_ID, message.threadId)
+                smsInfo.put(Provider.Sms_Data.MSG_ADDRESS, message.address)
+                smsInfo.put(Provider.Sms_Data.MSG_BODY, message.msg)
+
+                applicationContext.contentResolver.insert(
+                    Provider.Sms_Data.CONTENT_URI,
+                    smsInfo
+                )
             }
-            lastSynced.close()
         }
-        return lastSyncTimestamp
+    }
+
+    suspend fun syncSentiment(sentimentList: List<SentimentData>) {
+        withContext(Dispatchers.IO) { //TODO inject dispatcher
+
+            for (sentiment in sentimentList) {
+                val sentimentInfo = ContentValues()
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.RETRIEVAL_TIMESTAMP, sentiment.retrievalTimestamp
+                )
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.DEVICE_ID,
+                    Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)
+                )
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.MESSAGE_TIMESTAMP, sentiment.messageTimestamp
+                )
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.CATEGORY, sentiment.category
+                )
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.TOTAL_WORDS, sentiment.totalWords
+                )
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.DICTIONARY_WORDS, sentiment.wordCount
+                )
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.SCORE, sentiment.score
+                )
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.ADDRESS, sentiment.address
+                )
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.TYPE, sentiment.type
+                )
+
+                applicationContext.contentResolver.insert(
+                    Provider.Sentiment_Analysis.CONTENT_URI,
+                    sentimentInfo
+                )
+            }
+        }
     }
 
     //STUDY-SYNC: plugin_sms
-    fun updateServerSyncSettings() {
+    fun setPeriodic() {
         if (Aware.isStudy(applicationContext)) {
             val aware_account = Aware.getAWAREAccount(applicationContext)
             val authority = Provider.getAuthority(applicationContext)
