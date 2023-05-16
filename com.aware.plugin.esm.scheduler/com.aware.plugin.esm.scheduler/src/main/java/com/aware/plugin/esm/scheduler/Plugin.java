@@ -30,7 +30,7 @@ public class Plugin extends Aware_Plugin {
         TAG = "AWARE::" + getResources().getString(R.string.app_name);
 
         //Add permissions you need (Android M+).
-        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_CALENDAR);
+        //REQUIRED_PERMISSIONS.add(Manifest.permission.READ_CALENDAR);
     }
 
     public class CalendarObserver extends ContentObserver {

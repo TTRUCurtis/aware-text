@@ -30,6 +30,8 @@ public class Plugin extends Aware_Plugin {
 
         AUTHORITY = Provider.getAuthority(this);
         TAG = "AWARE::Contacts List";
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
         //REQUIRED_PERMISSIONS.add(Manifest.permission.READ_CONTACTS);
     }
 

@@ -68,6 +68,9 @@ class Websocket : Aware_Sensor() {
                 super.sendMessage(message)
             }
         }
+
+        contextBroadcaster.setTag(TAG)
+        contextBroadcaster.setProvider(AUTHORITY)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

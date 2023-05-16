@@ -214,6 +214,9 @@ public class Proximity extends Aware_Sensor implements SensorEventListener {
         filter.addAction(ACTION_AWARE_PROXIMITY_LABEL);
         registerReceiver(dataLabeler, filter);
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (Aware.DEBUG) Log.d(TAG, "Proximity service created!");
     }
 

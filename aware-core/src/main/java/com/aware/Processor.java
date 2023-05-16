@@ -34,6 +34,11 @@ import java.util.HashMap;
 public class Processor extends Aware_Sensor {
 
     /**
+     * Logging tag (default = "AWARE::Processor")
+     */
+    private static String TAG = "AWARE::Processor";
+
+    /**
      * Broadcasted event: when there is new processor usage information
      */
     public static final String ACTION_AWARE_PROCESSOR = "ACTION_AWARE_PROCESSOR";
@@ -163,6 +168,9 @@ public class Processor extends Aware_Sensor {
     public void onCreate() {
         super.onCreate();
         AUTHORITY = Processor_Provider.getAuthority(this);
+
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
 
         if (Aware.DEBUG) Log.d(TAG, "Processor service created");
     }

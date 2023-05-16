@@ -117,6 +117,9 @@ public class Installations extends Aware_Sensor {
         filter.addDataScheme("package");
         registerReceiver(installationsMonitor, filter);
 
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
         if (Aware.DEBUG) Log.d(TAG, "Installations service created!");
     }
 

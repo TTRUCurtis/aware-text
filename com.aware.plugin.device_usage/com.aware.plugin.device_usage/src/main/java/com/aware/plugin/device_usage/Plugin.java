@@ -67,6 +67,9 @@ public class Plugin extends Aware_Plugin {
                 sendBroadcast(sharedContext);
             }
         };
+
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
     }
 
     @Override
