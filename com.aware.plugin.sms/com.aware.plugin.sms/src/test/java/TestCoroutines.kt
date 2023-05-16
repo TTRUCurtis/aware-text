@@ -33,6 +33,11 @@ class TestCoroutines {
         println(data)
         val moreData = fetchMoreData(i)
         println("$data + $moreData")
+
+        //Cancel after 10th try
+        if (i == 10) {
+            eventsChannel.cancel()
+        }
     }
 
     private suspend fun fetchData(i: Int): String {
