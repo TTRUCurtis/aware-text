@@ -57,8 +57,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
-                            android:id="@+id/participant_label"
-                            android:inputType="textEmailAddress" android:hint="Your email address"/>
+                            android:id="@+id/participant_id"
+                            android:hint="Your Participant ID"/>
                 </LinearLayout>
             </ScrollView>
         </LinearLayout>

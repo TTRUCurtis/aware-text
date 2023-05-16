@@ -56,7 +56,7 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
         if (participantId == null) {
             return Result.error("Unable to find participant ID from provided info: " + registrationData);
         } else {
-            Aware.setSetting(application, Aware_Preferences.DEVICE_LABEL, participantId);
+            Aware.setSetting(application, Aware_Preferences.DEVICE_ID, participantId);
         }
 
         Result<StudyMetadata.Builder> result = getStudyAndSurveyUrls(registrationData);
