@@ -119,7 +119,7 @@ class SyncSettings @Inject constructor(
     }
 
 
-    fun updateSchedule() {
+    fun setSchedule() {
         try {
             var smsSync = Scheduler.getSchedule(applicationContext, SyncKeys.SCHEDULER_PLUGIN_SMS)
             var checkInterval = Settings.PLUGIN_SMS_SYNC_FREQUENCY_DEFAULT

@@ -37,34 +37,6 @@ class SettingsDao @Inject constructor(@ApplicationContext private val appContext
         key: String,
         value: Any
     ) {
-        //Check if we already have a device ID
-        if (key == Aware_Preferences.DEVICE_ID) {
-            try {
-                val setting = Aware.getSetting(appContext, Aware_Preferences.DEVICE_ID)
-                if (setting.isNotEmpty()) {
-                    Log.d(Aware.TAG, "AWARE UUID: $setting")
-                }
-            } catch (e: IllegalStateException) {
-                Log.i(
-                    Aware.TAG,
-                    "This will be thrown the first time through since settings are not yet loaded in memory",
-                    e
-                )
-            }
-        }
-        if (key == Aware_Preferences.DEVICE_LABEL && (value as String).isNotEmpty()) {
-            val newLabel = ContentValues()
-            newLabel.put(Aware_Provider.Aware_Device.LABEL, value)
-            appContext.applicationContext.contentResolver.update(
-                Aware_Provider.Aware_Device.CONTENT_URI,
-                newLabel,
-                Aware_Provider.Aware_Device.DEVICE_ID + " LIKE '" + Aware.getSetting(
-                    appContext,
-                    Aware_Preferences.DEVICE_ID
-                ) + "'",
-                null
-            )
-        }
         val setting = ContentValues()
         setting.put(Aware_Provider.Aware_Settings.SETTING_KEY, key)
         setting.put(Aware_Provider.Aware_Settings.SETTING_VALUE, value.toString())
