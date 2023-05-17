@@ -28,7 +28,6 @@ import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
 import com.aware.phone.R
-import com.aware.phone.ui.PermissionUtils.getPermissions
 import com.aware.providers.Aware_Provider
 import com.aware.utils.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -737,7 +736,7 @@ class Aware_Join_Study : AppCompatActivity() {
             }
         }
 
-        permissions = populatePermissionsList(plugins, sensors)
+        permissions = PermissionUtils.populatePermissionsList(study_config)
 
         permissionLauncher =
             registerForActivityResult(
@@ -786,36 +785,6 @@ class Aware_Join_Study : AppCompatActivity() {
         mAdapter = PluginsAdapter(active_plugins!!)
         pluginsRecyclerView!!.adapter = mAdapter
     }
-
-    private fun populatePermissionsList(plugins: JSONArray, sensors: JSONArray): ArrayList<String> {
-        var permissions: ArrayList<String> = ArrayList()
-        for (i in 0 until plugins.length()) {
-            try {
-                val plugin = plugins.getJSONObject(i)
-                permissions?.addAll(
-                    getPermissions(plugin.getString("plugin"))
-                )  //sends in "com.aware.plugin...."
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }
-        }
-
-        for (i in 0 until sensors.length()) {
-            try {
-                val sensor = sensors.getJSONObject(i)
-                permissions?.addAll(
-                    getPermissions(sensor.getString("setting"))
-                )
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }
-        }
-        permissions?.addAll(PermissionUtils.getRequiredPermissions())
-
-        return ArrayList(permissions?.distinct())
-
-    }
-
 
     private fun requestStudyPermissions(permissions: ArrayList<String>){
         val permissionRequest: MutableList<String> = ArrayList()

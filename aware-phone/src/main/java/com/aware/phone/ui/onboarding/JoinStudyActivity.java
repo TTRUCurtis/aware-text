@@ -77,7 +77,7 @@ public class JoinStudyActivity extends AppCompatActivity {
         joinStudyFromTextLayout = findViewById(R.id.layout_join_study_thru_text);
         actionButton = findViewById(R.id.btn_action);
         actionButton.setOnClickListener(v -> {
-            String defaultSmsPackageName = Telephony.Sms.getDefaultSmsPackage(this);
+            Telephony.Sms.getDefaultSmsPackage(this);
 
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse("sms:"));
@@ -198,13 +198,6 @@ public class JoinStudyActivity extends AppCompatActivity {
             });
         });
     }
-
-//    private void requestPermissions(ArrayList<String> requiredPermissions) {
-//        Intent permissionsHandler = new Intent(this, PermissionsHandler.class);
-//        permissionsHandler.putStringArrayListExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, requiredPermissions);
-//        permissionsHandler.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        startActivityForResult(permissionsHandler, REQUEST_CODE_PERMISSIONS);
-//    }
 
     private void checkForStudy(Intent intent) {
         Uri uri = intent.getData();
