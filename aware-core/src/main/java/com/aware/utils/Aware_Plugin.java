@@ -1,7 +1,6 @@
 
 package com.aware.utils;
 
-import android.Manifest;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -17,17 +16,26 @@ import androidx.core.content.PermissionChecker;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.R;
+import com.aware.ui.PermissionHandler;
 import com.aware.ui.PermissionsHandler;
 
 import java.util.ArrayList;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * Aware_Plugin: Extend to integrate with the framework (extension of Android Service class).
  *
  * @author denzil
  */
+@AndroidEntryPoint
 public class Aware_Plugin extends Service {
 
+
+    @Inject
+    public PermissionHandler permissionHandler;
     /**
      * Debug tag for this plugin
      */
@@ -108,7 +116,7 @@ public class Aware_Plugin extends Service {
 
             NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-            Intent requestPermissions = new Intent(getApplicationContext(), PermissionsHandler.class);
+            Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(getApplicationContext());
             requestPermissions.putExtra(
                     PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS,
                     REQUIRED_PERMISSIONS

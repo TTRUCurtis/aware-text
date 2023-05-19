@@ -106,6 +106,12 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
 //            startService(aware);
 //        }
 
+        if (getIntent().hasExtra(PermissionsHandler.EXTRA_REQUEST_PERMISSIONS)) {
+            Intent permissionsHandler = getIntent();
+            permissionsHandler.setClass(getApplicationContext(), PermissionsHandler.class);
+            startActivity(permissionsHandler);
+        }
+
         IntentFilter awarePackages = new IntentFilter();
         awarePackages.addAction(Intent.ACTION_PACKAGE_ADDED);
         awarePackages.addAction(Intent.ACTION_PACKAGE_REMOVED);
@@ -116,6 +122,15 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             Intent whitelisting = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
             whitelisting.setData(Uri.parse("package:" + getPackageName()));
             startActivity(whitelisting);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (intent.hasExtra(PermissionsHandler.EXTRA_REQUEST_PERMISSIONS)) {
+            intent.setClass(getApplicationContext(), PermissionsHandler.class);
+            startActivity(intent);
         }
     }
 
