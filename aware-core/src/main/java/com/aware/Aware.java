@@ -348,7 +348,7 @@ public class Aware extends Service {
     public void foreground(boolean enable) {
         if (enable) {
             Intent aware = new Intent(this, Aware.class);
-            PendingIntent onTap = PendingIntent.getService(this, 0, aware, 0);
+            PendingIntent onTap = PendingIntent.getService(this, 0, aware, PendingIntent.FLAG_IMMUTABLE);
 
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Aware.AWARE_NOTIFICATION_CHANNEL_SILENT);
             mBuilder.setSmallIcon(R.drawable.ic_action_aware_studies);
@@ -476,7 +476,8 @@ public class Aware extends Service {
             Intent batteryIntent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
             batteryIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-            PendingIntent clickIntent = PendingIntent.getActivity(context, 0, batteryIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent clickIntent =
+                    PendingIntent.getActivity(context, 0, batteryIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             mBuilder.setContentIntent(clickIntent);
 
             NotificationManager notManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -654,10 +655,6 @@ public class Aware extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PermissionChecker.PERMISSION_GRANTED) {
-            return START_STICKY;
-        }
-
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 
             if (Aware.DEBUG) Log.d(TAG, "AWARE framework is active...");
@@ -772,7 +769,8 @@ public class Aware extends Service {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                             mBuilder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
 
-                        PendingIntent clickIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, new Intent(), PendingIntent.FLAG_UPDATE_CURRENT);
+                        PendingIntent clickIntent =
+                                PendingIntent.getActivity(context.getApplicationContext(), 0, new Intent(), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                         mBuilder.setContentIntent(clickIntent);
 
                         notManager.notify(CHARGE_REMINDER, mBuilder.build());

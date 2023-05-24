@@ -85,53 +85,11 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             listSensorType.put(sensors.get(i).getType(), true);
         }
 
-//        boolean PERMISSIONS_OK = true;
-
-        //TODO Permissions 1: Delete all existing permission checking from this class. We'll check
-        // permissions when we enable plugins/sensors. (If the user disables permissions for this
-        // app from their Android Settings and those plugins/sensors are still enabled when they
-        // start the app, we can ask again in the app startup process, but that will be an edge case
-        // so we can take care of it later.)
-
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            for (String p : PermissionUtils.getRequiredPermissions()) {
-//                if (ContextCompat.checkSelfPermission(this, p) != PERMISSION_GRANTED) {
-//                    PERMISSIONS_OK = false;
-//                    break;
-//                }
-//            }
-//        }
-//        if (PERMISSIONS_OK) {
-//            Intent aware = new Intent(this, Aware.class);
-//            startService(aware);
-//        }
-
-        if (getIntent().hasExtra(PermissionsHandler.EXTRA_REQUEST_PERMISSIONS)) {
-            Intent permissionsHandler = getIntent();
-            permissionsHandler.setClass(getApplicationContext(), PermissionsHandler.class);
-            startActivity(permissionsHandler);
-        }
-
         IntentFilter awarePackages = new IntentFilter();
         awarePackages.addAction(Intent.ACTION_PACKAGE_ADDED);
         awarePackages.addAction(Intent.ACTION_PACKAGE_REMOVED);
         awarePackages.addDataScheme("package");
         registerReceiver(packageMonitor, awarePackages);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Intent whitelisting = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-            whitelisting.setData(Uri.parse("package:" + getPackageName()));
-            startActivity(whitelisting);
-        }
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        if (intent.hasExtra(PermissionsHandler.EXTRA_REQUEST_PERMISSIONS)) {
-            intent.setClass(getApplicationContext(), PermissionsHandler.class);
-            startActivity(intent);
-        }
     }
 
     @Override
@@ -304,14 +262,6 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                 if (pref.getKey().equalsIgnoreCase(optionalSensor) && !listSensorType.containsKey(optionalSensors.get(optionalSensor)))
                     parent.setEnabled(false);
             }
-
-            //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
-            if (!Aware.is_watch(this)) {
-                Applications.isAccessibilityServiceActive(this);
-            }
-
-            //Check if AWARE is allowed to run on Doze
-            //Aware.isBatteryOptimizationIgnored(this, getPackageName());
 
             prefs.registerOnSharedPreferenceChangeListener(this);
             

@@ -24,11 +24,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.aware.Applications
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
 import com.aware.phone.R
-import com.aware.phone.ui.Aware_Join_Study
 import com.aware.phone.ui.PermissionUtils.getPermissions
 import com.aware.providers.Aware_Provider
 import com.aware.utils.*
@@ -46,12 +46,14 @@ class Aware_Join_Study : AppCompatActivity() {
     private var mAdapter: RecyclerView.Adapter<*>? = null
     private var mLayoutManager: RecyclerView.LayoutManager? = null
     private var pluginsInstalled = true
+    private var participantIdEditText: EditText? = null
     private var btnAction: Button? = null
     private var btnQuit: Button? = null
     private var btnPermissions: Button? = null
     private var txtJoinDisabled: TextView? = null
     private var llPluginsRequired: LinearLayout? = null
     private var study_configs: JSONArray? = null
+    private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
 
@@ -66,27 +68,12 @@ class Aware_Join_Study : AppCompatActivity() {
         btnQuit = findViewById<View>(R.id.btn_quit_study) as Button
         btnPermissions = findViewById<View>(R.id.btn_go_to_permissions) as Button
         txtJoinDisabled = findViewById(R.id.txt_join_disabled) as TextView
-        val participant_label = findViewById<EditText>(R.id.participant_label)
-        participant_label.setText(
-            Aware.getSetting(
-                applicationContext,
-                Aware_Preferences.DEVICE_LABEL
-            )
-        )
-        participant_label.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                Aware.setSetting(applicationContext, Aware_Preferences.DEVICE_LABEL, s.toString())
-            }
-
-            override fun afterTextChanged(s: Editable) {}
-        })
+        participantIdEditText = findViewById(R.id.participant_id)
         pluginsRecyclerView = findViewById<View>(R.id.rv_plugins) as RecyclerView
         mLayoutManager = LinearLayoutManager(this)
         pluginsRecyclerView!!.layoutManager = mLayoutManager
         llPluginsRequired = findViewById<View>(R.id.ll_plugins_required) as LinearLayout
         study_url = intent.getStringExtra(EXTRA_STUDY_URL)
-
 
         //If we are getting here from an AWARE study link
         val scheme = intent.scheme
@@ -101,25 +88,46 @@ class Aware_Join_Study : AppCompatActivity() {
             } else if (scheme.equals("aware-ssl", ignoreCase = true)) {
                 study_url = intent.dataString?.replace("aware-ssl://", "https://")
             }
-            val url = Uri.parse(study_url)
-            onboarding = url.getQueryParameter("participant")
-            if (onboarding != null) {
-                if (Aware.DEBUG) Log.d(
-                    Aware.TAG,
-                    "AWARE Study participant ID detected: " + onboarding
-                )
-                study_url = study_url!!.substring(0, study_url!!.indexOf("participant") - 1)
-                if (Aware.DEBUG) Log.d(Aware.TAG, "AWARE Study URL: " + study_url)
-                participant_label.setText(onboarding)
-                participant_label.isFocusable = false
-                participant_label.isEnabled = false
-                participant_label.isCursorVisible = false
-                participant_label.keyListener = null
-                participant_label.setBackgroundColor(Color.TRANSPARENT)
-            } else {
-                onboarding = ""
-                participant_label.setText(onboarding)
-            }
+        }
+
+        val url = Uri.parse(study_url)
+        if (participantId == null) participantId = url.getQueryParameter("pid")
+        if (participantId != null) {
+            if (Aware.DEBUG) Log.d(
+                Aware.TAG,
+                "AWARE Study participant ID detected: " + participantId
+            )
+            Aware.setSetting(applicationContext, Aware_Preferences.DEVICE_ID, participantId)
+            study_url = study_url!!.substring(0, study_url!!.indexOf("pid") - 1)
+            if (Aware.DEBUG) Log.d(Aware.TAG, "AWARE Study URL: " + study_url)
+
+            participantIdEditText!!.setText(participantId)
+            participantIdEditText!!.isFocusable = false
+            participantIdEditText!!.isEnabled = false
+            participantIdEditText!!.isCursorVisible = false
+            participantIdEditText!!.keyListener = null
+            participantIdEditText!!.setBackgroundColor(Color.TRANSPARENT)
+        } else {
+            if (Aware.DEBUG) Log.d(
+                Aware.TAG,
+                "AWARE Study participant ID NOT detected"
+            )
+            participantIdEditText!!.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                    if (s.isNotEmpty()) {
+                        Aware.setSetting(
+                            applicationContext,
+                            Aware_Preferences.DEVICE_ID,
+                            s.toString()
+                        )
+                        btnAction!!.isEnabled = true
+                    } else {
+                        btnAction!!.isEnabled = false
+                    }
+                }
+                override fun afterTextChanged(s: Editable) {}
+            })
         }
         if (Aware.DEBUG) Log.d(Aware.TAG, "Study URL:" + study_url)
         val qry = Aware.getStudy(this, study_url)
@@ -146,24 +154,6 @@ class Aware_Join_Study : AppCompatActivity() {
                 populateStudyInfo(study_configs!!)
             }
 
-            //TODO Permissions 2: Write a method to get all required permission Strings based on the
-            // active plugins/sensors (e.g. Manifest.permission.READ_SMS). Once we have the
-            // required permission Strings, we can request the permissions using the code
-            // outlined in this section: https://developer.android.com/training/permissions/requesting#allow-system-manage-request-code
-            // The plugins/sensors are listed in the 'study_configs' field populated from the
-            // server response. The source code for each sensor/plugin should have which
-            // permissions are required, but we need to find out the exact names sent from the server to map to
-            // the permissions
-
-            //TODO Permissions 3: Check and request permissions here
-            // (refer to https://developer.android.com/training/permissions/requesting#allow-system-manage-request-code).
-            // If they have been granted, do nothing, they can click btnAction to join the study.
-            // if a rationale should be shown, make up something generic. We can ask Sal if it's ok.
-            // If they have not been asked before, ask now.
-            // If they decline, show a dialog saying they cannot join the study without
-            // accepting the permissions and then return to the main screen (call finish() on the
-            // current Activity)
-
             btnPermissions!!.setOnClickListener {
                 startActivity(
                     Intent(
@@ -174,13 +164,16 @@ class Aware_Join_Study : AppCompatActivity() {
 
             }
 
-
             btnAction!!.setOnClickListener {
                 btnAction!!.isEnabled = false
                 btnAction!!.alpha = 0.5f
                 val study = Aware.getStudy(applicationContext, study_url)
                 if (study != null && study.moveToFirst()) {
                     val studyData = ContentValues()
+                    studyData.put(Aware_Provider.Aware_Studies.STUDY_DEVICE_ID, Aware.getSetting(
+                            applicationContext, Aware_Preferences.DEVICE_ID
+                        )
+                    )
                     studyData.put(
                         Aware_Provider.Aware_Studies.STUDY_JOINED,
                         System.currentTimeMillis()
@@ -632,7 +625,7 @@ class Aware_Join_Study : AppCompatActivity() {
 
                     //Reload join study wizard. We already have the study info on the database.
                     val studyInfo = Intent(applicationContext, Aware_Join_Study::class.java)
-                    studyInfo.putExtra(EXTRA_STUDY_URL, study_url)
+                    studyInfo.putExtra(EXTRA_STUDY_URL, intent.getStringExtra(EXTRA_STUDY_URL))
                     studyInfo.flags =
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
                     finish()
@@ -763,11 +756,19 @@ class Aware_Join_Study : AppCompatActivity() {
                     showPermissionRationale(permissions)
                 }else{
                     pluginsInstalled = true
+
+                    //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
+                    if (!Aware.is_watch(this)) {
+                        Applications.isAccessibilityServiceActive(this)
+                    }
+
+                    val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    whitelisting.data = Uri.parse("package:$packageName")
+                    startActivity(whitelisting)
                 }
         }
 
         requestStudyPermissions(permissions!!)
-
 
         //Show the plugins' information
         active_plugins = ArrayList()
@@ -835,7 +836,6 @@ class Aware_Join_Study : AppCompatActivity() {
         if(permissionRequest.isNotEmpty()){
             permissionLauncher.launch(permissionRequest.toTypedArray())
         }
-
     }
 
     private fun showPermissionRationale(permissions: ArrayList<String>){
@@ -873,7 +873,7 @@ class Aware_Join_Study : AppCompatActivity() {
             llPluginsRequired!!.visibility = View.GONE
             if (pluginsInstalled) {
                 btnAction!!.alpha = 1f
-                btnAction!!.isEnabled = true
+                if (participantIdEditText!!.text.isNotEmpty()) btnAction!!.isEnabled = true
                 btnAction!!.visibility = View.VISIBLE
                 txtJoinDisabled!!.isEnabled = false
                 txtJoinDisabled!!.visibility = View.GONE
@@ -887,7 +887,6 @@ class Aware_Join_Study : AppCompatActivity() {
                 txtJoinDisabled!!.visibility = View.VISIBLE
                 btnPermissions!!.isEnabled = true
                 btnPermissions!!.visibility = View.VISIBLE
-
             }
             if (Aware.isStudy(applicationContext)) {
                 btnQuit!!.visibility = View.VISIBLE
@@ -972,7 +971,6 @@ class Aware_Join_Study : AppCompatActivity() {
     companion object {
         const val EXTRA_STUDY_URL = "study_url"
         private var study_url: String? = null
-        private var onboarding: String? = null
         private val pluginCompliance: PluginCompliance? = PluginCompliance()
     }
 }

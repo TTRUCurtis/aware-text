@@ -6,8 +6,8 @@ buildscript {
         google_libs = "17.0.0"
         version_code = 817
         version_readable = "4.0." + version_code + "." + "bundle"
-        compile_sdk = 32
-        target_sdk = 28
+        compile_sdk = 33
+        target_sdk = 33
         minimum_sdk = 24
         hilt_version = "2.44"
         build_tools = "28.0.3"
