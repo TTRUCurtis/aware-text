@@ -967,7 +967,7 @@
                 android:title="Wipe data on upload" />
 
             <CheckBoxPreference
-                android:defaultValue="false"
+                android:defaultValue="true"
                 android:key="interface_locked"
                 android:persistent="true"
                 android:summary="Simplifies the interface for participants after joining a study"

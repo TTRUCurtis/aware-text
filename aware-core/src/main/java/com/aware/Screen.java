@@ -114,6 +114,9 @@ public class Screen extends Aware_Sensor {
 
         AUTHORITY = Screen_Provider.getAuthority(this);
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (Aware.DEBUG) Log.d(TAG, "Screen service created!");
     }
 

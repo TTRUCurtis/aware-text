@@ -225,6 +225,14 @@ public class Aware_Plugin extends Service {
             this.provider = providerAuthority;
         }
 
+        public void setProvider(String provider) {
+            this.provider = provider;
+        }
+
+        public void setTag(String tag){
+            this.tag = tag;
+        }
+
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(Aware.ACTION_AWARE_CURRENT_CONTEXT)) {
@@ -250,7 +258,7 @@ public class Aware_Plugin extends Service {
         }
     }
 
-    private static ContextBroadcaster contextBroadcaster = null;
+    protected ContextBroadcaster contextBroadcaster = null;
 
     @Override
     public IBinder onBind(Intent arg0) {

@@ -3,6 +3,7 @@ package com.aware.plugin.sms
 import android.app.Service
 import android.content.Intent
 import android.util.Log
+import com.aware.Aware
 import com.aware.plugin.sms.Settings.Limit.NO_LIMIT_INDICATOR
 import com.aware.utils.Aware_Plugin
 import dagger.hilt.android.AndroidEntryPoint
@@ -49,6 +50,8 @@ open class Plugin : Aware_Plugin() {
         CoroutineScope(dispatcher).launch {
             eventsChannel.consumeEach { pullData() }
         }
+        contextBroadcaster.setProvider(AUTHORITY)
+        contextBroadcaster.setTag(Logging.LOCAL_TAG)
     }
 
     //This function gets called by AWARE to make sure this plugin is still running.
@@ -107,12 +110,12 @@ open class Plugin : Aware_Plugin() {
             }
         }
 
-        /* If we're doing batches, we need to make sure we're setting the endSelectTime
-                    to the time we've saved off to start re-pulling from, otherwise we're going
-                    to get double inserts for any messages that come in during the batch process
-                    (Check if Setting.PLUGIN_SMS_CURRENT_OFFSET > 0, and if so, make sure end
-                    time is not greater than Settings.PLUGIN_SMS_SYNC_DATE
-                 */
+                        /* If we're doing batches, we need to make sure we're setting the endSelectTime
+                            to the time we've saved off to start re-pulling from, otherwise we're going
+                            to get double inserts for any messages that come in during the batch process
+                            (Check if Setting.PLUGIN_SMS_CURRENT_OFFSET > 0, and if so, make sure end
+                            time is not greater than Settings.PLUGIN_SMS_SYNC_DATE
+                         */
 
         var filteredRetrievedSMSMessages = ""
         var filteredRetrievedMMSMessages = ""

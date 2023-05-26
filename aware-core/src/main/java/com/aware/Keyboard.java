@@ -27,6 +27,9 @@ public class Keyboard extends Aware_Sensor {
 
         TAG = "AWARE::Keyboard";
 
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
         if (Aware.DEBUG) Log.d(TAG, "Keyboard service created!");
     }
 

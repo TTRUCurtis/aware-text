@@ -243,7 +243,9 @@ public class LinearAccelerometer extends Aware_Sensor implements SensorEventList
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_AWARE_LINEAR_LABEL);
-        registerReceiver(dataLabeler, filter);
+
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
 
         if (Aware.DEBUG) Log.d(TAG, "Linear-accelerometer service created!");
     }

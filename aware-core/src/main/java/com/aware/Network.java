@@ -559,6 +559,9 @@ public class Network extends Aware_Sensor {
 
         teleManager.listen(phoneListener, PhoneStateListener.LISTEN_SERVICE_STATE);
 
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
         if (Aware.DEBUG) Log.d(TAG, "Network service created...");
     }
 

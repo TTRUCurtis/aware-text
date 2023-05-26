@@ -110,6 +110,9 @@ public class SignificantMotion extends Aware_Sensor implements SensorEventListen
             }
         };
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (DEBUG) Log.d(TAG, "Significant motion service created!");
     }
 
