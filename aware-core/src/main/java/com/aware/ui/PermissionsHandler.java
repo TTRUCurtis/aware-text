@@ -1,153 +1,92 @@
 package com.aware.ui;
 
-import android.app.Activity;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
-import android.os.Bundle;
-import android.util.Log;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
 
-import com.aware.Aware;
-import com.aware.R;
+import android.app.Activity;
+import android.app.Service;
+import android.content.pm.PackageManager;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+
 
 import java.util.ArrayList;
+import java.util.List;
 
-/**
- * This is an invisible activity used to request the needed permissions from the user from API 23 onwards.
- * Created by denzil on 22/10/15.
- */
-public class PermissionsHandler extends Activity {
+public class PermissionsHandler {
 
-    private String TAG = "PermissionsHandler";
-
-    /**
-     * Extra ArrayList<String> with Manifest.permission that require explicit users' permission on Android API 23+
-     */
+    public static final int RC_PERMISSIONS = 112;
     public static final String EXTRA_REQUIRED_PERMISSIONS = "required_permissions";
-
-    /**
-     * Class name of the Activity redirect, e.g., Class.getClass().getName();
-     */
     public static final String EXTRA_REDIRECT_ACTIVITY = "redirect_activity";
-
-    /**
-     * Class name of the Service redirect, e.g., Class.getClass().getName();
-     */
     public static final String EXTRA_REDIRECT_SERVICE = "redirect_service";
 
-    /**
-     * Used on redirect service to know when permissions have been accepted
-     */
-    public static final String ACTION_AWARE_PERMISSIONS_CHECK = "ACTION_AWARE_PERMISSIONS_CHECK";
 
-    /**
-     * The request code for the permissions
-     */
-    public static final int RC_PERMISSIONS = 112;
+    private Activity activity;
+    private Service service;
+    private PermissionCallback permissionCallback;
 
-    private Intent redirect_activity, redirect_service;
-
-    public static final String EXTRA_SHOW_NOTIFICATION = "show_notification";
-    public static final String EXTRA_REQUEST_PERMISSIONS = "request_permissions";
-    public static final String LOG_TAG = "Permissions:";
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.d("Permissions", "Permissions request for " + getPackageName());
+    public PermissionsHandler(Activity activity) {
+        this.activity = activity;
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        boolean check1 = getIntent() == null;
-        boolean check2 = getIntent().getExtras() == null;
-        boolean check3 = getIntent().getSerializableExtra(EXTRA_REQUIRED_PERMISSIONS) == null;
-        Log.d(LOG_TAG, "getIntent(): " + check1);
-        Log.d(LOG_TAG, "getIntent().getExtras(): " + check2);
-        Log.d(LOG_TAG, "getIntent().getSerializableExtra(): " + check3);
-        if (getIntent() != null && getIntent().getExtras() != null && getIntent().getSerializableExtra(EXTRA_REQUIRED_PERMISSIONS) != null) {
-            Log.d(LOG_TAG, "inside of EXTRA_REQUEST_PERMISSIONS");
-            ArrayList<String> permissionsNeeded = (ArrayList<String>) getIntent().getSerializableExtra(EXTRA_REQUIRED_PERMISSIONS);
-            ActivityCompat.requestPermissions(PermissionsHandler.this, permissionsNeeded.toArray(new String[permissionsNeeded.size()]), RC_PERMISSIONS);
-            if (getIntent().hasExtra(EXTRA_REDIRECT_ACTIVITY)) {
-                redirect_activity = new Intent();
-                String[] component = getIntent().getStringExtra(EXTRA_REDIRECT_ACTIVITY).split("/");
-                redirect_activity.setComponent(new ComponentName(component[0], component[1]));
-                redirect_activity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            } else if (getIntent().hasExtra(EXTRA_REDIRECT_SERVICE)) {
-                redirect_service = new Intent();
-                redirect_service.setAction(ACTION_AWARE_PERMISSIONS_CHECK);
-                String[] component = getIntent().getStringExtra(EXTRA_REDIRECT_SERVICE).split("/");
-                Log.d(LOG_TAG, component[0]);
-                Log.d(LOG_TAG, component[1]);
-                redirect_service.setComponent(new ComponentName(component[0], component[1]));
-            } else {
-                Log.d(LOG_TAG, "inside of else");
-                Intent activity = new Intent();
-                setResult(Activity.RESULT_OK, activity);
-                finish();
+    public PermissionsHandler(Service service) {
+        this.service = service;
+    }
+
+
+    public void requestPermissions(List<String> permissions, PermissionCallback callback) {
+        this.permissionCallback = callback;
+        List<String> permissionsToRequest = new ArrayList<>();
+
+        for (String permission : permissions) {
+            if (ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(permission);
             }
+        }
+
+        if (permissionsToRequest.isEmpty()) {
+            permissionCallback.onPermissionGranted();
+        } else {
+            ActivityCompat.requestPermissions(activity,
+                    permissionsToRequest.toArray(new String[permissionsToRequest.size()]),
+                    RC_PERMISSIONS);
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void handlePermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == RC_PERMISSIONS) {
-            int not_granted = 0;
+            List<String> deniedPermissions = new ArrayList<>();
             for (int i = 0; i < permissions.length; i++) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                    not_granted++;
-                    Log.d(Aware.TAG, permissions[i] + " was not granted");
-                } else {
-                    Log.d(Aware.TAG, permissions[i] + " was granted");
+                    deniedPermissions.add(permissions[i]);
                 }
             }
 
-            if (not_granted > 0) {
-                if (redirect_activity == null) {
-                    Intent activity = new Intent();
-                    setResult(Activity.RESULT_CANCELED, activity);
-                }
-                if (redirect_activity != null) {
-                    setResult(Activity.RESULT_CANCELED, redirect_activity);
-                    startActivity(redirect_activity);
-                }
-                if (redirect_service != null) {
-                    startService(redirect_service);
-                }
-                finish();
+            if (deniedPermissions.isEmpty()) {
+                permissionCallback.onPermissionGranted();
             } else {
-                if (redirect_activity == null) {
-                    Intent activity = new Intent();
-                    setResult(Activity.RESULT_OK, activity);
+                boolean showRationale = shouldShowRationale(deniedPermissions);
+                if (showRationale) {
+                    permissionCallback.onPermissionDeniedWithRationale(deniedPermissions);
+                } else {
+                    permissionCallback.onPermissionDenied(deniedPermissions);
                 }
-                finish();
             }
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (redirect_service != null) {
-            Log.d(TAG, "Redirecting to Service: " + redirect_service.getComponent().toString());
-            redirect_service.setAction(ACTION_AWARE_PERMISSIONS_CHECK);
-            startService(redirect_service);
+    private boolean shouldShowRationale(List<String> permissions) {
+        for (String permission : permissions) {
+            if (activity.shouldShowRequestPermissionRationale(permission)) {
+                return true;
+            }
         }
-        if (redirect_activity != null) {
-            Log.d(TAG, "Redirecting to Activity: " + redirect_activity.getComponent().toString());
-            setResult(Activity.RESULT_OK, redirect_activity);
-            startActivity(redirect_activity);
-        }
-        Log.d("Permissions", "Handled permissions for " + getPackageName());
+        return false;
+    }
+
+    public interface PermissionCallback {
+        void onPermissionGranted();
+
+        void onPermissionDenied(List<String> deniedPermissions);
+
+        void onPermissionDeniedWithRationale(List<String> deniedPermissions);
     }
 }

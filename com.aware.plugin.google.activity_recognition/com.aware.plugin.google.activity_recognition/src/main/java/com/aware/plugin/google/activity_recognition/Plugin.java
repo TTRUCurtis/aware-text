@@ -1,6 +1,7 @@
 
 package com.aware.plugin.google.activity_recognition;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
@@ -37,7 +38,7 @@ public class Plugin extends Aware_Plugin implements GoogleApiClient.ConnectionCa
         AUTHORITY = Google_AR_Provider.getAuthority(this);
 
         TAG = "AWARE::Google Activity Recognition";
-
+        REQUIRED_PERMISSIONS.add(Manifest.permission.ACTIVITY_RECOGNITION);
         CONTEXT_PRODUCER = new ContextProducer() {
             @Override
             public void onContext() {

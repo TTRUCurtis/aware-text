@@ -20,6 +20,7 @@ import com.aware.ui.PermissionHandler;
 import com.aware.ui.PermissionsHandler;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
@@ -36,6 +37,7 @@ public class Aware_Plugin extends Service {
 
     @Inject
     public PermissionHandler permissionHandler;
+
     /**
      * Debug tag for this plugin
      */
@@ -121,10 +123,10 @@ public class Aware_Plugin extends Service {
                     PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS,
                     REQUIRED_PERMISSIONS
             );
-            requestPermissions.putExtra(
-                    PermissionsHandler.EXTRA_REQUEST_PERMISSIONS,
-                    true
-            );
+//            requestPermissions.putExtra(
+//                    PermissionsHandler.EXTRA_REQUEST_PERMISSIONS,
+//                    true
+//            );
             requestPermissions.putExtra(
                     PermissionsHandler.EXTRA_REDIRECT_SERVICE,
                     getApplicationContext().getPackageName() + "/" + getClass().getName()

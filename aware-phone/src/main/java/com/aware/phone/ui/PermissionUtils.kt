@@ -53,6 +53,9 @@ object PermissionUtils {
 
     fun getPermissions(pluginOrSensor: String): List<String> {
         when (pluginOrSensor) {
+            ACTIVITY_REC -> return listOf(
+                Manifest.permission.ACTIVITY_RECOGNITION
+            )
             AMBIENT_NOISE -> return listOf(
                 Manifest.permission.RECORD_AUDIO
             )
@@ -89,7 +92,9 @@ object PermissionUtils {
             SENSOR_BLUETOOTH -> return listOf(
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.BLUETOOTH,
-                Manifest.permission.BLUETOOTH_ADMIN
+                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.BLUETOOTH_SCAN
             )
             SENSOR_COMMUNICATION -> return listOf(
                 Manifest.permission.READ_CONTACTS,

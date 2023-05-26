@@ -31,6 +31,7 @@ import com.aware.phone.Aware_Client
 import com.aware.phone.R
 import com.aware.phone.ui.PermissionUtils.getPermissions
 import com.aware.providers.Aware_Provider
+import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import org.json.JSONArray
@@ -40,7 +41,7 @@ import java.io.FileNotFoundException
 import java.util.*
 
 
-class Aware_Join_Study : AppCompatActivity() {
+class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallback {
     private var active_plugins: ArrayList<PluginInfo>? = null
     private var pluginsRecyclerView: RecyclerView? = null
     private var mAdapter: RecyclerView.Adapter<*>? = null
@@ -55,8 +56,8 @@ class Aware_Join_Study : AppCompatActivity() {
     private var study_configs: JSONArray? = null
     private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
-    private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
-
+    //private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var permissionsHandler: PermissionsHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +75,8 @@ class Aware_Join_Study : AppCompatActivity() {
         pluginsRecyclerView!!.layoutManager = mLayoutManager
         llPluginsRequired = findViewById<View>(R.id.ll_plugins_required) as LinearLayout
         study_url = intent.getStringExtra(EXTRA_STUDY_URL)
+
+        permissionsHandler = PermissionsHandler(this)
 
         //If we are getting here from an AWARE study link
         val scheme = intent.scheme
@@ -409,6 +412,12 @@ class Aware_Join_Study : AppCompatActivity() {
         registerReceiver(pluginCompliance, pluginStatuses)
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        permissionsHandler.handlePermissionsResult(requestCode, permissions, grantResults)
+    }
+
     private open inner class PopulateStudy : AsyncTask<String?, Void?, JSONObject?>() {
         var mPopulating: ProgressDialog? = null
         private var study_url = ""
@@ -739,36 +748,37 @@ class Aware_Join_Study : AppCompatActivity() {
         }
 
         permissions = populatePermissionsList(plugins, sensors)
+        permissionsHandler.requestPermissions(permissions, this)
 
-        permissionLauncher =
-            registerForActivityResult(
-                ActivityResultContracts.RequestMultiplePermissions()
-            ) { permission: Map<String, Boolean> ->
-                var permissions:ArrayList<String> = ArrayList()
-                permission.forEach{(key, value) ->
-                    if(shouldShowRequestPermissionRationale(key)){
-                        permissions.add(key)
-                    }
-                }
-                if(permissions.isNotEmpty()){
-                    showPermissionRationale(permissions)
-                }else if(permissions.isEmpty() && permission.containsValue(false)){
-                    showPermissionRationale(permissions)
-                }else{
-                    pluginsInstalled = true
+//        permissionLauncher =
+//            registerForActivityResult(
+//                ActivityResultContracts.RequestMultiplePermissions()
+//            ) { permission: Map<String, Boolean> ->
+//                var permissions:ArrayList<String> = ArrayList()
+//                permission.forEach{(key, value) ->
+//                    if(shouldShowRequestPermissionRationale(key)){
+//                        permissions.add(key)
+//                    }
+//                }
+//                if(permissions.isNotEmpty()){
+//                    showPermissionRationale(permissions)
+//                }else if(permissions.isEmpty() && permission.containsValue(false)){
+//                    showPermissionRationale(permissions)
+//                }else{
+//                    pluginsInstalled = true
+//
+//                    //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
+//                    if (!Aware.is_watch(this)) {
+//                        Applications.isAccessibilityServiceActive(this)
+//                    }
+//
+//                    val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+//                    whitelisting.data = Uri.parse("package:$packageName")
+//                    startActivity(whitelisting)
+//                }
+//        }
 
-                    //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
-                    if (!Aware.is_watch(this)) {
-                        Applications.isAccessibilityServiceActive(this)
-                    }
-
-                    val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                    whitelisting.data = Uri.parse("package:$packageName")
-                    startActivity(whitelisting)
-                }
-        }
-
-        requestStudyPermissions(permissions!!)
+//        requestStudyPermissions(permissions!!)
 
         //Show the plugins' information
         active_plugins = ArrayList()
@@ -826,35 +836,35 @@ class Aware_Join_Study : AppCompatActivity() {
     }
 
 
-    private fun requestStudyPermissions(permissions: ArrayList<String>){
-        val permissionRequest: MutableList<String> = ArrayList()
-        for(p in permissions){
-            if(ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED){
-                permissionRequest.add(p)
-            }
-        }
-        if(permissionRequest.isNotEmpty()){
-            permissionLauncher.launch(permissionRequest.toTypedArray())
-        }
-    }
-
-    private fun showPermissionRationale(permissions: ArrayList<String>){
-        pluginsInstalled = false
-        if(permissions.isNotEmpty()){
-            val builder = AlertDialog.Builder(this@Aware_Join_Study)
-            builder.setTitle("Permissions Required")
-            builder.setMessage("In order to participate in this study you must accept all permissions. " +
-                    "Please go into your settings and accept permissions.")
-            builder.setCancelable(false)
-            builder.setPositiveButton("Ok", object: DialogInterface.OnClickListener{
-
-                override fun onClick(p0: DialogInterface?, p1: Int) {
-                    permissionLauncher.launch(permissions.toTypedArray())
-                }
-            })
-            builder.show()
-        }
-    }
+//    private fun requestStudyPermissions(permissions: ArrayList<String>){
+//        val permissionRequest: MutableList<String> = ArrayList()
+//        for(p in permissions){
+//            if(ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED){
+//                permissionRequest.add(p)
+//            }
+//        }
+//        if(permissionRequest.isNotEmpty()){
+//            permissionLauncher.launch(permissionRequest.toTypedArray())
+//        }
+//    }
+//
+//    private fun showPermissionRationale(permissions: ArrayList<String>){
+//        pluginsInstalled = false
+//        if(permissions.isNotEmpty()){
+//            val builder = AlertDialog.Builder(this@Aware_Join_Study)
+//            builder.setTitle("Permissions Required")
+//            builder.setMessage("In order to participate in this study you must accept all permissions. " +
+//                    "Please go into your settings and accept permissions.")
+//            builder.setCancelable(false)
+//            builder.setPositiveButton("Ok", object: DialogInterface.OnClickListener{
+//
+//                override fun onClick(p0: DialogInterface?, p1: Int) {
+//                    permissionLauncher.launch(permissions.toTypedArray())
+//                }
+//            })
+//            builder.show()
+//        }
+//    }
 
     override fun onResume() {
         super.onResume()
@@ -875,16 +885,12 @@ class Aware_Join_Study : AppCompatActivity() {
                 btnAction!!.alpha = 1f
                 if (participantIdEditText!!.text.isNotEmpty()) btnAction!!.isEnabled = true
                 btnAction!!.visibility = View.VISIBLE
-                txtJoinDisabled!!.isEnabled = false
-                txtJoinDisabled!!.visibility = View.GONE
                 btnPermissions!!.isEnabled = false
                 btnPermissions!!.visibility = View.GONE
             } else {
                 btnAction!!.isEnabled = false
                 btnAction!!.alpha = .3f
                 btnAction!!.visibility = View.GONE
-                txtJoinDisabled!!.isEnabled = true
-                txtJoinDisabled!!.visibility = View.VISIBLE
                 btnPermissions!!.isEnabled = true
                 btnPermissions!!.visibility = View.VISIBLE
             }
@@ -972,5 +978,34 @@ class Aware_Join_Study : AppCompatActivity() {
         const val EXTRA_STUDY_URL = "study_url"
         private var study_url: String? = null
         private val pluginCompliance: PluginCompliance? = PluginCompliance()
+    }
+
+    override fun onPermissionGranted() {
+        pluginsInstalled = true
+    }
+
+    override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
+        txtJoinDisabled!!.isEnabled = true
+        txtJoinDisabled!!.visibility = View.VISIBLE
+    }
+
+    override fun onPermissionDeniedWithRationale(deniedPermissions: MutableList<String>?) {
+        pluginsInstalled = false
+        if (permissions?.isNotEmpty() == true) {
+            val builder = AlertDialog.Builder(this@Aware_Join_Study)
+            builder.setTitle("Permissions Required")
+            builder.setMessage(
+                "In order to participate in this study you must accept all permissions. " +
+                        "Please go into your settings and accept permissions."
+            )
+            builder.setCancelable(false)
+            builder.setPositiveButton("Ok", object : DialogInterface.OnClickListener {
+
+                override fun onClick(p0: DialogInterface?, p1: Int) {
+                    permissionsHandler.requestPermissions(deniedPermissions, this@Aware_Join_Study)
+                }
+            })
+            builder.show()
+        }
     }
 }
