@@ -1,6 +1,7 @@
 
 package com.aware.plugin.google.activity_recognition;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.app.PendingIntent;
 import android.content.ContentResolver;

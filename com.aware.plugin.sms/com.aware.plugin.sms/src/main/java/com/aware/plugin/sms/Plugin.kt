@@ -1,5 +1,6 @@
 package com.aware.plugin.sms
 
+import android.Manifest
 import android.app.Service
 import android.content.Intent
 import android.util.Log
@@ -45,6 +46,8 @@ open class Plugin : Aware_Plugin() {
         Log.i(Logging.LOCAL_TAG, "onCreate")
         AUTHORITY = Provider.getAuthority(this)
         syncSettings.setSchedule() //This should go in the class that's responsible for starting this plugin
+        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SMS)
+
         serverSync.setPeriodic()
 
         CoroutineScope(dispatcher).launch {
@@ -64,8 +67,6 @@ open class Plugin : Aware_Plugin() {
                     eventsChannel.send(Unit)
                 }
             }
-        } else {
-            throw IllegalStateException(TAG + "SMS Plugin does not have the required permissions") //Need to call the permission handler here
         }
         return Service.START_STICKY
     }

@@ -99,23 +99,19 @@ public class Aware_Plugin extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String p : REQUIRED_PERMISSIONS) {
-                if (ContextCompat.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
-                    Log.d("Permissions:", "permissions not granted!");
-                    PERMISSIONS_OK = false;
-                    break;
-                }
-
-                PERMISSIONS_OK = true;
+        Log.d("Permissions", "Inside onStartCommand");
+        for (String p : REQUIRED_PERMISSIONS) {
+            if (ContextCompat.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
+                Log.d("Permissions:", "permissions not granted!");
+                PERMISSIONS_OK = false;
+                break;
             }
+
+            PERMISSIONS_OK = true;
         }
 
         if (!PERMISSIONS_OK) {
-
-            Log.d("Permissions:", "inside of !PERMISSIONS_OK");
-
+            Log.d("Permissions", "!PERMISSIONS_OK");
             NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
             Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(getApplicationContext());
@@ -123,10 +119,6 @@ public class Aware_Plugin extends Service {
                     PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS,
                     REQUIRED_PERMISSIONS
             );
-//            requestPermissions.putExtra(
-//                    PermissionsHandler.EXTRA_REQUEST_PERMISSIONS,
-//                    true
-//            );
             requestPermissions.putExtra(
                     PermissionsHandler.EXTRA_REDIRECT_SERVICE,
                     getApplicationContext().getPackageName() + "/" + getClass().getName()
@@ -140,9 +132,7 @@ public class Aware_Plugin extends Service {
                     123,
                     requestPermissions,
                     PendingIntent.FLAG_UPDATE_CURRENT |
-                    PendingIntent.FLAG_ONE_SHOT |
-                    PendingIntent.FLAG_IMMUTABLE |
-                    PendingIntent.FLAG_CANCEL_CURRENT
+                    PendingIntent.FLAG_IMMUTABLE
             );
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
@@ -164,8 +154,6 @@ public class Aware_Plugin extends Service {
                 if (Aware.DEBUG) Log.d(Aware.TAG, "Notification exception: " + e);
             }
         } else {
-            Log.d("Permissions:", "Permissions are ok!");
-            PERMISSIONS_OK = true;
 
             if (Aware.getSetting(this, Aware_Preferences.STATUS_WEBSERVICE).equals("true")) {
                 SSLManager.handleUrl(getApplicationContext(), Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER), true);

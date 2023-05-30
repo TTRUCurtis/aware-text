@@ -995,8 +995,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
             val builder = AlertDialog.Builder(this@Aware_Join_Study)
             builder.setTitle("Permissions Required")
             builder.setMessage(
-                "In order to participate in this study you must accept all permissions. " +
-                        "Please go into your settings and accept permissions."
+                "Please accept all permissions to join a study"
             )
             builder.setCancelable(false)
             builder.setPositiveButton("Ok", object : DialogInterface.OnClickListener {

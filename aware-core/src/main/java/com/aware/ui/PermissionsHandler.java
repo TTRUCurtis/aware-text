@@ -2,8 +2,9 @@ package com.aware.ui;
 
 
 import android.app.Activity;
-import android.app.Service;
 import android.content.pm.PackageManager;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
@@ -19,18 +20,12 @@ public class PermissionsHandler {
     public static final String EXTRA_REDIRECT_SERVICE = "redirect_service";
 
 
-    private Activity activity;
-    private Service service;
+    private final Activity activity;
     private PermissionCallback permissionCallback;
 
     public PermissionsHandler(Activity activity) {
         this.activity = activity;
     }
-
-    public PermissionsHandler(Service service) {
-        this.service = service;
-    }
-
 
     public void requestPermissions(List<String> permissions, PermissionCallback callback) {
         this.permissionCallback = callback;
@@ -75,7 +70,7 @@ public class PermissionsHandler {
 
     private boolean shouldShowRationale(List<String> permissions) {
         for (String permission : permissions) {
-            if (activity.shouldShowRequestPermissionRationale(permission)) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
                 return true;
             }
         }
