@@ -86,11 +86,11 @@
             </intent-filter>
             <!-- Onboarding Switch Part 1 of 2: Uncomment the intent-filter below to switch to
             online registration (undo to switch back) -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
         </activity>
         <!-- Activities -->
         <activity
@@ -102,11 +102,11 @@
             android:launchMode="singleTop"
             android:theme="@style/Theme.Aware">
             <!-- Onboarding Switch Part 2 of 2: Comment the <intent-filter> below to switch to online registration (undo to switch back) -->
-            <!--            <intent-filter>-->
-            <!--                <action android:name="android.intent.action.MAIN" />-->
-            <!--                <category android:name="android.intent.category.DEFAULT" />-->
-            <!--                <category android:name="android.intent.category.LAUNCHER" />-->
-            <!--            </intent-filter>-->
+                        <intent-filter>
+                            <action android:name="android.intent.action.MAIN" />
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.LAUNCHER" />
+                        </intent-filter>
         </activity>
         <activity
             android:name="com.aware.phone.ui.Stream_UI"
