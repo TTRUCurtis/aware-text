@@ -33,23 +33,22 @@ object PermissionUtils {
 
     @JvmStatic
     fun getRequiredPermissions(): ArrayList<String> {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
-            return arrayListOf(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.GET_ACCOUNTS,
-                Manifest.permission.WRITE_SYNC_SETTINGS,
-                Manifest.permission.READ_SYNC_SETTINGS,
-                Manifest.permission.READ_SYNC_STATS,
-                Manifest.permission.FOREGROUND_SERVICE
-            )
-        }
-        return arrayListOf(
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        val requiredPermissions = arrayListOf(
             Manifest.permission.GET_ACCOUNTS,
             Manifest.permission.WRITE_SYNC_SETTINGS,
             Manifest.permission.READ_SYNC_SETTINGS,
             Manifest.permission.READ_SYNC_STATS
         )
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
+            requiredPermissions.add(Manifest.permission.FOREGROUND_SERVICE)
+        }
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            requiredPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        return requiredPermissions
     }
 
     fun getPermissions(pluginOrSensor: String): List<String> {
@@ -115,44 +114,4 @@ object PermissionUtils {
         }
 
     }
-
-
-//    @JvmStatic
-//    val requiredPermissions: ArrayList<String>?
-//        get() {
-//            if (REQUIRED_PERMISSIONS == null) {
-//                REQUIRED_PERMISSIONS = ArrayList()
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.ACCESS_WIFI_STATE)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.CAMERA)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.BLUETOOTH)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.BLUETOOTH_ADMIN)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.ACCESS_COARSE_LOCATION)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.ACCESS_FINE_LOCATION)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.READ_PHONE_STATE)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.GET_ACCOUNTS)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.WRITE_SYNC_SETTINGS)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.READ_SYNC_SETTINGS)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.READ_SYNC_STATS)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.READ_SMS)
-//                REQUIRED_PERMISSIONS!!.add(Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) REQUIRED_PERMISSIONS!!.add(
-//                    Manifest.permission.FOREGROUND_SERVICE
-//                )
-//            }
-//            return REQUIRED_PERMISSIONS
-//        }
-
-//    fun checkIfHasRequiredPermissions(context: Context?): Boolean {
-//        for (p in requiredPermissions!!) {
-//            if (PermissionChecker.checkSelfPermission(
-//                    context!!,
-//                    p
-//                ) != PermissionChecker.PERMISSION_GRANTED
-//            ) {
-//                return false
-//            }
-//        }
-//        return true
-//    }
 }

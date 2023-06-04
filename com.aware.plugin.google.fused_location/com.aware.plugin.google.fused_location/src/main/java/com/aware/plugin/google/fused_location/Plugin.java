@@ -91,7 +91,8 @@ public class Plugin extends Aware_Plugin implements GoogleApiClient.ConnectionCa
                     .build();
 
             Intent locationIntent = new Intent(this, com.aware.plugin.google.fused_location.Algorithm.class);
-            pIntent = PendingIntent.getService(this, 0, locationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            pIntent =
+                    PendingIntent.getService(this, 0, locationIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
             geofences = new Intent(this, GeofencesTracker.class);
             startService(geofences);

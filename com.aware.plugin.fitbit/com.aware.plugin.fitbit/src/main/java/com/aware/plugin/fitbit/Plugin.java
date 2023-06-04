@@ -172,7 +172,8 @@ public class Plugin extends Aware_Plugin {
             if (Aware.getSetting(getApplicationContext(), Settings.OAUTH_TOKEN).length() == 0) { //not authenticated yet
                 Intent fitbitAuth = new Intent(this, FitbitAuth.class);
                 fitbitAuth.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, fitbitAuth, PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent pendingIntent =
+                        PendingIntent.getActivity(this, 0, fitbitAuth, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
                 NotificationCompat.Builder notBuilder = new NotificationCompat.Builder(this, Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
                 notBuilder.setSmallIcon(R.drawable.ic_stat_fitbit)

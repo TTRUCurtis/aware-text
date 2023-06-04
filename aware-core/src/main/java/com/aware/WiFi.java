@@ -87,7 +87,8 @@ public class WiFi extends Aware_Sensor {
 
         backgroundService = new Intent(this, BackgroundService.class);
         backgroundService.setAction(ACTION_AWARE_WIFI_REQUEST_SCAN);
-        wifiScan = PendingIntent.getService(this, 0, backgroundService, PendingIntent.FLAG_UPDATE_CURRENT);
+        wifiScan =
+                PendingIntent.getService(this, 0, backgroundService, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         REQUIRED_PERMISSIONS.add(Manifest.permission.CHANGE_WIFI_STATE);
         REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_WIFI_STATE);
