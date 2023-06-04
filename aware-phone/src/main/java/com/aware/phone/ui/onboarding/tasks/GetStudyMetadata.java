@@ -93,7 +93,7 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
                                         .getString("researcher_first") + " " + studyInfo
                                         .getString("researcher_last") + "\nContact: " + studyInfo
                                         .getString("researcher_contact"))
-                                .setPermissions(PermissionUtils.getRequiredPermissions())
+                                .setPermissions(PermissionUtils.populatePermissionsList(new JSONArray(studyBuilderWithConfig.getData().configuration)))
                                 .build());
             } catch (JSONException e) {
                 e.printStackTrace();
