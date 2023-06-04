@@ -59,7 +59,7 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
             Aware.setSetting(application, Aware_Preferences.DEVICE_ID, participantId);
         }
 
-        Result<StudyMetadata.Builder> result = getStudyAndSurveyUrls(registrationData);
+        Result<StudyMetadata.Builder> result = getStudyUrls(registrationData);
 
         if (result.hasError()) {
             return Result.error(result.getErrorMsg()); //immediately return since we can't do
@@ -268,7 +268,7 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
         return pathSegments.get(pathSegments.size() - 2);
     }
 
-    private Result<StudyMetadata.Builder> getStudyAndSurveyUrls(Uri registrationUri) {
+    private Result<StudyMetadata.Builder> getStudyUrls(Uri registrationUri) {
 
         Uri.Builder builder = registrationUri.buildUpon();
         builder.appendPath("config");
@@ -284,11 +284,13 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
             JSONObject responseJO = new JSONObject(response);
             String studyUrl = responseJO.getString("study_url");
             String surveyUrl = responseJO.getString("survey_url");
+            String socialMediaUrl = responseJO.getString("social_media_url");
 
             return Result.data(
                     new StudyMetadata.Builder()
                             .setUrl(studyUrl)
-                            .setSurveyUrl(surveyUrl));
+                            .setSurveyUrl(surveyUrl)
+                            .setSocialMediaUrl(socialMediaUrl));
 
         } catch (JSONException e) {
             e.printStackTrace();

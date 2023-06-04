@@ -11,6 +11,8 @@ public class StudyMetadata {
     private final String description;
     private final String configuration;
     private final ArrayList<String> permissions;
+    private final String surveyUrl;
+    private final String socialMediaUrl;
 
     public boolean showPermissionsNoticeDialog() {
         return showPermissionsNoticeDialog;
@@ -27,14 +29,17 @@ public class StudyMetadata {
         return surveyUrl;
     }
 
-    private final String surveyUrl;
+    public String getSocialMediaUrl() {
+        return socialMediaUrl;
+    }
 
     public String getConfiguration() {
         return configuration;
     }
 
     private StudyMetadata(String url, String name, String researcher, String description,
-                          String configuration, ArrayList<String> permissions, String surveyUrl) {
+                          String configuration, ArrayList<String> permissions, String surveyUrl,
+                          String socialMediaUrl) {
         this.url = url;
         this.name = name;
         this.researcher = researcher;
@@ -42,6 +47,7 @@ public class StudyMetadata {
         this.configuration = configuration;
         this.permissions = permissions;
         this.surveyUrl = surveyUrl;
+        this.socialMediaUrl = socialMediaUrl;
     }
 
     public String getResearcher() {
@@ -72,6 +78,7 @@ public class StudyMetadata {
         public String configuration;
         ArrayList<String> permissions;
         public String surveyUrl;
+        public String socialMediaUrl;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -108,9 +115,14 @@ public class StudyMetadata {
             return this;
         }
 
+        public Builder setSocialMediaUrl(String url) {
+            this.socialMediaUrl = url;
+            return this;
+        }
+
         public StudyMetadata build() {
             return new StudyMetadata(url, name, researcher, description, configuration, permissions,
-                    surveyUrl);
+                    surveyUrl, socialMediaUrl);
         }
     }
 }
