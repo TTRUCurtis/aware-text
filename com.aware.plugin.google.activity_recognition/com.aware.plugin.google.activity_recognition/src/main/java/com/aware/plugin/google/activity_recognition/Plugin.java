@@ -38,6 +38,9 @@ public class Plugin extends Aware_Plugin implements GoogleApiClient.ConnectionCa
 
         TAG = "AWARE::Google Activity Recognition";
 
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
         CONTEXT_PRODUCER = new ContextProducer() {
             @Override
             public void onContext() {
@@ -59,8 +62,12 @@ public class Plugin extends Aware_Plugin implements GoogleApiClient.ConnectionCa
                     .build();
 
             Intent gARIntent = new Intent(getApplicationContext(), com.aware.plugin.google.activity_recognition.Algorithm.class);
-            gARPending = PendingIntent.getService(getApplicationContext(), 0, gARIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            gARPending =
+                    PendingIntent.getService(getApplicationContext(), 0, gARIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         }
+
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
     }
 
     /**

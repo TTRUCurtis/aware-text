@@ -53,7 +53,6 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="com.aware.READ_CONTEXT_DATA" />
     <uses-permission android:name="com.aware.WRITE_CONTEXT_DATA" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -152,7 +151,8 @@
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="Join study"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.Aware">
+            android:theme="@style/Theme.Aware"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 

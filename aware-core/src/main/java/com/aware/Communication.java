@@ -380,6 +380,9 @@ public class Communication extends Aware_Sensor {
         REQUIRED_PERMISSIONS.add(Manifest.permission.READ_CALL_LOG);
         REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SMS);
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (Aware.DEBUG) Log.d(TAG, "Communication service created!");
     }
 

@@ -252,6 +252,10 @@ public class ESM extends Aware_Sensor {
         filter.addAction(ACTION_AWARE_ESM_REPLACED);
 
         registerReceiver(esmMonitor, filter);
+
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
     }
 
     @Override
@@ -459,7 +463,8 @@ public class ESM extends Aware_Sensor {
         Intent intent_ESM = new Intent(context, ESM_Queue.class);
         intent_ESM.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent pending_ESM = PendingIntent.getActivity(context, 0, intent_ESM, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pending_ESM =
+                PendingIntent.getActivity(context, 0, intent_ESM, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         mBuilder.setContentIntent(pending_ESM);
 
         if (mNotificationManager == null)

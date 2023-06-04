@@ -3,7 +3,6 @@
     package="com.aware.tests">
 
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         tools:replace="android:allowBackup"

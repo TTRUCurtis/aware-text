@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.aware.Applications
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
@@ -754,11 +755,19 @@ class Aware_Join_Study : AppCompatActivity() {
                     showPermissionRationale(permissions)
                 }else{
                     pluginsInstalled = true
+
+                    //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
+                    if (!Aware.is_watch(this)) {
+                        Applications.isAccessibilityServiceActive(this)
+                    }
+
+                    val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    whitelisting.data = Uri.parse("package:$packageName")
+                    startActivity(whitelisting)
                 }
         }
 
         requestStudyPermissions(permissions!!)
-
 
         //Show the plugins' information
         active_plugins = ArrayList()
@@ -796,7 +805,6 @@ class Aware_Join_Study : AppCompatActivity() {
         if(permissionRequest.isNotEmpty()){
             permissionLauncher.launch(permissionRequest.toTypedArray())
         }
-
     }
 
     private fun showPermissionRationale(permissions: ArrayList<String>){

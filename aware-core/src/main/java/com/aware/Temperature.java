@@ -223,6 +223,9 @@ public class Temperature extends Aware_Sensor implements SensorEventListener {
             mTemperature = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
         }
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (Aware.DEBUG) Log.d(TAG, "Temperature service created!");
     }
 

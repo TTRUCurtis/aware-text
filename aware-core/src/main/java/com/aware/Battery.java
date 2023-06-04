@@ -380,6 +380,9 @@ public class Battery extends Aware_Sensor {
 
         registerReceiver(batteryMonitor, filter);
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (Aware.DEBUG) Log.d(TAG, "Battery service created!");
     }
 

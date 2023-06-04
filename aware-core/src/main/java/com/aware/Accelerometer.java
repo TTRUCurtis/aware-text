@@ -262,6 +262,9 @@ public class Accelerometer extends Aware_Sensor implements SensorEventListener {
         filter.addAction(ACTION_AWARE_ACCELEROMETER_LABEL);
         registerReceiver(dataLabeler, filter);
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (Aware.DEBUG) Log.d(TAG, "Accelerometer service created!");
     }
 

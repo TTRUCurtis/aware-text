@@ -209,6 +209,9 @@ public class Barometer extends Aware_Sensor implements SensorEventListener {
         filter.addAction(ACTION_AWARE_BAROMETER_LABEL);
         registerReceiver(dataLabeler, filter);
 
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
         if (Aware.DEBUG) Log.d(TAG, "Barometer service created!");
     }
 

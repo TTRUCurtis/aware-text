@@ -125,7 +125,8 @@ public class Bluetooth extends Aware_Sensor {
         registerReceiver(bluetoothMonitor, filter);
 
         Intent backgroundService = new Intent(ACTION_AWARE_BLUETOOTH_REQUEST_SCAN);
-        bluetoothScan = PendingIntent.getBroadcast(this, 0, backgroundService, PendingIntent.FLAG_UPDATE_CURRENT);
+        bluetoothScan =
+                PendingIntent.getBroadcast(this, 0, backgroundService, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH);
         REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_ADMIN);
@@ -143,6 +144,9 @@ public class Bluetooth extends Aware_Sensor {
 
         enableBT = new Intent(this, Bluetooth.class);
         enableBT.putExtra("action", ACTION_AWARE_ENABLE_BT);
+
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
 
         if (Aware.DEBUG) Log.d(TAG, "Bluetooth service created!");
     }
@@ -491,7 +495,7 @@ public class Bluetooth extends Aware_Sensor {
                     .setDefaults(Notification.DEFAULT_ALL)
                     .setOnlyAlertOnce(true)
                     .setAutoCancel(true)
-                    .setContentIntent(PendingIntent.getService(c, 123, enableBT, PendingIntent.FLAG_UPDATE_CURRENT));
+                    .setContentIntent(PendingIntent.getService(c, 123, enableBT, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
 
             builder = Aware.setNotificationProperties(builder, Aware.AWARE_NOTIFICATION_IMPORTANCE_GENERAL);
 

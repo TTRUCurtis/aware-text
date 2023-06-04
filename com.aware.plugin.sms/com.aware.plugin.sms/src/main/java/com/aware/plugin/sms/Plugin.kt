@@ -3,6 +3,7 @@ package com.aware.plugin.sms
 import android.app.Service
 import android.content.Intent
 import android.util.Log
+import com.aware.Aware
 import com.aware.plugin.sms.Settings.Limit.NO_LIMIT_INDICATOR
 import com.aware.utils.Aware_Plugin
 import dagger.hilt.android.AndroidEntryPoint
@@ -43,12 +44,17 @@ open class Plugin : Aware_Plugin() {
         super.onCreate()
         Log.i(Logging.LOCAL_TAG, "onCreate")
         AUTHORITY = Provider.getAuthority(this)
+
+        contextBroadcaster.setProvider(AUTHORITY)
+        contextBroadcaster.setTag(Logging.LOCAL_TAG)
+
         syncSettings.setSchedule() //This should go in the class that's responsible for starting this plugin
         serverSync.setPeriodic()
 
         CoroutineScope(dispatcher).launch {
             eventsChannel.consumeEach { pullData() }
         }
+
     }
 
     //This function gets called by AWARE to make sure this plugin is still running.

@@ -39,11 +39,6 @@ import java.util.List;
  */
 public class Rotation extends Aware_Sensor implements SensorEventListener {
 
-    /**
-     * Logging tag (default = "AWARE::Rotation")
-     */
-    private static String TAG = "AWARE::Rotation";
-
     private static SensorManager mSensorManager;
     private static Sensor mRotation;
 
@@ -253,6 +248,9 @@ public class Rotation extends Aware_Sensor implements SensorEventListener {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_AWARE_ROTATION_LABEL);
         registerReceiver(dataLabeler, filter);
+
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
 
         if (Aware.DEBUG) Log.d(TAG, "Rotation service created!");
     }

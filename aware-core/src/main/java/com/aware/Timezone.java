@@ -76,6 +76,9 @@ public class Timezone extends Aware_Sensor {
         filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         registerReceiver(timezoneObserver, filter);
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (Aware.DEBUG) Log.d(TAG, "Timezone service created");
     }
 

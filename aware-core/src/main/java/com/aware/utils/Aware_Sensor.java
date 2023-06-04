@@ -79,12 +79,6 @@ public class Aware_Sensor extends Service {
 
         registerReceiver(contextBroadcaster, filter);
 
-//        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-//        REQUIRED_PERMISSIONS.add(Manifest.permission.GET_ACCOUNTS);
-//        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_SYNC_SETTINGS);
-//        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_SETTINGS);
-//        REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SYNC_STATS);
-
         Log.d(Aware.TAG, "created: " + getClass().getName() + " package: " + getPackageName());
     }
 
@@ -150,6 +144,14 @@ public class Aware_Sensor extends Service {
             this.provider = providerAuthority;
         }
 
+        public void setProvider(String provider) {
+            this.provider = provider;
+        }
+
+        public void setTag(String tag){
+            this.tag = tag;
+        }
+
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(Aware.ACTION_AWARE_CURRENT_CONTEXT)) {
@@ -188,7 +190,7 @@ public class Aware_Sensor extends Service {
         }
     }
 
-    private static ContextBroadcaster contextBroadcaster = null;
+    protected ContextBroadcaster contextBroadcaster = null;
 
     @Override
     public IBinder onBind(Intent intent) {
