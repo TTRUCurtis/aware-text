@@ -126,6 +126,9 @@ public class Plugin extends Aware_Plugin {
                 sendBroadcast(fitbitData);
             }
         };
+
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
     }
 
     //This function gets called every 5 minutes by AWARE to make sure this plugin is still running.

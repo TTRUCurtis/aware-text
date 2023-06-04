@@ -150,6 +150,9 @@ public class Traffic extends Aware_Sensor {
         startTotalRxPackets = TrafficStats.getTotalRxPackets();
         startTotalTxPackets = TrafficStats.getTotalTxPackets();
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (Aware.DEBUG) Log.d(TAG, "Traffic service created!");
     }
 

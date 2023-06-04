@@ -275,6 +275,9 @@ public class Locations extends Aware_Sensor implements LocationListener {
         REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_FINE_LOCATION);
 
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
         if (Aware.DEBUG) Log.d(TAG, "Location sensor is created!");
     }
 

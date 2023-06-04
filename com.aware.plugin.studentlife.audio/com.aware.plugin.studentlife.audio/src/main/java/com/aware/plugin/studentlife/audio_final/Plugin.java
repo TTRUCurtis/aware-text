@@ -56,6 +56,9 @@ public class Plugin extends Aware_Plugin {
 
         //Add permissions you need (Support for Android M) e.g.,
         REQUIRED_PERMISSIONS.add(Manifest.permission.RECORD_AUDIO);
+
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
     }
 
     //This function gets called every 5 minutes by AWARE to make sure this plugin is still running.

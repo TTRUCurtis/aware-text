@@ -252,6 +252,10 @@ public class ESM extends Aware_Sensor {
         filter.addAction(ACTION_AWARE_ESM_REPLACED);
 
         registerReceiver(esmMonitor, filter);
+
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
     }
 
     @Override

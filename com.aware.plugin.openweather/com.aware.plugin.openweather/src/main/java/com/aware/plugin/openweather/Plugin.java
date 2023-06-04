@@ -90,6 +90,9 @@ public class Plugin extends Aware_Plugin implements GoogleApiClient.ConnectionCa
             openWeatherIntent.setAction(ACTION_AWARE_PLUGIN_OPENWEATHER_UPDATE);
             pIntent = PendingIntent.getService(getApplicationContext(), 0, openWeatherIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
+
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
     }
 
     @Override

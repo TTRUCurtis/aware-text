@@ -37,6 +37,9 @@ public class Plugin extends Aware_Plugin {
         //REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_FINE_LOCATION);
         //REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH);
         //REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_ADMIN);
+
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
     }
 
     @Override

@@ -144,6 +144,9 @@ public class Bluetooth extends Aware_Sensor {
         enableBT = new Intent(this, Bluetooth.class);
         enableBT.putExtra("action", ACTION_AWARE_ENABLE_BT);
 
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
         if (Aware.DEBUG) Log.d(TAG, "Bluetooth service created!");
     }
 

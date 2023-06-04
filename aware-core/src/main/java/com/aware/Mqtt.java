@@ -350,6 +350,9 @@ public class Mqtt extends Aware_Sensor implements MqttCallback {
         filter.addAction(Mqtt.ACTION_AWARE_MQTT_TOPIC_UNSUBSCRIBE);
         filter.addAction(Mqtt.ACTION_AWARE_MQTT_MSG_PUBLISH);
         registerReceiver(mqttReceiver, filter);
+
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
     }
 
     @Override

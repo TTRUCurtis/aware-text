@@ -102,6 +102,9 @@ public class Telephony extends Aware_Sensor {
         REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_COARSE_LOCATION); //needed to get the cell towers positions
         REQUIRED_PERMISSIONS.add(Manifest.permission.READ_PHONE_STATE); //needed for tracking signal strength
 
+        contextBroadcaster.setTag(TAG);
+        contextBroadcaster.setProvider(AUTHORITY);
+
         if (Aware.DEBUG) Log.d(TAG, "Telephony service created!");
     }
 

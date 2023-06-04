@@ -223,6 +223,9 @@ public class Magnetometer extends Aware_Sensor implements SensorEventListener {
         filter.addAction(ACTION_AWARE_MAGNETOMETER_LABEL);
         registerReceiver(dataLabeler, filter);
 
+        contextBroadcaster.setProvider(AUTHORITY);
+        contextBroadcaster.setTag(TAG);
+
         if (Aware.DEBUG) Log.d(TAG, "Magnetometer service created!");
     }
 
