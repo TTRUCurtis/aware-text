@@ -1,48 +1,34 @@
 
 package com.aware.phone;
 
-import android.Manifest;
-import android.app.AlertDialog;
+
 import android.app.Dialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.*;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ProviderInfo;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.*;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
+
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.PermissionChecker;
-import com.aware.Applications;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.phone.ui.Aware_Activity;
 import com.aware.phone.ui.Aware_Join_Study;
 import com.aware.phone.ui.Aware_Participant;
-import com.aware.phone.ui.PermissionUtils;
-import com.aware.phone.ui.onboarding.JoinStudyActivity;
-import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
-
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -50,7 +36,7 @@ import java.util.*;
 /**
  * @author df
  */
-public class Aware_Client extends Aware_Activity implements SharedPreferences.OnSharedPreferenceChangeListener, PermissionsHandler.PermissionCallback {
+public class Aware_Client extends Aware_Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static Hashtable<Integer, Boolean> listSensorType;
     private static SharedPreferences prefs;
@@ -58,10 +44,10 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     private static final Hashtable<String, Integer> optionalSensors = new Hashtable<>();
 
     private final Aware.AndroidPackageMonitor packageMonitor = new Aware.AndroidPackageMonitor();
-    private static PermissionsHandler permissionsHandler;
+
     public static final String EXTRA_REDIRECT_SERVICE = "redirect_service";
     public static final String ACTION_AWARE_PERMISSIONS_CHECK = "ACTION_AWARE_PERMISSIONS_CHECK";
-    private boolean permissionsRequested = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +55,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
 
         prefs = getSharedPreferences("com.aware.phone", Context.MODE_PRIVATE);
         addPreferencesFromResource(R.xml.aware_preferences);
-        permissionsHandler = new PermissionsHandler(this);
+
         setContentView(R.layout.aware_ui);
 
         optionalSensors.put(Aware_Preferences.STATUS_ACCELEROMETER, Sensor.TYPE_ACCELEROMETER);
@@ -153,59 +139,6 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             ListPreference list = (ListPreference) findPreference(key);
             list.setSummary(list.getEntry());
         }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        permissionsHandler.handlePermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    @Override
-    public void onPermissionGranted() {
-        Log.d("Permissions", "onPermissionGranted-Aware_Client");
-        Intent redirect_service = new Intent();
-        redirect_service.setAction(ACTION_AWARE_PERMISSIONS_CHECK);
-        String[] component = getIntent().getStringExtra(EXTRA_REDIRECT_SERVICE).split("/");
-        redirect_service.setComponent(new ComponentName(component[0], component[1]));
-        startService(redirect_service);
-    }
-
-    @Override
-    public void onPermissionDenied(List<String> deniedPermissions) {
-        Log.d("Permissions", "onPermissionDenied-Aware_Client");
-        if (deniedPermissions != null && !deniedPermissions.isEmpty()) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Permissions Required");
-            builder.setMessage("Please accept all permissions otherwise you'll be removed from the study");
-            builder.setCancelable(false);
-            builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    permissionsHandler.requestPermissions(deniedPermissions, Aware_Client.this);
-                }
-            });
-            builder.show();
-        }
-        Aware.stopAWARE(getApplicationContext());
-    }
-
-    @Override
-    public void onPermissionDeniedWithRationale(List<String> deniedPermissions) {
-        Log.d("Permissions", "onPermissionDeniedWithRationale-Aware_Client");
-//        if (deniedPermissions != null && !deniedPermissions.isEmpty()) {
-//            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//            builder.setTitle("Permissions Required");
-//            builder.setMessage("Please accept all permissions otherwise you'll be removed from the study");
-//            builder.setCancelable(false);
-//            builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-//                @Override
-//                public void onClick(DialogInterface dialog, int which) {
-//                    permissionsHandler.requestPermissions(deniedPermissions, Aware_Client.this);
-//                }
-//            });
-//            builder.show();
-//        }
     }
 
     private class SettingsSync extends AsyncTask<Preference, Preference, Void> {
@@ -317,12 +250,6 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     protected void onResume() {
         super.onResume();
 
-        if(getIntent() != null && getIntent().getExtras() != null && getIntent().getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) != null) {
-            Log.d("Permissions", "onResume-Aware_Client");
-            ArrayList<String> permissions = (ArrayList<String>) getIntent().getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS);
-            permissionsHandler.requestPermissions(permissions, this);
-
-        } else {
             Set<String> keys = optionalSensors.keySet();
             for (String optionalSensor : keys) {
                 Preference pref = findPreference(optionalSensor);
@@ -451,7 +378,6 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                     startActivity(new Intent(this, Aware_Participant.class));
                 }
             }
-        }
 
 
     }

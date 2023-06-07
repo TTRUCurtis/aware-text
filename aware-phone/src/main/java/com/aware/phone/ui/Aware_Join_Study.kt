@@ -17,14 +17,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.aware.Applications
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
@@ -34,6 +32,7 @@ import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.karumi.dexter.PermissionToken
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -77,7 +76,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         study_url = intent.getStringExtra(EXTRA_STUDY_URL)
 
         permissionsHandler = PermissionsHandler(this)
-
+        btnPermissions!!.visibility = View.GONE
         //If we are getting here from an AWARE study link
         val scheme = intent.scheme
         if (scheme != null) {
@@ -157,15 +156,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 populateStudyInfo(study_configs!!)
             }
 
-            btnPermissions!!.setOnClickListener {
-                startActivity(
-                    Intent(
-                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                        Uri.fromParts("package", packageName, null)
-                    )
-                )
 
-            }
 
             btnAction!!.setOnClickListener {
                 btnAction!!.isEnabled = false
@@ -412,8 +403,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         registerReceiver(pluginCompliance, pluginStatuses)
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionsHandler.handlePermissionsResult(requestCode, permissions, grantResults)
     }
@@ -750,36 +740,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         permissions = populatePermissionsList(plugins, sensors)
         permissionsHandler.requestPermissions(permissions, this)
 
-//        permissionLauncher =
-//            registerForActivityResult(
-//                ActivityResultContracts.RequestMultiplePermissions()
-//            ) { permission: Map<String, Boolean> ->
-//                var permissions:ArrayList<String> = ArrayList()
-//                permission.forEach{(key, value) ->
-//                    if(shouldShowRequestPermissionRationale(key)){
-//                        permissions.add(key)
-//                    }
-//                }
-//                if(permissions.isNotEmpty()){
-//                    showPermissionRationale(permissions)
-//                }else if(permissions.isEmpty() && permission.containsValue(false)){
-//                    showPermissionRationale(permissions)
-//                }else{
-//                    pluginsInstalled = true
-//
-//                    //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
-//                    if (!Aware.is_watch(this)) {
-//                        Applications.isAccessibilityServiceActive(this)
-//                    }
-//
-//                    val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-//                    whitelisting.data = Uri.parse("package:$packageName")
-//                    startActivity(whitelisting)
-//                }
-//        }
-
-//        requestStudyPermissions(permissions!!)
-
         //Show the plugins' information
         active_plugins = ArrayList()
         for (i in 0 until plugins.length()) {
@@ -885,14 +845,10 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 btnAction!!.alpha = 1f
                 if (participantIdEditText!!.text.isNotEmpty()) btnAction!!.isEnabled = true
                 btnAction!!.visibility = View.VISIBLE
-                btnPermissions!!.isEnabled = false
-                btnPermissions!!.visibility = View.GONE
             } else {
                 btnAction!!.isEnabled = false
                 btnAction!!.alpha = .3f
                 btnAction!!.visibility = View.GONE
-                btnPermissions!!.isEnabled = true
-                btnPermissions!!.visibility = View.VISIBLE
             }
             if (Aware.isStudy(applicationContext)) {
                 btnQuit!!.visibility = View.VISIBLE
@@ -987,24 +943,22 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
         txtJoinDisabled!!.isEnabled = true
         txtJoinDisabled!!.visibility = View.VISIBLE
+        btnPermissions!!.visibility = View.VISIBLE
+        btnPermissions!!.isEnabled = true
+        val permissionsToRequest = deniedPermissions?.toList() ?: emptyList()
+        btnPermissions!!.setOnClickListener {
+            permissionsHandler.requestPermissions(permissionsToRequest, this)
+        }
     }
 
     override fun onPermissionDeniedWithRationale(deniedPermissions: MutableList<String>?) {
-        pluginsInstalled = false
-        if (permissions?.isNotEmpty() == true) {
-            val builder = AlertDialog.Builder(this@Aware_Join_Study)
-            builder.setTitle("Permissions Required")
-            builder.setMessage(
-                "Please accept all permissions to join a study"
-            )
-            builder.setCancelable(false)
-            builder.setPositiveButton("Ok", object : DialogInterface.OnClickListener {
 
-                override fun onClick(p0: DialogInterface?, p1: Int) {
-                    permissionsHandler.requestPermissions(deniedPermissions, this@Aware_Join_Study)
-                }
-            })
-            builder.show()
-        }
+        AlertDialog.Builder(this)
+            .setTitle("Permission Required")
+            .setMessage("This app requires the following ")
+            .setPositiveButton(
+                "Retry"
+            ){_, _ -> permissionsHandler.requestPermissions(deniedPermissions, this@Aware_Join_Study)}
+            .show()
     }
 }

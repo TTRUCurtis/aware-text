@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/aware_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -43,6 +44,31 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/device_name" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="bottom">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/permission_rationale"
+            android:text="Grant Permission to continue in the study"
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Title" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/request_permission"
+            android:text="Grant Permission"
+            android:padding="16dp"
+            android:background="@color/primaryDark"
+            android:textColor="@android:color/white"
+            />
 
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -99,10 +99,9 @@ public class Aware_Plugin extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("Permissions", "Inside onStartCommand");
+
         for (String p : REQUIRED_PERMISSIONS) {
             if (ContextCompat.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
-                Log.d("Permissions:", "permissions not granted!");
                 PERMISSIONS_OK = false;
                 break;
             }
@@ -111,7 +110,7 @@ public class Aware_Plugin extends Service {
         }
 
         if (!PERMISSIONS_OK) {
-            Log.d("Permissions", "!PERMISSIONS_OK");
+
             NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
             Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(getApplicationContext());
