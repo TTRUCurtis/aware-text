@@ -14,7 +14,7 @@ import java.util.List;
 
 public class PermissionsHandler {
 
-    public static final int RC_PERMISSIONS = 0;
+    public static final int RC_PERMISSIONS = 112;
     public static final String EXTRA_REQUIRED_PERMISSIONS = "required_permissions";
     public static final String EXTRA_REDIRECT_ACTIVITY = "redirect_activity";
     public static final String EXTRA_REDIRECT_SERVICE = "redirect_service";

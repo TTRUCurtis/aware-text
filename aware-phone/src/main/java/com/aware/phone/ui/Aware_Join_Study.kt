@@ -711,6 +711,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d("Permission", "onDestroy-AJS")
         if (pluginCompliance != null) {
             try {
                 unregisterReceiver(pluginCompliance)
@@ -842,19 +843,29 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         if (qry != null && qry.moveToFirst()) {
             llPluginsRequired!!.visibility = View.GONE
             if (pluginsInstalled) {
+                Log.d("Permissions", "1")
                 btnAction!!.alpha = 1f
+                pluginsInstalled = true
+                txtJoinDisabled!!.isEnabled = false
+                txtJoinDisabled!!.visibility = View.GONE
+                btnPermissions!!.visibility = View.GONE
+                btnPermissions!!.isEnabled = false
                 if (participantIdEditText!!.text.isNotEmpty()) btnAction!!.isEnabled = true
                 btnAction!!.visibility = View.VISIBLE
+
             } else {
+                Log.d("Permissions", "2")
                 btnAction!!.isEnabled = false
                 btnAction!!.alpha = .3f
                 btnAction!!.visibility = View.GONE
             }
             if (Aware.isStudy(applicationContext)) {
+                Log.d("Permissions", "23")
                 btnQuit!!.visibility = View.VISIBLE
                 btnAction!!.setOnClickListener { finish() }
                 btnAction!!.text = "OK"
             } else {
+                Log.d("Permissions", "4")
                 btnQuit!!.visibility = View.GONE
             }
             qry.close()
@@ -937,7 +948,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     override fun onPermissionGranted() {
-        pluginsInstalled = true
+        Log.d("Permissions", "onPermissionGranted")
     }
 
     override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
@@ -945,9 +956,14 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         txtJoinDisabled!!.visibility = View.VISIBLE
         btnPermissions!!.visibility = View.VISIBLE
         btnPermissions!!.isEnabled = true
-        val permissionsToRequest = deniedPermissions?.toList() ?: emptyList()
+
         btnPermissions!!.setOnClickListener {
-            permissionsHandler.requestPermissions(permissionsToRequest, this)
+            startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", packageName, null)
+                )
+            )
         }
     }
 

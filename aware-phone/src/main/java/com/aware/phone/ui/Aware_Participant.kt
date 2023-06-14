@@ -3,7 +3,9 @@ package com.aware.phone.ui
 import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -123,10 +125,12 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
     override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
         permissionRationale.visibility = View.VISIBLE
         requestPermissionBtn.visibility = View.VISIBLE
-        val permissionsToRequest = deniedPermissions?.toList() ?: emptyList()
-        requestPermissionBtn.setOnClickListener {
-            permissionsHandler.requestPermissions(permissionsToRequest, this)
-        }
+        startActivity(
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", packageName, null)
+            )
+        )
     }
 
     override fun onPermissionDeniedWithRationale(deniedPermissions: MutableList<String>?) {
