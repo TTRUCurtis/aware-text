@@ -8,6 +8,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.aware.Aware;
+import com.aware.Aware_Preferences;
 import com.aware.phone.ui.onboarding.data.StudyMetadata;
 import com.aware.providers.Aware_Provider;
 import com.aware.utils.Https;
@@ -50,7 +51,8 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
             ContentValues studyData = new ContentValues();
             studyData.put(Aware_Provider.Aware_Studies.STUDY_JOINED, System.currentTimeMillis());
             studyData.put(Aware_Provider.Aware_Studies.STUDY_EXIT, 0);
-            application.getContentResolver().update(Aware_Provider.Aware_Studies.CONTENT_URI, studyData, Aware_Provider.Aware_Studies.STUDY_URL + " LIKE '" + params[0] + "'", null);
+            application.getContentResolver().update(Aware_Provider.Aware_Studies.CONTENT_URI,
+                    studyData, Aware_Provider.Aware_Studies.STUDY_URL + " LIKE '" + params[0].getUrl() + "'", null);
         }
         if (!study.isClosed()) study.close();
 
@@ -59,7 +61,15 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
         //Last step in joining study
         String socialMediaUrl = params[0].getSocialMediaUrl();
         if (socialMediaUrl != null) {
-            String response = new Https().dataGET(socialMediaUrl, true);
+            JSONObject pid = new JSONObject();
+            try {
+                pid.put("pid", Aware.getSetting(application,
+                        Aware_Preferences.DEVICE_ID));
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+
+            String response = new Https().dataPOSTJson(socialMediaUrl, pid, true);
             Log.i("JoinStudy", response);
         }
 
