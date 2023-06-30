@@ -32,7 +32,6 @@ import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.karumi.dexter.PermissionToken
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject

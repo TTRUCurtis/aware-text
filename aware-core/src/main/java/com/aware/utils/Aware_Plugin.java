@@ -136,8 +136,8 @@ public class Aware_Plugin extends Service {
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
                     .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
-                    .setContentTitle("Notification Title")
-                    .setContentText("Notification Text")
+                    .setContentTitle("AWARE: Permission Revoked")
+                    .setContentText("Permissions are required to remain in the study.\nTap to open app and accept permissions.")
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setAutoCancel(true)
                     .setContentIntent(pi);
