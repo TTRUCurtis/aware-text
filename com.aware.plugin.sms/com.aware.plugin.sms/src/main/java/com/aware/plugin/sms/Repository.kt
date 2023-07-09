@@ -139,7 +139,7 @@ class Repository @Inject constructor(
             }
             //Variables declared outside of cursor loop for scope
             var addresses = ""
-            var body = ""
+            var body: String? = ""
             var date: Long
             var mid: String
             var threadId: String
@@ -217,6 +217,8 @@ class Repository @Inject constructor(
                                                 )
                                             )
                                         }
+                                    } else {
+                                        body = null
                                     }
 
                                 } while (mmsPartCursor.moveToNext())
@@ -256,17 +258,19 @@ class Repository @Inject constructor(
                             }
 
                             val isMms = true
-                            mmsList.add(
-                                Message(
-                                    threadId,
-                                    addresses,
-                                    type,
-                                    date.toString(),
-                                    timeStamp.toString(),
-                                    body,
-                                    isMms
+                            if (body != null) {
+                                mmsList.add(
+                                    Message(
+                                        threadId,
+                                        addresses,
+                                        type,
+                                        date.toString(),
+                                        timeStamp.toString(),
+                                        body,
+                                        isMms
+                                    )
                                 )
-                            )
+                            }
                         } while (mmsCursor.moveToNext())
                     }
                 } catch (e: java.lang.Exception) {
