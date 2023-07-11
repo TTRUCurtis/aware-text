@@ -710,7 +710,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d("Permission", "onDestroy-AJS")
         if (pluginCompliance != null) {
             try {
                 unregisterReceiver(pluginCompliance)
@@ -796,36 +795,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
 
-//    private fun requestStudyPermissions(permissions: ArrayList<String>){
-//        val permissionRequest: MutableList<String> = ArrayList()
-//        for(p in permissions){
-//            if(ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED){
-//                permissionRequest.add(p)
-//            }
-//        }
-//        if(permissionRequest.isNotEmpty()){
-//            permissionLauncher.launch(permissionRequest.toTypedArray())
-//        }
-//    }
-//
-//    private fun showPermissionRationale(permissions: ArrayList<String>){
-//        pluginsInstalled = false
-//        if(permissions.isNotEmpty()){
-//            val builder = AlertDialog.Builder(this@Aware_Join_Study)
-//            builder.setTitle("Permissions Required")
-//            builder.setMessage("In order to participate in this study you must accept all permissions. " +
-//                    "Please go into your settings and accept permissions.")
-//            builder.setCancelable(false)
-//            builder.setPositiveButton("Ok", object: DialogInterface.OnClickListener{
-//
-//                override fun onClick(p0: DialogInterface?, p1: Int) {
-//                    permissionLauncher.launch(permissions.toTypedArray())
-//                }
-//            })
-//            builder.show()
-//        }
-//    }
-
     override fun onResume() {
         super.onResume()
         if(permissions != null){
@@ -842,7 +811,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         if (qry != null && qry.moveToFirst()) {
             llPluginsRequired!!.visibility = View.GONE
             if (pluginsInstalled) {
-                Log.d("Permissions", "1")
                 btnAction!!.alpha = 1f
                 pluginsInstalled = true
                 txtJoinDisabled!!.isEnabled = false
@@ -853,18 +821,15 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 btnAction!!.visibility = View.VISIBLE
 
             } else {
-                Log.d("Permissions", "2")
                 btnAction!!.isEnabled = false
                 btnAction!!.alpha = .3f
                 btnAction!!.visibility = View.GONE
             }
             if (Aware.isStudy(applicationContext)) {
-                Log.d("Permissions", "23")
                 btnQuit!!.visibility = View.VISIBLE
                 btnAction!!.setOnClickListener { finish() }
                 btnAction!!.text = "OK"
             } else {
-                Log.d("Permissions", "4")
                 btnQuit!!.visibility = View.GONE
             }
             qry.close()
@@ -947,7 +912,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     override fun onPermissionGranted() {
-        Log.d("Permissions", "onPermissionGranted")
+        pluginsInstalled = true
     }
 
     override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
@@ -969,8 +934,9 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     override fun onPermissionDeniedWithRationale(deniedPermissions: MutableList<String>?) {
 
         AlertDialog.Builder(this)
-            .setTitle("Permission Required")
-            .setMessage("This app requires the following ")
+            .setTitle("Permission Required to Join Study")
+            .setMessage("A few permissions are required to join this study. Press Retry \" +\n" +
+                    "\"to review the required permissions. Please select \\\"Allow\\\" or \\\"While using the app\\\" for all permissions.\")")
             .setPositiveButton(
                 "Retry"
             ){_, _ -> permissionsHandler.requestPermissions(deniedPermissions, this@Aware_Join_Study)}
