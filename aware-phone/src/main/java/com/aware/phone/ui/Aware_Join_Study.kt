@@ -27,7 +27,6 @@ import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
 import com.aware.phone.R
-import com.aware.phone.ui.PermissionUtils.getPermissions
 import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
@@ -737,8 +736,42 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
             }
         }
 
+
         permissions = populatePermissionsList(plugins, sensors)
         permissionsHandler.requestPermissions(permissions, this)
+
+        permissions = PermissionUtils.populatePermissionsList(study_config)
+
+        permissionLauncher =
+            registerForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) { permission: Map<String, Boolean> ->
+                var permissions:ArrayList<String> = ArrayList()
+                permission.forEach{(key, value) ->
+                    if(shouldShowRequestPermissionRationale(key)){
+                        permissions.add(key)
+                    }
+                }
+                if(permissions.isNotEmpty()){
+                    showPermissionRationale(permissions)
+                }else if(permissions.isEmpty() && permission.containsValue(false)){
+                    showPermissionRationale(permissions)
+                }else{
+                    pluginsInstalled = true
+
+                    //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
+                    if (!Aware.is_watch(this)) {
+                        Applications.isAccessibilityServiceActive(this)
+                    }
+
+                    val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    whitelisting.data = Uri.parse("package:$packageName")
+                    startActivity(whitelisting)
+                }
+        }
+
+        requestStudyPermissions(permissions!!)
+
 
         //Show the plugins' information
         active_plugins = ArrayList()
@@ -795,37 +828,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
     }
 
-
-//    private fun requestStudyPermissions(permissions: ArrayList<String>){
-//        val permissionRequest: MutableList<String> = ArrayList()
-//        for(p in permissions){
-//            if(ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED){
-//                permissionRequest.add(p)
-//            }
-//        }
-//        if(permissionRequest.isNotEmpty()){
-//            permissionLauncher.launch(permissionRequest.toTypedArray())
-//        }
-//    }
-//
-//    private fun showPermissionRationale(permissions: ArrayList<String>){
-//        pluginsInstalled = false
-//        if(permissions.isNotEmpty()){
-//            val builder = AlertDialog.Builder(this@Aware_Join_Study)
-//            builder.setTitle("Permissions Required")
-//            builder.setMessage("In order to participate in this study you must accept all permissions. " +
-//                    "Please go into your settings and accept permissions.")
-//            builder.setCancelable(false)
-//            builder.setPositiveButton("Ok", object: DialogInterface.OnClickListener{
-//
-//                override fun onClick(p0: DialogInterface?, p1: Int) {
-//                    permissionLauncher.launch(permissions.toTypedArray())
-//                }
-//            })
-//            builder.show()
-//        }
-//    }
-
     override fun onResume() {
         super.onResume()
         if(permissions != null){
@@ -842,7 +844,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         if (qry != null && qry.moveToFirst()) {
             llPluginsRequired!!.visibility = View.GONE
             if (pluginsInstalled) {
-                Log.d("Permissions", "1")
                 btnAction!!.alpha = 1f
                 pluginsInstalled = true
                 txtJoinDisabled!!.isEnabled = false
@@ -853,18 +854,15 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 btnAction!!.visibility = View.VISIBLE
 
             } else {
-                Log.d("Permissions", "2")
                 btnAction!!.isEnabled = false
                 btnAction!!.alpha = .3f
                 btnAction!!.visibility = View.GONE
             }
             if (Aware.isStudy(applicationContext)) {
-                Log.d("Permissions", "23")
                 btnQuit!!.visibility = View.VISIBLE
                 btnAction!!.setOnClickListener { finish() }
                 btnAction!!.text = "OK"
             } else {
-                Log.d("Permissions", "4")
                 btnQuit!!.visibility = View.GONE
             }
             qry.close()

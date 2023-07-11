@@ -82,7 +82,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         joinStudyFromTextLayout = findViewById(R.id.layout_join_study_thru_text);
         actionButton = findViewById(R.id.btn_action);
         actionButton.setOnClickListener(v -> {
-            String defaultSmsPackageName = Telephony.Sms.getDefaultSmsPackage(this);
+            Telephony.Sms.getDefaultSmsPackage(this);
 
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse("sms:"));

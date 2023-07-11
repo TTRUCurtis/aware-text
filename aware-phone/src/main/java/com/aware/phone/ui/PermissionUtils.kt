@@ -1,11 +1,10 @@
 package com.aware.phone.ui
 
 import android.Manifest
-import android.content.Context
 
 import android.os.Build
-import androidx.core.content.PermissionChecker
-import com.aware.providers.Bluetooth_Provider
+import org.json.JSONArray
+import org.json.JSONException
 import java.util.ArrayList
 
 
@@ -26,13 +25,13 @@ object PermissionUtils {
     private const val SMS = "com.aware.plugin.sms"
     private const val STUDENTLIFE_AUDIO = "com.aware.plugin.studentlife.audio"
     private const val SENSOR_BLUETOOTH = "status_bluetooth"
-    private const val SENSOR_COMMUNICATION = "status_communications_events"
+    private const val SENSOR_COMMUNICATION = "status_communication_events"
     private const val SENSOR_LOCATION = "status_location_gps"
     private const val SENSOR_TELEPHONY = "status_telephony"
     private const val SENSOR_WIFI = "status_wifi"
 
     @JvmStatic
-    fun getRequiredPermissions(): ArrayList<String> {
+    private fun getRequiredPermissions(): ArrayList<String> {
         val requiredPermissions = arrayListOf(
             Manifest.permission.GET_ACCOUNTS,
             Manifest.permission.WRITE_SYNC_SETTINGS,
@@ -47,11 +46,55 @@ object PermissionUtils {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
             requiredPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
-
         return requiredPermissions
     }
 
-    fun getPermissions(pluginOrSensor: String): List<String> {
+    @JvmStatic
+    fun populatePermissionsList(studyConfig: JSONArray): ArrayList<String> {
+        var plugins = JSONArray()
+        var sensors = JSONArray()
+        for (i in 0 until studyConfig.length()) {
+            try {
+                val element = studyConfig.getJSONObject(i)
+                if (element.has("plugins")) {
+                    plugins = element.getJSONArray("plugins")
+                }
+                if (element.has("sensors")) {
+                    sensors = element.getJSONArray("sensors")
+                }
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+        }
+
+        val permissions: ArrayList<String> = ArrayList()
+        for (i in 0 until plugins.length()) {
+            try {
+                val plugin = plugins.getJSONObject(i)
+                permissions.addAll(
+                    getPermissions(plugin.getString("plugin"))
+                )  //sends in "com.aware.plugin...."
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+        }
+
+        for (i in 0 until sensors.length()) {
+            try {
+                val sensor = sensors.getJSONObject(i)
+                permissions.addAll(
+                    getPermissions(sensor.getString("setting"))
+                )
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+        }
+        permissions.addAll(getRequiredPermissions())
+
+        return ArrayList(permissions.distinct())
+    }
+
+    private fun getPermissions(pluginOrSensor: String): List<String> {
         when (pluginOrSensor) {
             ACTIVITY_REC -> return listOf(
                 Manifest.permission.ACTIVITY_RECOGNITION
@@ -117,6 +160,5 @@ object PermissionUtils {
             )
             else -> return emptyList()
         }
-
     }
 }

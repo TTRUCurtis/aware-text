@@ -69,7 +69,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
                     "Congratulations! You've successfully registered for this study",
                     "Please complete this follow-up survey: "
                     ));
-        }).execute(studyMetadataLiveData.getValue().getUrl());
+        }).execute(studyMetadataLiveData.getValue());
     }
 
     public MutableLiveData<StudyMetadata> getStudyMetadataLiveData() {

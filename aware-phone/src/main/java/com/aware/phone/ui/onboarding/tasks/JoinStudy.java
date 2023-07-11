@@ -4,20 +4,25 @@ import android.app.Application;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.aware.Aware;
+import com.aware.phone.ui.onboarding.data.StudyMetadata;
 import com.aware.providers.Aware_Provider;
+import com.aware.utils.Https;
 import com.aware.utils.StudyUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URL;
+
 /**
  * Join study asynchronously
  */
-public class JoinStudy extends AsyncTask<String, Void, Void> {
+public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
 
     private final Application application;
     private final Listener listener;
@@ -28,9 +33,9 @@ public class JoinStudy extends AsyncTask<String, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(String... params) {
+    protected Void doInBackground(StudyMetadata... params) {
         //TODO do we really need to ask the DB for the study config if we just received it? Why not keep it in memory and pass it in here
-        Cursor study = Aware.getStudy(application, params[0]);
+        Cursor study = Aware.getStudy(application, params[0].getUrl());
         study.moveToFirst();
         JSONArray study_configs = null;
         try {
@@ -49,10 +54,15 @@ public class JoinStudy extends AsyncTask<String, Void, Void> {
         }
         if (!study.isClosed()) study.close();
 
-        //Last step in joining study
-        //TODO figure out how this really works and how it creates/inserts all those tables on
-        // the server
         StudyUtils.applySettings(application, study_configs);
+
+        //Last step in joining study
+        String socialMediaUrl = params[0].getSocialMediaUrl();
+        if (socialMediaUrl != null) {
+            String response = new Https().dataGET(socialMediaUrl, true);
+            Log.i("JoinStudy", response);
+        }
+
         return null;
     }
 
