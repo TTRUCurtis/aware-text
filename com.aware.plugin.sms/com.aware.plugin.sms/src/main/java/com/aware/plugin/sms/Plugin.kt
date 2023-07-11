@@ -45,6 +45,10 @@ open class Plugin : Aware_Plugin() {
         super.onCreate()
         Log.i(Logging.LOCAL_TAG, "onCreate")
         AUTHORITY = Provider.getAuthority(this)
+
+        contextBroadcaster.setProvider(AUTHORITY)
+        contextBroadcaster.setTag(Logging.LOCAL_TAG)
+
         syncSettings.setSchedule() //This should go in the class that's responsible for starting this plugin
         REQUIRED_PERMISSIONS.add(Manifest.permission.READ_SMS)
 
@@ -53,8 +57,10 @@ open class Plugin : Aware_Plugin() {
         CoroutineScope(dispatcher).launch {
             eventsChannel.consumeEach { pullData() }
         }
+
         contextBroadcaster.setProvider(AUTHORITY)
         contextBroadcaster.setTag(Logging.LOCAL_TAG)
+
     }
 
     //This function gets called by AWARE to make sure this plugin is still running.
