@@ -5,9 +5,12 @@ import android.util.Log;
 
 import com.aware.Aware;
 
+import org.json.JSONObject;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -162,7 +165,71 @@ public class Https {
                     page_content.append(line);
                 }
                 result = page_content.toString();
-                br.close();
+            }
+            stream.close();
+
+            return result;
+        } catch (UnsupportedEncodingException e) {
+            Log.e(TAG, "Sync HTTPS dataPost encoding error: " + e.getMessage());
+        } catch (IOException | NullPointerException e) {
+            Log.e(TAG, "Sync HTTPS dataPost io/null error: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Sync HTTPS dataPost state error: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public String dataPOSTJson(final String url, final JSONObject data,
+                            final boolean is_gzipped) {
+
+        if (url.length() == 0) return null;
+
+        try {
+
+            URL path = new URL(url);
+
+            HttpsURLConnection path_connection = (HttpsURLConnection) path.openConnection();
+            path_connection.setSSLSocketFactory(sslSocketFactory);
+            path_connection.setReadTimeout(timeout);
+            path_connection.setConnectTimeout(timeout);
+            path_connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            path_connection.setRequestMethod("POST");
+            path_connection.setDoOutput(true);
+
+            if (is_gzipped) path_connection.setRequestProperty("accept-encoding", "gzip");
+
+            OutputStream os = path_connection.getOutputStream();
+            DataOutputStream writer = new DataOutputStream(os);
+            writer.write(data.toString().getBytes("UTF-8"));
+            writer.flush();
+            writer.close();
+            os.close();
+
+            path_connection.connect();
+
+            //only debug is there is a problem with the request
+            if (path_connection.getResponseCode() != HttpsURLConnection.HTTP_OK) {
+                if (Aware.DEBUG) {
+                    Log.d(TAG, "Request: POST, URL: " + url + "\nData:" + data);
+                    Log.d(TAG, "Status: " + path_connection.getResponseCode());
+                    Log.e(TAG, path_connection.getResponseMessage());
+                }
+                return null;
+            }
+
+            InputStream stream = path_connection.getInputStream();
+            if ("gzip".equals(path_connection.getContentEncoding())) {
+                stream = new GZIPInputStream(stream);
+            }
+
+            String result;
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(stream))) {
+                StringBuilder page_content = new StringBuilder("");
+                String line;
+                while ((line = br.readLine()) != null) {
+                    page_content.append(line);
+                }
+                result = page_content.toString();
             }
             stream.close();
 
