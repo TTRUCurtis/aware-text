@@ -710,7 +710,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d("Permission", "onDestroy-AJS")
         if (pluginCompliance != null) {
             try {
                 unregisterReceiver(pluginCompliance)
@@ -842,7 +841,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         if (qry != null && qry.moveToFirst()) {
             llPluginsRequired!!.visibility = View.GONE
             if (pluginsInstalled) {
-                Log.d("Permissions", "1")
                 btnAction!!.alpha = 1f
                 pluginsInstalled = true
                 txtJoinDisabled!!.isEnabled = false
@@ -853,18 +851,15 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 btnAction!!.visibility = View.VISIBLE
 
             } else {
-                Log.d("Permissions", "2")
                 btnAction!!.isEnabled = false
                 btnAction!!.alpha = .3f
                 btnAction!!.visibility = View.GONE
             }
             if (Aware.isStudy(applicationContext)) {
-                Log.d("Permissions", "23")
                 btnQuit!!.visibility = View.VISIBLE
                 btnAction!!.setOnClickListener { finish() }
                 btnAction!!.text = "OK"
             } else {
-                Log.d("Permissions", "4")
                 btnQuit!!.visibility = View.GONE
             }
             qry.close()
@@ -947,7 +942,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     override fun onPermissionGranted() {
-        Log.d("Permissions", "onPermissionGranted")
+        pluginsInstalled = true;
     }
 
     override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {

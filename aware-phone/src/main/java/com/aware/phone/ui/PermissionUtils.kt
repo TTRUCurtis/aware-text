@@ -31,7 +31,7 @@ object PermissionUtils {
     private const val SENSOR_WIFI = "status_wifi"
 
     @JvmStatic
-    private fun getRequiredPermissions(): ArrayList<String> {
+    fun getRequiredPermissions(): ArrayList<String> {
         val requiredPermissions = arrayListOf(
             Manifest.permission.GET_ACCOUNTS,
             Manifest.permission.WRITE_SYNC_SETTINGS,
@@ -94,7 +94,7 @@ object PermissionUtils {
         return ArrayList(permissions.distinct())
     }
 
-    private fun getPermissions(pluginOrSensor: String): List<String> {
+    fun getPermissions(pluginOrSensor: String): List<String> {
         when (pluginOrSensor) {
             ACTIVITY_REC -> return listOf(
                 Manifest.permission.ACTIVITY_RECOGNITION
