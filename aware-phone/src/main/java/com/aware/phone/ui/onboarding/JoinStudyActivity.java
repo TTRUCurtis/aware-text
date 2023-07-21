@@ -22,6 +22,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.aware.Applications;
 import com.aware.Aware;
 import com.aware.phone.R;
 import com.aware.phone.ui.Aware_Participant;
@@ -127,6 +128,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 });
                 builder.setTitle("Error retrieving study metadata");
                 builder.setMessage(errorMsg);
+                builder.show();
             }
         });
 
@@ -150,6 +152,13 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
 
             if (studyMetadata.showPermissionsNoticeDialog()) {
                 actionButton.setEnabled(false);
+                if (!Aware.is_watch(this)) {
+                    Applications.isAccessibilityServiceActive(this);
+                }
+
+                Intent whitelisting = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                whitelisting.setData(Uri.parse("package:" + getPackageName()));
+                startActivity(whitelisting);
                 permissionsHandler.requestPermissions(studyMetadata.getPermissions(), this);
 
             } else {

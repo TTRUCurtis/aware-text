@@ -40,7 +40,7 @@ public class Locations extends Aware_Sensor implements LocationListener {
      * This listener will keep track for failed GPS location requests
      * TODO: extend to log satellite information
      */
-    private final GnssStatus.Callback gps_status_listener = new GnssStatus.Callback() {
+    private final GnssStatus.Callback gnssStatusCallback = new GnssStatus.Callback() {
         @Override
         public void onStarted() {
             super.onStarted();
@@ -116,73 +116,6 @@ public class Locations extends Aware_Sensor implements LocationListener {
 
         }
     };
-//    private final GpsStatus.Listener gps_status_listener = new GpsStatus.Listener() {
-//        @Override
-//        public void onGpsStatusChanged(int event) {
-//            switch (event) {
-//                case GpsStatus.GPS_EVENT_FIRST_FIX:
-//                    break;
-//                case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-//                    break;
-//                case GpsStatus.GPS_EVENT_STARTED:
-//                    break;
-//                case GpsStatus.GPS_EVENT_STOPPED:
-//                    //Save best location, could be GPS or network
-//                    //This covers the case when the GPS stopped and we did not get a location fix.
-//                    Location lastGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-//
-//                    Location lastNetwork = null;
-//                    //Do a quick check on the network provider
-//                    if (locationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null) {
-//                        locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, Locations.this, getMainLooper());
-//                        lastNetwork = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-//                    }
-//
-//                    Location bestLocation;
-//                    if (isBetterLocation(lastNetwork, lastGPS)) {
-//                        bestLocation = lastNetwork;
-//                    } else {
-//                        bestLocation = lastGPS;
-//                    }
-//
-//                    // Are we within the geofence, if we are given one?
-//                    Boolean permitted;
-//                    if (bestLocation != null) {
-//                        permitted = testGeoFence(bestLocation.getLatitude(), bestLocation.getLongitude());
-//                    } else {
-//                        permitted = true;  // unused because no location.
-//                    }
-//                    if (Aware.DEBUG) Log.d(TAG, "Locations: geofencing: permitted=" + permitted);
-//
-//                    if (bestLocation != null) {
-//                        ContentValues rowData = new ContentValues();
-//                        rowData.put(Locations_Data.TIMESTAMP, System.currentTimeMillis());
-//                        rowData.put(Locations_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-//                        rowData.put(Locations_Data.PROVIDER, bestLocation.getProvider());
-//                        if (permitted) {
-//                            rowData.put(Locations_Data.LATITUDE, bestLocation.getLatitude());
-//                            rowData.put(Locations_Data.LONGITUDE, bestLocation.getLongitude());
-//                            rowData.put(Locations_Data.BEARING, bestLocation.getBearing());
-//                            rowData.put(Locations_Data.SPEED, bestLocation.getSpeed());
-//                            rowData.put(Locations_Data.ALTITUDE, bestLocation.getAltitude());
-//                            rowData.put(Locations_Data.ACCURACY, bestLocation.getAccuracy());
-//                        } else {
-//                            rowData.put(Locations_Data.LABEL, "outofbounds");
-//                        }
-//
-//                        try {
-//                            getContentResolver().insert(Locations_Data.CONTENT_URI, rowData);
-//                        } catch (SQLException e) {
-//                            if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-//                        }
-//
-//                        Intent locationEvent = new Intent(ACTION_AWARE_LOCATIONS);
-//                        sendBroadcast(locationEvent);
-//                    }
-//                    break;
-//            }
-//        }
-//    };
 
     public String TAG = "AWARE Sensor Location";
 
@@ -369,7 +302,7 @@ public class Locations extends Aware_Sensor implements LocationListener {
         super.onDestroy();
 
         if (PERMISSIONS_OK) locationManager.removeUpdates(this);
-        locationManager.unregisterGnssStatusCallback(gps_status_listener);
+        locationManager.unregisterGnssStatusCallback(gnssStatusCallback);
 
         ContentResolver.setSyncAutomatically(Aware.getAWAREAccount(this), Locations_Provider.getAuthority(this), false);
         ContentResolver.removePeriodicSync(
@@ -414,8 +347,8 @@ public class Locations extends Aware_Sensor implements LocationListener {
                                 LocationManager.GPS_PROVIDER,
                                 Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_GPS)) * 1000,
                                 Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.MIN_LOCATION_GPS_ACCURACY)), this);
-                        locationManager.unregisterGnssStatusCallback(gps_status_listener);
-                        locationManager.registerGnssStatusCallback(gps_status_listener);
+                        locationManager.unregisterGnssStatusCallback(gnssStatusCallback);
+                        locationManager.registerGnssStatusCallback(gnssStatusCallback);
 
                         FREQUENCY_GPS = Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_GPS));
                     }

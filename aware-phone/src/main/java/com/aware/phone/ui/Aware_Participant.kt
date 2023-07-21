@@ -51,11 +51,11 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
 
             val permissions =
                 intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) as java.util.ArrayList<String>?
-            permissionsHandler.requestPermissions(permissions, this)
+            permissionsHandler.requestPermissions(permissions!!, this)
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionsHandler.handlePermissionsResult(requestCode, permissions, grantResults)
     }
@@ -122,7 +122,7 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
         startService(redirectService)
     }
 
-    override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
+    override fun onPermissionDenied(deniedPermissions: List<String>?) {
         permissionRationale.visibility = View.VISIBLE
         requestPermissionBtn.visibility = View.VISIBLE
         startActivity(
@@ -133,8 +133,12 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
         )
     }
 
-    override fun onPermissionDeniedWithRationale(deniedPermissions: MutableList<String>?) {
-
+    override fun onPermissionDeniedWithRationale(deniedPermissions: List<String>?) {
+        /*
+            This activity is responsible for handling permissions that have been revoked
+            and does not receive any rationale as revoked permissions do not trigger this
+            part of the permission flow.
+         */
     }
 
 
