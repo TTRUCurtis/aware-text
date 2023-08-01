@@ -28,8 +28,9 @@ public class Plugin extends Aware_Plugin {
     public static String EXTRA_ACTIVITY = "activity";
     public static String EXTRA_CONFIDENCE = "confidence";
 
-    private String permissionNeededErrorMsg = "ACTIVITY_RECOGNITION permission has not been " +
-            "granted";
+    private static final String TAG = "AWARE::Google Activity Recognition";
+    private static final String permissionNeededErrorMsg =
+            "ACTIVITY_RECOGNITION permission has not been granted";
     private static PendingIntent gARPending;
 
     public static int current_activity = -1;
@@ -41,19 +42,14 @@ public class Plugin extends Aware_Plugin {
 
         AUTHORITY = Google_AR_Provider.getAuthority(this);
 
-        TAG = "AWARE::Google Activity Recognition";
-
         contextBroadcaster.setProvider(AUTHORITY);
         contextBroadcaster.setTag(TAG);
 
-        CONTEXT_PRODUCER = new ContextProducer() {
-            @Override
-            public void onContext() {
-                Intent context = new Intent(ACTION_AWARE_GOOGLE_ACTIVITY_RECOGNITION);
-                context.putExtra(EXTRA_ACTIVITY, current_activity);
-                context.putExtra(EXTRA_CONFIDENCE, current_confidence);
-                sendBroadcast(context);
-            }
+        CONTEXT_PRODUCER = () -> {
+            Intent context = new Intent(ACTION_AWARE_GOOGLE_ACTIVITY_RECOGNITION);
+            context.putExtra(EXTRA_ACTIVITY, current_activity);
+            context.putExtra(EXTRA_CONFIDENCE, current_confidence);
+            sendBroadcast(context);
         };
 
         if (!is_google_services_available()) {
@@ -69,36 +65,6 @@ public class Plugin extends Aware_Plugin {
 
         contextBroadcaster.setTag(TAG);
         contextBroadcaster.setProvider(AUTHORITY);
-    }
-
-    /**
-     * Allow callback to other applications when data is stored in provider
-     */
-    private static AWARESensorObserver awareSensor;
-
-    public static void setSensorObserver(AWARESensorObserver observer) {
-        awareSensor = observer;
-    }
-
-    public static AWARESensorObserver getSensorObserver() {
-        return awareSensor;
-    }
-
-    /**
-     * Callbacks when activities are detected
-     */
-    public interface AWARESensorObserver {
-        void onActivityChanged(ContentValues data);
-
-        void isRunning(int confidence);
-
-        void isWalking(int confidence);
-
-        void isStill(int confidence);
-
-        void isBycicle(int confidence);
-
-        void isVehicle(int confidence);
     }
 
     @Override

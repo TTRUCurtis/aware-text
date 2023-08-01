@@ -67,28 +67,6 @@ public class Algorithm extends IntentService {
                 Log.d(Aware.TAG, "User is: " + activity_name + " (conf:" + Plugin.current_confidence + ")");
             }
 
-            Plugin.AWARESensorObserver sensorObserver = Plugin.getSensorObserver();
-            if (sensorObserver != null) {
-                switch (mostProbable.getType()) {
-                    case DetectedActivity.IN_VEHICLE:
-                        sensorObserver.isVehicle(mostProbable.getConfidence());
-                        break;
-                    case DetectedActivity.ON_BICYCLE:
-                        sensorObserver.isBycicle(mostProbable.getConfidence());
-                        break;
-                    case DetectedActivity.WALKING:
-                        sensorObserver.isWalking(mostProbable.getConfidence());
-                        break;
-                    case DetectedActivity.RUNNING:
-                        sensorObserver.isRunning(mostProbable.getConfidence());
-                        break;
-                    case DetectedActivity.STILL:
-                        sensorObserver.isStill(mostProbable.getConfidence());
-                        break;
-                }
-                sensorObserver.onActivityChanged(data);
-            }
-
             Intent context = new Intent(Plugin.ACTION_AWARE_GOOGLE_ACTIVITY_RECOGNITION);
             context.putExtra(Plugin.EXTRA_ACTIVITY, Plugin.current_activity);
             context.putExtra(Plugin.EXTRA_CONFIDENCE, Plugin.current_confidence);
