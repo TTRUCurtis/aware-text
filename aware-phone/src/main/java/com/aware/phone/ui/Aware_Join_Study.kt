@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.aware.Applications
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
@@ -911,6 +912,13 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
     override fun onPermissionGranted() {
         pluginsInstalled = true;
+        if (!Aware.is_watch(this)) {
+            Applications.isAccessibilityServiceActive(this)
+        }
+        val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+        whitelisting.data = Uri.parse("package:$packageName")
+        startActivity(whitelisting)
+
     }
 
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
@@ -934,8 +942,8 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         AlertDialog.Builder(this)
             .setTitle("Permissions Required to Join Study")
             .setMessage(
-                "Permissions are required to join this study. Press OK " +
-                        "to review the required permissions. Please select \"Allow\" or \"While using the app\" for all permissions."
+                "Permissions are required to join study. Press OK " +
+                        "to review the required permissions. Please select \"Allow\" or \"While using the app\" or \"Only this time\" for all permissions."
             )
             .setPositiveButton(
                 android.R.string.ok

@@ -202,7 +202,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         new AlertDialog.Builder(this)
                 .setTitle("Permission required to use camera")
                 .setMessage("Press OK " +
-                        "to review the required permission. Please select \"While using the app\" or \"Only this time\" to use camera.")
+                        "to review the required permission. Please select \"Allow\" or \"While using the app\" or \"Only this time\" to use camera.")
                 .setPositiveButton(
                         android.R.string.ok,
                         new DialogInterface.OnClickListener() {
