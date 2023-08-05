@@ -19,7 +19,6 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -933,11 +932,19 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     override fun onPermissionDeniedWithRationale(deniedPermissions: List<String>?) {
 
         AlertDialog.Builder(this)
-            .setTitle("Permission Required")
-            .setMessage("This app requires the following ")
+            .setTitle("Permissions Required to Join Study")
+            .setMessage(
+                "Permissions are required to join this study. Press OK " +
+                        "to review the required permissions. Please select \"Allow\" or \"While using the app\" for all permissions."
+            )
             .setPositiveButton(
-                "Retry"
-            ){_, _ -> permissionsHandler.requestPermissions(deniedPermissions!!, this@Aware_Join_Study)}
+                android.R.string.ok
+            ) { dialog, which ->
+                permissionsHandler.requestPermissions(
+                    deniedPermissions!!,
+                    this@Aware_Join_Study
+                )
+            }
             .show()
     }
 }
