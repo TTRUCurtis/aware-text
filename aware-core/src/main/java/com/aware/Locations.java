@@ -1,13 +1,15 @@
 package com.aware;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SyncRequest;
+import android.content.pm.PackageManager;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteException;
-import android.location.GpsStatus;
+import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -15,9 +17,14 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+
 import com.aware.providers.Locations_Provider;
 import com.aware.providers.Locations_Provider.Locations_Data;
 import com.aware.utils.Aware_Sensor;
+
+import kotlin.Suppress;
 
 /**
  * Location service for Aware framework
@@ -33,71 +40,80 @@ public class Locations extends Aware_Sensor implements LocationListener {
      * This listener will keep track for failed GPS location requests
      * TODO: extend to log satellite information
      */
-    private final GpsStatus.Listener gps_status_listener = new GpsStatus.Listener() {
+    private final GnssStatus.Callback gnssStatusCallback = new GnssStatus.Callback() {
         @Override
-        public void onGpsStatusChanged(int event) {
-            switch (event) {
-                case GpsStatus.GPS_EVENT_FIRST_FIX:
-                    break;
-                case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-                    break;
-                case GpsStatus.GPS_EVENT_STARTED:
-                    break;
-                case GpsStatus.GPS_EVENT_STOPPED:
-                    //Save best location, could be GPS or network
-                    //This covers the case when the GPS stopped and we did not get a location fix.
-                    Location lastGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        public void onStarted() {
+            super.onStarted();
+        }
 
-                    Location lastNetwork = null;
-                    //Do a quick check on the network provider
-                    if (locationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null) {
-                        locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, Locations.this, getMainLooper());
-                        lastNetwork = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                    }
+        @Override
+        public void onFirstFix(int ttffMillis) {
 
-                    Location bestLocation;
-                    if (isBetterLocation(lastNetwork, lastGPS)) {
-                        bestLocation = lastNetwork;
-                    } else {
-                        bestLocation = lastGPS;
-                    }
+            super.onFirstFix(ttffMillis);
+        }
 
-                    // Are we within the geofence, if we are given one?
-                    Boolean permitted;
-                    if (bestLocation != null) {
-                        permitted = testGeoFence(bestLocation.getLatitude(), bestLocation.getLongitude());
-                    } else {
-                        permitted = true;  // unused because no location.
-                    }
-                    if (Aware.DEBUG) Log.d(TAG, "Locations: geofencing: permitted=" + permitted);
+        @Override
+        public void onSatelliteStatusChanged(@NonNull GnssStatus status) {
+            super.onSatelliteStatusChanged(status);
+        }
 
-                    if (bestLocation != null) {
-                        ContentValues rowData = new ContentValues();
-                        rowData.put(Locations_Data.TIMESTAMP, System.currentTimeMillis());
-                        rowData.put(Locations_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-                        rowData.put(Locations_Data.PROVIDER, bestLocation.getProvider());
-                        if (permitted) {
-                            rowData.put(Locations_Data.LATITUDE, bestLocation.getLatitude());
-                            rowData.put(Locations_Data.LONGITUDE, bestLocation.getLongitude());
-                            rowData.put(Locations_Data.BEARING, bestLocation.getBearing());
-                            rowData.put(Locations_Data.SPEED, bestLocation.getSpeed());
-                            rowData.put(Locations_Data.ALTITUDE, bestLocation.getAltitude());
-                            rowData.put(Locations_Data.ACCURACY, bestLocation.getAccuracy());
-                        } else {
-                            rowData.put(Locations_Data.LABEL, "outofbounds");
-                        }
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onStopped() {
+            super.onStopped();
 
-                        try {
-                            getContentResolver().insert(Locations_Data.CONTENT_URI, rowData);
-                        } catch (SQLException e) {
-                            if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-                        }
+            Location lastGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-                        Intent locationEvent = new Intent(ACTION_AWARE_LOCATIONS);
-                        sendBroadcast(locationEvent);
-                    }
-                    break;
+            Location lastNetwork = null;
+            // Do a quick check on the network provider
+
+            if (locationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null) {
+                locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, Locations.this, getMainLooper());
+                lastNetwork = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             }
+
+            Location bestLocation;
+            if (isBetterLocation(lastNetwork, lastGPS)) {
+                bestLocation = lastNetwork;
+            } else {
+                bestLocation = lastGPS;
+            }
+
+            // Are we within the geofence, if we are given one?
+            boolean permitted;
+            if (bestLocation != null) {
+                permitted = testGeoFence(bestLocation.getLatitude(), bestLocation.getLongitude());
+            } else {
+                permitted = true;  // unused because no location.
+            }
+            if (Aware.DEBUG) Log.d(TAG, "Locations: geofencing: permitted=" + permitted);
+
+            if (bestLocation != null) {
+                ContentValues rowData = new ContentValues();
+                rowData.put(Locations_Data.TIMESTAMP, System.currentTimeMillis());
+                rowData.put(Locations_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                rowData.put(Locations_Data.PROVIDER, bestLocation.getProvider());
+                if (permitted) {
+                    rowData.put(Locations_Data.LATITUDE, bestLocation.getLatitude());
+                    rowData.put(Locations_Data.LONGITUDE, bestLocation.getLongitude());
+                    rowData.put(Locations_Data.BEARING, bestLocation.getBearing());
+                    rowData.put(Locations_Data.SPEED, bestLocation.getSpeed());
+                    rowData.put(Locations_Data.ALTITUDE, bestLocation.getAltitude());
+                    rowData.put(Locations_Data.ACCURACY, bestLocation.getAccuracy());
+                } else {
+                    rowData.put(Locations_Data.LABEL, "outofbounds");
+                }
+
+                try {
+                    getContentResolver().insert(Locations_Data.CONTENT_URI, rowData);
+                } catch (SQLException e) {
+                    if (Aware.DEBUG) Log.d(TAG, e.getMessage());
+                }
+
+                Intent locationEvent = new Intent(ACTION_AWARE_LOCATIONS);
+                sendBroadcast(locationEvent);
+            }
+
         }
     };
 
@@ -286,7 +302,7 @@ public class Locations extends Aware_Sensor implements LocationListener {
         super.onDestroy();
 
         if (PERMISSIONS_OK) locationManager.removeUpdates(this);
-        locationManager.removeGpsStatusListener(gps_status_listener);
+        locationManager.unregisterGnssStatusCallback(gnssStatusCallback);
 
         ContentResolver.setSyncAutomatically(Aware.getAWAREAccount(this), Locations_Provider.getAuthority(this), false);
         ContentResolver.removePeriodicSync(
@@ -298,6 +314,7 @@ public class Locations extends Aware_Sensor implements LocationListener {
         if (Aware.DEBUG) Log.d(TAG, "Locations service terminated...");
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
@@ -330,8 +347,8 @@ public class Locations extends Aware_Sensor implements LocationListener {
                                 LocationManager.GPS_PROVIDER,
                                 Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_GPS)) * 1000,
                                 Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.MIN_LOCATION_GPS_ACCURACY)), this);
-                        locationManager.removeGpsStatusListener(gps_status_listener);
-                        locationManager.addGpsStatusListener(gps_status_listener);
+                        locationManager.unregisterGnssStatusCallback(gnssStatusCallback);
+                        locationManager.registerGnssStatusCallback(gnssStatusCallback);
 
                         FREQUENCY_GPS = Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_GPS));
                     }
@@ -428,6 +445,7 @@ public class Locations extends Aware_Sensor implements LocationListener {
         return START_STICKY;
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onLocationChanged(Location newLocation) {
         if (Aware.DEBUG)
@@ -530,6 +548,7 @@ public class Locations extends Aware_Sensor implements LocationListener {
         }
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
         if (Aware.DEBUG)

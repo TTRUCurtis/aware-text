@@ -1,15 +1,11 @@
 
 package com.aware.phone;
 
-import android.Manifest;
+
 import android.app.Dialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.*;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ProviderInfo;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -17,7 +13,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.*;
 import android.provider.Settings;
@@ -25,21 +20,22 @@ import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.Toast;
+
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.PermissionChecker;
-import com.aware.Applications;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.phone.ui.Aware_Activity;
 import com.aware.phone.ui.Aware_Join_Study;
 import com.aware.phone.ui.Aware_Participant;
-import com.aware.phone.ui.PermissionUtils;
 import com.aware.phone.ui.onboarding.JoinStudyActivity;
 import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
-
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -47,15 +43,20 @@ import java.util.*;
 /**
  * @author df
  */
-public class Aware_Client extends Aware_Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class Aware_Client extends Aware_Activity implements SharedPreferences.OnSharedPreferenceChangeListener, PermissionsHandler.PermissionCallback {
 
-//     public static boolean permissions_ok;
     private static Hashtable<Integer, Boolean> listSensorType;
     private static SharedPreferences prefs;
 
     private static final Hashtable<String, Integer> optionalSensors = new Hashtable<>();
 
     private final Aware.AndroidPackageMonitor packageMonitor = new Aware.AndroidPackageMonitor();
+
+    public static final String EXTRA_REDIRECT_SERVICE = "redirect_service";
+    public static final String ACTION_AWARE_PERMISSIONS_CHECK = "ACTION_AWARE_PERMISSIONS_CHECK";
+    private PermissionsHandler permissionsHandler;
+    private String redirectActivityComponent;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,6 +148,70 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             ListPreference list = (ListPreference) findPreference(key);
             list.setSummary(list.getEntry());
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        permissionsHandler.handlePermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public void onPermissionGranted() {
+
+            Intent redirectActivity = new Intent();
+            String[] component = redirectActivityComponent.split("/");
+            redirectActivity.setComponent(new ComponentName(component[0], component[1]));
+            startActivity(redirectActivity);
+    }
+
+    @Override
+    public void onPermissionDenied(@Nullable List<String> deniedPermissions) {
+        new AlertDialog.Builder(this)
+                .setTitle("Grant Camera Permissions Manually")
+                .setMessage("Proceed to settings, click on permissions, and select camera. " +
+                        "Please select \"Allow only while using the app\" or \"ask every time\".")
+                .setPositiveButton(
+                        "Proceed to Settings",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                startActivity(
+                                        new Intent(
+                                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                                Uri.fromParts("package", getPackageName(), null)
+                                        )
+                                );
+                            }
+                        })
+                .setNegativeButton(
+                        "Cancel joining study",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+
+                            }
+                        }
+                )
+                .show();
+
+    }
+
+    @Override
+    public void onPermissionDeniedWithRationale(@Nullable List<String> deniedPermissions) {
+        new AlertDialog.Builder(this)
+                .setTitle("Permission required to use camera")
+                .setMessage("Press OK " +
+                        "to review the required permission. Please select \"Allow\" or \"While using the app\" or \"Only this time\" to use camera.")
+                .setPositiveButton(
+                        android.R.string.ok,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                permissionsHandler.requestPermissions(deniedPermissions, Aware_Client.this);
+                            }
+                        })
+                .show();
     }
 
     private class SettingsSync extends AsyncTask<Preference, Preference, Void> {
@@ -252,9 +317,12 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     }
 
 
+
+
     @Override
     protected void onResume() {
         super.onResume();
+
             Set<String> keys = optionalSensors.keySet();
             for (String optionalSensor : keys) {
                 Preference pref = findPreference(optionalSensor);
@@ -264,7 +332,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             }
 
             prefs.registerOnSharedPreferenceChangeListener(this);
-            
+
             new SettingsSync().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, //use all cores available to process UI faster
                     findPreference(Aware_Preferences.DEVICE_ID),
                     findPreference(Aware_Preferences.DEVICE_LABEL),
@@ -375,13 +443,27 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             );
 
 
-        if (Aware.isStudy(this)) {
-            if (Aware.getSetting(this, Aware_Preferences.INTERFACE_LOCKED).equals("true") ||
-                    Aware.getSetting(this, "ui_mode").equals("1") || Aware.getSetting(this, "ui_mode").equals("2")
-            ) {
-                finish();
-                startActivity(new Intent(this, Aware_Participant.class));
+            if (Aware.isStudy(this)) {
+                if (Aware.getSetting(this, Aware_Preferences.INTERFACE_LOCKED).equals("true") ||
+                        Aware.getSetting(this, "ui_mode").equals("1") || Aware.getSetting(this, "ui_mode").equals("2")
+                ) {
+                    finish();
+                    startActivity(new Intent(this, Aware_Participant.class));
+                }
             }
+
+
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        if(intent != null && intent.getExtras() != null && intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) != null) {
+            redirectActivityComponent = intent.getStringExtra(PermissionsHandler.EXTRA_REDIRECT_ACTIVITY);
+            permissionsHandler = new PermissionsHandler(this);
+            ArrayList<String> permission = (ArrayList<String>) intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS);
+            permissionsHandler.requestPermissions(permission, this);
         }
     }
 

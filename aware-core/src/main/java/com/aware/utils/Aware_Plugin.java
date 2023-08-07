@@ -1,7 +1,8 @@
 
 package com.aware.utils;
 
-import android.Manifest;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.*;
 import android.os.Build;
@@ -9,20 +10,33 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.PermissionChecker;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
+import com.aware.R;
+import com.aware.ui.PermissionHandler;
 import com.aware.ui.PermissionsHandler;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * Aware_Plugin: Extend to integrate with the framework (extension of Android Service class).
  *
  * @author denzil
  */
+@AndroidEntryPoint
 public class Aware_Plugin extends Service {
+
+
+    @Inject
+    public PermissionHandler permissionHandler;
 
     /**
      * Debug tag for this plugin
@@ -86,24 +100,59 @@ public class Aware_Plugin extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String p : REQUIRED_PERMISSIONS) {
-                if (ContextCompat.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
-                    PERMISSIONS_OK = false;
-                    break;
-                }
+        for (String p : REQUIRED_PERMISSIONS) {
+            if (ContextCompat.checkSelfPermission(this, p) != PermissionChecker.PERMISSION_GRANTED) {
+                PERMISSIONS_OK = false;
+                break;
             }
+
+            PERMISSIONS_OK = true;
         }
 
         if (!PERMISSIONS_OK) {
-            Intent permissions = new Intent(this, PermissionsHandler.class);
-            permissions.putExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, REQUIRED_PERMISSIONS);
-            permissions.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            permissions.putExtra(PermissionsHandler.EXTRA_REDIRECT_SERVICE, getApplicationContext().getPackageName() + "/" + getClass().getName()); //restarts plugin once permissions are accepted
-            startActivity(permissions);
-        } else {
 
-            PERMISSIONS_OK = true;
+            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+            Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(getApplicationContext());
+            requestPermissions.putExtra(
+                    PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS,
+                    REQUIRED_PERMISSIONS
+            );
+            requestPermissions.putExtra(
+                    PermissionsHandler.EXTRA_REDIRECT_SERVICE,
+                    getApplicationContext().getPackageName() + "/" + getClass().getName()
+            );
+            requestPermissions.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+            );
+
+            PendingIntent pi = PendingIntent.getActivity(
+                    getApplicationContext(),
+                    123,
+                    requestPermissions,
+                    PendingIntent.FLAG_UPDATE_CURRENT |
+                    PendingIntent.FLAG_IMMUTABLE
+            );
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
+                    .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
+                    .setContentTitle("AWARE: Permission Revoked")
+                    .setContentText("Permissions are required to remain in the study.\nTap to open app and accept permissions.")
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
+                    .setContentIntent(pi);
+
+            Aware.setNotificationProperties(builder, Aware.AWARE_NOTIFICATION_IMPORTANCE_GENERAL);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                builder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
+
+            try {
+                notificationManager.notify(123, builder.build());
+            } catch (NullPointerException e) {
+                if (Aware.DEBUG) Log.d(Aware.TAG, "Notification exception: " + e);
+            }
+        } else {
 
             if (Aware.getSetting(this, Aware_Preferences.STATUS_WEBSERVICE).equals("true")) {
                 SSLManager.handleUrl(getApplicationContext(), Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER), true);

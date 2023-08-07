@@ -2,6 +2,7 @@
 package com.aware;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -131,6 +132,8 @@ public class Bluetooth extends Aware_Sensor {
         REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH);
         REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_ADMIN);
         REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_COARSE_LOCATION); //we need this permission for BT scanning to work
+        REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_CONNECT);
+        REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_SCAN);
 
         bluetoothAdapter = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) ? ((BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter() : BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
@@ -177,6 +180,8 @@ public class Bluetooth extends Aware_Sensor {
         void onBluetoothDisabled();
     }
 
+
+    @SuppressLint("MissingPermission")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
@@ -244,6 +249,7 @@ public class Bluetooth extends Aware_Sensor {
     }
 
     private Runnable scanRunnable = new Runnable() {
+        @SuppressLint("MissingPermission")
         @Override
         public void run() {
             BluetoothLeScanner scanner = bluetoothAdapter.getBluetoothLeScanner();
@@ -260,6 +266,7 @@ public class Bluetooth extends Aware_Sensor {
     };
 
     private Runnable stopScan = new Runnable() {
+        @SuppressLint("MissingPermission")
         @Override
         public void run() {
             BluetoothLeScanner scanner = bluetoothAdapter.getBluetoothLeScanner();
@@ -275,6 +282,7 @@ public class Bluetooth extends Aware_Sensor {
         }
     };
 
+    @SuppressLint("MissingPermission")
     private final ScanCallback scanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
@@ -312,6 +320,7 @@ public class Bluetooth extends Aware_Sensor {
         }
     };
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -362,6 +371,7 @@ public class Bluetooth extends Aware_Sensor {
      * @author denzil
      */
     public class Bluetooth_Broadcaster extends BroadcastReceiver {
+        @SuppressLint("MissingPermission")
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(BluetoothDevice.ACTION_FOUND)) {
@@ -467,6 +477,7 @@ public class Bluetooth extends Aware_Sensor {
 
     private final Bluetooth_Broadcaster bluetoothMonitor = new Bluetooth_Broadcaster();
 
+    @SuppressLint("MissingPermission")
     private void save_bluetooth_device(BluetoothAdapter btAdapter) {
         if (btAdapter == null) return;
 
