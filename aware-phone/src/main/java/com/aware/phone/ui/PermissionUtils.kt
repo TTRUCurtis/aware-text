@@ -158,6 +158,8 @@ object PermissionUtils {
                 Manifest.permission.ACCESS_WIFI_STATE,
                 Manifest.permission.CHANGE_WIFI_STATE
             )
+            ACTIVITY_REC -> return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                listOf(Manifest.permission.ACTIVITY_RECOGNITION) else emptyList()
             else -> return emptyList()
         }
     }
