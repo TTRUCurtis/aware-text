@@ -960,7 +960,7 @@
                 android:title="Simple webservice" />
 
             <CheckBoxPreference
-                android:defaultValue="false"
+                android:defaultValue="true"
                 android:key="webservice_remove_data"
                 android:persistent="true"
                 android:summary="WARNING: This may cause problems with some sensors or plugins if they rely on history data (e.g., battery charges, discharges, ...)"

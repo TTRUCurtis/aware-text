@@ -47,6 +47,9 @@ public class Plugin extends Aware_Plugin {
         contextBroadcaster.setProvider(AUTHORITY);
         contextBroadcaster.setTag(TAG);
 
+
+        REQUIRED_PERMISSIONS.add(Manifest.permission.ACTIVITY_RECOGNITION);
+
         CONTEXT_PRODUCER = new ContextProducer() {
             @Override
             public void onContext() {
@@ -67,9 +70,6 @@ public class Plugin extends Aware_Plugin {
                     PendingIntent.getService(getApplicationContext(), 0, gARIntent,
                             PendingIntent.FLAG_MUTABLE);
         }
-
-        contextBroadcaster.setTag(TAG);
-        contextBroadcaster.setProvider(AUTHORITY);
     }
 
     /**
