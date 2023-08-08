@@ -67,9 +67,6 @@ public class Plugin extends Aware_Plugin {
                     PendingIntent.getService(getApplicationContext(), 0, gARIntent,
                             PendingIntent.FLAG_MUTABLE);
         }
-
-        contextBroadcaster.setTag(TAG);
-        contextBroadcaster.setProvider(AUTHORITY);
     }
 
     /**
