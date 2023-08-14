@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SyncRequest;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -45,6 +46,9 @@ public class Plugin extends Aware_Plugin {
         contextBroadcaster.setProvider(AUTHORITY);
         contextBroadcaster.setTag(TAG);
 
+
+        REQUIRED_PERMISSIONS.add(Manifest.permission.ACTIVITY_RECOGNITION);
+
         CONTEXT_PRODUCER = () -> {
             Intent context = new Intent(ACTION_AWARE_GOOGLE_ACTIVITY_RECOGNITION);
             context.putExtra(EXTRA_ACTIVITY, current_activity);
@@ -62,9 +66,6 @@ public class Plugin extends Aware_Plugin {
                     PendingIntent.getService(getApplicationContext(), 0, gARIntent,
                             PendingIntent.FLAG_MUTABLE);
         }
-
-        contextBroadcaster.setTag(TAG);
-        contextBroadcaster.setProvider(AUTHORITY);
     }
 
     @Override
@@ -90,7 +91,7 @@ public class Plugin extends Aware_Plugin {
                 Aware.setSetting(this, Settings.FREQUENCY_PLUGIN_GOOGLE_ACTIVITY_RECOGNITION, 60);
             }
 
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
                 throw new IllegalStateException(permissionNeededErrorMsg);
             }
             Task<Void> task =

@@ -1,6 +1,7 @@
 package com.aware.phone.ui;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -8,9 +9,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.PermissionChecker;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.phone.Aware_Client;
@@ -22,6 +21,7 @@ import java.util.ArrayList;
 
 public abstract class Aware_Activity extends AppCompatPreferenceActivity {
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -31,27 +31,24 @@ public abstract class Aware_Activity extends AppCompatPreferenceActivity {
             getSupportActionBar().setDisplayShowHomeEnabled(false);
         }
 
-        BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.aware_bottombar);
+        BottomNavigationView bottomNavigationView = findViewById(R.id.aware_bottombar);
         if (bottomNavigationView != null) {
-            bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
-                @Override
-                public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                    switch (item.getItemId()) {
-                        case R.id.aware_sensors: //Sensors
-                            Intent sensors_ui = new Intent(getApplicationContext(), Aware_Client.class);
-                            startActivity(sensors_ui);
-                            break;
-                        case R.id.aware_plugins: //Plugins
-                            Intent pluginsManager = new Intent(getApplicationContext(), Plugins_Manager.class);
-                            startActivity(pluginsManager);
-                            break;
-                        case R.id.aware_stream: //Stream
-                            Intent stream_ui = new Intent(getApplicationContext(), Stream_UI.class);
-                            startActivity(stream_ui);
-                            break;
-                    }
-                    return true;
+            bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
+                switch (item.getItemId()) {
+                    case R.id.aware_sensors: //Sensors
+                        Intent sensors_ui = new Intent(getApplicationContext(), Aware_Client.class);
+                        startActivity(sensors_ui);
+                        break;
+                    case R.id.aware_plugins: //Plugins
+                        Intent pluginsManager = new Intent(getApplicationContext(), Plugins_Manager.class);
+                        startActivity(pluginsManager);
+                        break;
+                    case R.id.aware_stream: //Stream
+                        Intent stream_ui = new Intent(getApplicationContext(), Stream_UI.class);
+                        startActivity(stream_ui);
+                        break;
                 }
+                return true;
             });
         }
     }
@@ -78,11 +75,11 @@ public abstract class Aware_Activity extends AppCompatPreferenceActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getTitle().toString().equalsIgnoreCase(getResources().getString(R.string.aware_qrcode))) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 ArrayList<String> permission = new ArrayList<>();
                 permission.add(Manifest.permission.CAMERA);
 
-                Intent permissions = new Intent(this, PermissionsHandler.class);
+                Intent permissions = new Intent(Aware_Activity.this, Aware_Client.class);
                 permissions.putExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, permission);
                 permissions.putExtra(PermissionsHandler.EXTRA_REDIRECT_ACTIVITY, getPackageName() + "/" + getPackageName() + ".ui.Aware_QRCode");
                 permissions.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

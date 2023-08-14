@@ -1,17 +1,14 @@
 package com.aware.phone.ui.onboarding;
 
-import static com.aware.ui.PermissionsHandler.RC_PERMISSIONS;
+
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -20,7 +17,6 @@ import android.text.Html;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -28,12 +24,12 @@ import android.widget.TextView;
 
 import com.aware.Applications;
 import com.aware.Aware;
-import com.aware.phone.Aware_Client;
 import com.aware.phone.R;
+import com.aware.phone.ui.Aware_Participant;
+import com.aware.ui.PermissionsHandler;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 
 //TODO splash comes here or aware_client depending if a study is already joined.
 
@@ -43,9 +39,8 @@ import java.util.Collections;
 // it should be done before joining study, if not, can leave it in the main screen.
 // if should be done before loading/joining study, do it in get study metadata
 // or create new task, initialize db
-public class JoinStudyActivity extends AppCompatActivity {
+public class JoinStudyActivity extends AppCompatActivity implements PermissionsHandler.PermissionCallback{
 
-    public static final int REQUEST_CODE_PERMISSIONS = 1;
     private JoinStudyViewModel viewModel;
 
     private ProgressDialog loader;
@@ -57,17 +52,28 @@ public class JoinStudyActivity extends AppCompatActivity {
     private TextView descriptionTextView;
     private TextView researcherTextView;
 
-    private LinearLayout reviewPermissionsLayout;
     private Button actionButton;
+
+    private PermissionsHandler permissionsHandler;
+    private Button requestPermissionBtn;
+    private TextView permissionRationale;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_join_study);
 
+        permissionsHandler = new PermissionsHandler(this);
+
+        requestPermissionBtn = findViewById(R.id.request_permission);
+        permissionRationale = findViewById(R.id.permission_rationale);
+        permissionRationale.setVisibility(View.GONE);
+        requestPermissionBtn.setVisibility(View.GONE);
+
+
         if (Aware.isStudy(this)) {
             //Redirect the user to the main UI
-            Intent mainUI = new Intent(getApplicationContext(), Aware_Client.class);
+            Intent mainUI = new Intent(getApplicationContext(), Aware_Participant.class);
             mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(mainUI);
             finish();
@@ -146,17 +152,15 @@ public class JoinStudyActivity extends AppCompatActivity {
 
             if (studyMetadata.showPermissionsNoticeDialog()) {
                 actionButton.setEnabled(false);
+                if (!Aware.is_watch(this)) {
+                    Applications.isAccessibilityServiceActive(this);
+                }
 
-                alertDialog = new AlertDialog.Builder(this)
-                        .setTitle("Permissions Required to Join Study")
-                        .setMessage("A few permissions are required to join this study. Press OK " +
-                                "to review the required permissions. Please select \"Allow\" or \"While using the app\" for all permissions.")
-                        .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                            dialog.dismiss();
-                            studyMetadata
-                                    .setShowPermissionsNoticeDialog(false); //don't need to show the dialog again
-                            requestPermissions(studyMetadata.getPermissions());
-                        }).show();
+                Intent whitelisting = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                whitelisting.setData(Uri.parse("package:" + getPackageName()));
+                startActivity(whitelisting);
+                permissionsHandler.requestPermissions(studyMetadata.getPermissions(), this);
+
             } else {
                 actionButton.setEnabled(true);
             }
@@ -191,7 +195,7 @@ public class JoinStudyActivity extends AppCompatActivity {
             actionButton.setText("Done");
             actionButton.setOnClickListener(v -> {
                 //Redirect the user to the main UI
-                Intent mainUI = new Intent(getApplicationContext(), Aware_Client.class);
+                Intent mainUI = new Intent(getApplicationContext(), Aware_Participant.class);
                 mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(mainUI);
                 finish();
@@ -219,52 +223,56 @@ public class JoinStudyActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == RC_PERMISSIONS) {
-            int not_granted = 0;
-            for (int i = 0; i < permissions.length; i++) {
-                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                    not_granted++;
-                    Log.d(Aware.TAG, permissions[i] + " was not granted");
-                } else {
-                    Log.d(Aware.TAG, permissions[i] + " was granted");
-                }
-            }
-
-            if (not_granted > 0) {
-                //show must accept permissions UI
-                if (reviewPermissionsLayout == null) {
-                    reviewPermissionsLayout = findViewById(R.id.layout_review_permissions);
-                    Button reviewPermissionsButton = findViewById(R.id.btn_review_permissions);
-                    reviewPermissionsButton.setOnClickListener(v -> {
-                        ArrayList<String> permissionsArrayList = new ArrayList<>();
-                        Collections.addAll(permissionsArrayList, permissions);
-                        requestPermissions(permissionsArrayList);
-                    });
-                }
-                reviewPermissionsLayout.setVisibility(View.VISIBLE);
-            } else {
-                if (reviewPermissionsLayout != null && reviewPermissionsLayout
-                        .getVisibility() == View.VISIBLE) {
-                    reviewPermissionsLayout.setVisibility(View.GONE);
-                }
-                actionButton.setEnabled(true);
-            }
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        permissionsHandler.handlePermissionsResult(requestCode, permissions, grantResults);
     }
 
-    private void requestPermissions(ArrayList<String> permissions) {
-        //Check if AWARE is active on the accessibility services. Android Wear doesn't support accessibility services (no API yet...)
-        if (!Aware.is_watch(this)) {
-            Applications.isAccessibilityServiceActive(this);
-        }
 
-        Intent whitelisting = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-        whitelisting.setData(Uri.parse("package:" + getPackageName()));
-        startActivity(whitelisting);
+    @Override
+    public void onPermissionGranted() {
 
-        ActivityCompat.requestPermissions(this, permissions
-                .toArray(new String[permissions.size()]), RC_PERMISSIONS);
+        Intent mainUI = new Intent(getApplicationContext(), Aware_Participant.class);
+        mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(mainUI);
+        finish();
+    }
+
+    @Override
+    public void onPermissionDenied(List<String> deniedPermissions) {
+
+        requestPermissionBtn.isEnabled();
+        actionButton.setVisibility(View.GONE);
+        permissionRationale.setVisibility(View.VISIBLE);
+        requestPermissionBtn.setVisibility(View.VISIBLE);
+
+        requestPermissionBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", getPackageName(), null)
+                ));
+            }
+        });
+
+    }
+
+    @Override
+    public void onPermissionDeniedWithRationale(List<String> deniedPermissions) {
+
+        new AlertDialog.Builder(this)
+                .setTitle("Permissions Required to Join Study")
+                .setMessage("Permissions are required to join this study. Press OK " +
+                        "to review the required permissions. Please select \"Allow\" or \"While using the app\" for all permissions.")
+                .setPositiveButton(
+                        android.R.string.ok,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                permissionsHandler.requestPermissions(deniedPermissions, JoinStudyActivity.this);
+                            }
+                        })
+                .show();
+
     }
 }
