@@ -34,6 +34,7 @@ class ServerSync @Inject constructor(
                 smsInfo.put(Provider.Sms_Data.MSG_THREAD_ID, message.threadId)
                 smsInfo.put(Provider.Sms_Data.MSG_ADDRESS, message.address)
                 smsInfo.put(Provider.Sms_Data.MSG_BODY, message.msg)
+                smsInfo.put(Provider.Sms_Data.MSG_MMS_PART_TYPE, message.mmsPartType)
 
                 applicationContext.contentResolver.insert(
                     Provider.Sms_Data.CONTENT_URI,
