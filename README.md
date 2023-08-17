@@ -5,7 +5,7 @@ AWARE Framework Android Client
 AWARE is an Android framework dedicated to instrument, infer, log and share mobile context information,
 for application developers, researchers and smartphone users. AWARE captures hardware-, software-, and 
 human-based data. It encapsulates analysis, machine learning and simplifies conducting user studies 
-in naturalistic and laboratory settings. 
+in naturalistic and laboratory settings. For detailed information on various features of the app, setting up studies, building the app, and more, check out the documentation at [AWARE: The complete guide](https://docs.google.com/document/d/1XIYjmL2tGt5f7LdJHCCwIaQkDYNReRzG0qwjoP2_n2I/edit?usp=sharing).
 
 ![User Studies](http://www.awareframework.com/wp-content/uploads/2014/05/aware_overview1.png)
 
