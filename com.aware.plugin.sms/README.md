@@ -46,6 +46,7 @@ Content Storage for SMS/MMS data pulled from the users phone.
         * a list of two addresses indicates MMS that is one-on-one
         * a list of three or more addresses indicates a group chat
 7. MSG_BODY - text - Contents of the SMS/MMS message.
+8. MMS_PART_TYPE - text - What type is this MMS part. "N/A" for SMS.
 
 # Credits
 

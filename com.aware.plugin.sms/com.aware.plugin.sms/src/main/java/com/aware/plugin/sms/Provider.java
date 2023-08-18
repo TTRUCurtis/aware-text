@@ -47,7 +47,8 @@ public class Provider extends ContentProvider {
                 Sms_Data.MSG_TYPE + " text default ''," +
                 Sms_Data.MSG_THREAD_ID + " text default ''," +
                 Sms_Data.MSG_ADDRESS + " text default ''," +
-                Sms_Data.MSG_BODY + " text default ''",
+                Sms_Data.MSG_BODY + " text default ''," +
+                Sms_Data.MSG_MMS_PART_TYPE + " text default ''",
             Sentiment_Analysis._ID + " integer primary key autoincrement," +
                     Sentiment_Analysis.RETRIEVAL_TIMESTAMP + " real default 0," +
                     Sentiment_Analysis.DEVICE_ID + " text default ''," +
@@ -83,6 +84,7 @@ public class Provider extends ContentProvider {
         public static final String MSG_THREAD_ID = "thread_id";
         public static final String MSG_ADDRESS = "address"; // should be md5 encrypted
         public static final String MSG_BODY = "body";
+        public static final String MSG_MMS_PART_TYPE = "mms_part_type";
     }
 
     public static final class Sentiment_Analysis implements BaseColumns {
@@ -141,6 +143,8 @@ public class Provider extends ContentProvider {
         databaseMap.put(Sms_Data.MSG_THREAD_ID, Sms_Data.MSG_THREAD_ID);
         databaseMap.put(Sms_Data.MSG_ADDRESS, Sms_Data.MSG_ADDRESS);
         databaseMap.put(Sms_Data.MSG_BODY, Sms_Data.MSG_BODY);
+        databaseMap.put(Sms_Data.MSG_MMS_PART_TYPE, Sms_Data.MSG_MMS_PART_TYPE);
+        //TODO Remove these maps if not necessary
 
         sentimentMap = new HashMap<>();
         sentimentMap.put(Sentiment_Analysis._ID, Sentiment_Analysis._ID);

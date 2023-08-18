@@ -102,6 +102,7 @@ class Repository @Inject constructor(
                             date,
                             currentTime.toString(),
                             msg,
+                            "N/A",
                             isMms
                         )
                     )
@@ -137,9 +138,12 @@ class Repository @Inject constructor(
             } else {
                 "${android.provider.Telephony.BaseMmsColumns.DATE} ASC "
             }
+
             //Variables declared outside of cursor loop for scope
+            //TODO need to use them in cursor loop creating objects there and adding them to a list per query
             var addresses = ""
             var body: String? = ""
+            var mmsPartType: String? = ""
             var date: Long
             var mid: String
             var threadId: String
@@ -189,7 +193,7 @@ class Repository @Inject constructor(
                             if (mmsPartCursor != null && mmsPartCursor.moveToFirst()) {
 
                                 do {
-                                    val mmsPartType =
+                                    mmsPartType =
                                         mmsPartCursor.getString(
                                             mmsPartCursor.getColumnIndexOrThrow(
                                                 MmsConstants.KEY_CT
@@ -258,19 +262,18 @@ class Repository @Inject constructor(
                             }
 
                             val isMms = true
-                            if (body != null) {
-                                mmsList.add(
-                                    Message(
-                                        threadId,
-                                        addresses,
-                                        type,
-                                        date.toString(),
-                                        timeStamp.toString(),
-                                        body,
-                                        isMms
-                                    )
+                            mmsList.add(
+                                Message(
+                                    threadId,
+                                    addresses,
+                                    type,
+                                    date.toString(),
+                                    timeStamp.toString(),
+                                    body,
+                                    mmsPartType,
+                                    isMms
                                 )
-                            }
+                            )
                         } while (mmsCursor.moveToNext())
                     }
                 } catch (e: java.lang.Exception) {
