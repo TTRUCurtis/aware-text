@@ -920,7 +920,6 @@
 
         </PreferenceScreen>
     </PreferenceCategory>
-
     <PreferenceCategory
         android:key="advanced_settings"
         android:summary="Advanced"
@@ -983,5 +982,34 @@
         </PreferenceScreen>
 
     </PreferenceCategory>
+    <PreferenceCategory
+        android:key="aware_study"
+        android:summary="Join an AWARE study"
+        android:title="Join Study">
+        <PreferenceScreen
+            android:icon="@drawable/ic_action_webservice"
+            android:key="webservice"
+            android:summary="Join study via url link"
+            android:title="Study URL Link">
 
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="status_webservice"
+                android:persistent="true"
+                android:title="Active" />
+
+            <EditTextPreference
+                android:defaultValue="https://api.awareframework.com/index.php"
+                android:key="webservice_server"
+                android:persistent="true"
+                android:summary="URL"
+                android:title="Study URL" />
+        </PreferenceScreen>
+        <PreferenceScreen
+            android:icon="@drawable/ic_action_webservice"
+            android:key="qrcode"
+            android:summary="Join study via qr code"
+            android:title="Study QR Code"/>
+
+    </PreferenceCategory>
 </PreferenceScreen>

@@ -10,5 +10,6 @@
     app:itemBackground="@color/primary"
     app:itemIconTint="@android:color/white"
     app:itemTextColor="@android:color/white"
-    app:menu="@menu/aware_bottomnav" />
+    app:menu="@menu/aware_bottomnav"
+    android:background="@color/primary"/>
 

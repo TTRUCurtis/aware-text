@@ -125,12 +125,15 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
         permissionRationale.visibility = View.VISIBLE
         requestPermissionBtn.visibility = View.VISIBLE
-        startActivity(
-            Intent(
-                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.fromParts("package", packageName, null)
+        requestPermissionBtn.setOnClickListener {
+            startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", packageName, null)
+                )
             )
-        )
+        }
+
     }
 
     override fun onPermissionDeniedWithRationale(deniedPermissions: List<String>?) {
