@@ -23,13 +23,14 @@ import com.aware.phone.Aware_Client
 import com.aware.phone.R
 import com.aware.ui.PermissionsHandler
 
-import kotlinx.android.synthetic.main.aware_ui_participant.*
-
 class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCallback {
 
     private lateinit var permissionsHandler: PermissionsHandler
     private lateinit var requestPermissionBtn:Button
     private lateinit var permissionRationale: TextView
+    private lateinit var deviceId: TextView
+    private lateinit var deviceName: TextView
+    private lateinit var studyUrl: TextView
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
@@ -43,6 +44,9 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
         setContentView(R.layout.aware_ui_participant)
         requestPermissionBtn = findViewById<View>(R.id.request_permission) as Button
         permissionRationale = findViewById<View>(R.id.permission_rationale) as TextView
+        deviceId = findViewById<View>(R.id.device_id) as TextView
+        deviceName = findViewById<View>(R.id.device_name) as TextView
+        studyUrl = findViewById<View>(R.id.study_url) as TextView
         permissionsHandler = PermissionsHandler(this)
         requestPermissionBtn.isVisible = false
         permissionRationale.isVisible = false
@@ -62,9 +66,9 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
 
     override fun onResume() {
         super.onResume()
-        device_id.text = Aware.getSetting(this, Aware_Preferences.DEVICE_ID)
-        device_name.text = Aware.getSetting(this, Aware_Preferences.DEVICE_LABEL)
-        study_url.text = Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER)
+        deviceId.text = Aware.getSetting(this, Aware_Preferences.DEVICE_ID)
+        deviceName.text = Aware.getSetting(this, Aware_Preferences.DEVICE_LABEL)
+        studyUrl.text = Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

@@ -673,7 +673,7 @@ public class Scheduler extends Aware_Sensor {
                                 BroadcastReceiver listener = new BroadcastReceiver() {
                                     @Override
                                     public void onReceive(Context context, Intent intent) {
-                                        if (is_trigger(schedule)) {
+                                        if (areTimeConstraintsMet(schedule)) {
                                             if (DEBUG)
                                                 Log.d(TAG, "Triggered contextual trigger: " + contexts.toString());
 
@@ -742,7 +742,7 @@ public class Scheduler extends Aware_Sensor {
                         }
 
                         //Not contextual or conditional scheduler, it is time-based
-                        if (is_trigger(schedule)) {
+                        if (areTimeConstraintsMet(schedule)) {
                             if (DEBUG)
                                 Log.d(TAG, "Triggering scheduled task: " + schedule.getScheduleID() + " in package: " + getPackageName());
                             performAction(schedule);
@@ -781,7 +781,7 @@ public class Scheduler extends Aware_Sensor {
      * @param schedule
      * @return
      */
-    private boolean is_trigger(Schedule schedule) {
+    private boolean areTimeConstraintsMet(Schedule schedule) {
 
         Calendar now = Calendar.getInstance();
         now.setTimeInMillis(System.currentTimeMillis());
@@ -1761,7 +1761,7 @@ public class Scheduler extends Aware_Sensor {
                 if (rows != null && !rows.isClosed()) rows.close();
 
                 if (condition_met) {
-                    if (is_trigger(schedule)) {
+                    if (areTimeConstraintsMet(schedule)) {
                         performAction(schedule);
                         if (DEBUG)
                             Log.d(Aware.TAG, "Condition triggered: " + data.toString() + " where: " + condition);
