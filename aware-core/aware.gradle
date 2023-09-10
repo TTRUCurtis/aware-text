@@ -12,7 +12,7 @@ buildscript {
         hilt_version = "2.44"
         build_tools = "28.0.3"
         aware_libs = "master-SNAPSHOT"
-        kotlin_version = "1.7.10"
+        kotlin_version = "1.8.10"
         build_gradle = "3.4.2"
     }
 

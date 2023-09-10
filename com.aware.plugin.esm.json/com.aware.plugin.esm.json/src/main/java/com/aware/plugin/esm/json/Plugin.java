@@ -1,6 +1,7 @@
 package com.aware.plugin.esm.json;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 
 import com.aware.Aware;
@@ -165,6 +166,15 @@ public class Plugin extends Aware_Plugin {
                 JSONArray contexts = entry.getJSONArray("context");
                 for (int j = 0, z = contexts.length(); j < z; ++j) {
                     schedule.addContext(contexts.getString(j));
+                }
+            }
+
+            if (entry.has("condition")) {
+                JSONArray conditions = entry.getJSONArray("condition");
+                for (int j = 0, z = conditions.length(); j < z; ++j) {
+                    JSONObject condition = conditions.getJSONObject(j);
+                    schedule.addCondition(Uri.parse(condition.getString("contentUri")),
+                            condition.getString("where"));
                 }
             }
 
