@@ -122,6 +122,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:31.1.1')
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-perf'
+    implementation "androidx.constraintlayout:constraintlayout:2.2.0-alpha10"
 
     api (project(':aware-core'))
     api (project(":com.aware.plugin.ambient_noise"))

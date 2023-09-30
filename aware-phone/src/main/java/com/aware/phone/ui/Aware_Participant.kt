@@ -2,38 +2,50 @@ package com.aware.phone.ui
 
 import android.Manifest
 import android.content.ComponentName
+import android.content.DialogInterface
 import android.content.Intent
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
-import androidx.core.view.isVisible
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
 import com.aware.phone.R
 import com.aware.ui.PermissionsHandler
-
+import kotlinx.android.synthetic.main.aware_participant_item_layout.view.*
 import kotlinx.android.synthetic.main.aware_ui_participant.*
+
 
 class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCallback {
 
     private lateinit var permissionsHandler: PermissionsHandler
-    private lateinit var requestPermissionBtn:Button
-    private lateinit var permissionRationale: TextView
+    private lateinit var awareParticipantItems: MutableList<AwareParticipantItem>
+    private lateinit var title: TextView
+    private lateinit var description: TextView
+    private lateinit var image: ImageView
+    private lateinit var card: CardView
+    private lateinit var container: ConstraintLayout
+    private lateinit var layoutRevokedPermissions: View
+    private lateinit var itemRevokedPermission: AwareParticipantItem
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
-
         (supportActionBar as ActionBar).setDisplayHomeAsUpEnabled(false)
         (supportActionBar as ActionBar).setDisplayShowHomeEnabled(false)
     }
@@ -41,11 +53,55 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.aware_ui_participant)
-        requestPermissionBtn = findViewById<View>(R.id.request_permission) as Button
-        permissionRationale = findViewById<View>(R.id.permission_rationale) as TextView
         permissionsHandler = PermissionsHandler(this)
-        requestPermissionBtn.isVisible = false
-        permissionRationale.isVisible = false
+        awareParticipantItems = mutableListOf(
+            AwareParticipantItem(
+                "AWARE Study",
+                "Device Id: ${Aware.getSetting(this, Aware_Preferences.DEVICE_ID)}\n" +
+                        "Study URL: ${Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER)}",
+                R.drawable.ic_launcher_aware,
+                R.id.aware_participant_card,
+                R.drawable.item_background
+            ),
+            AwareParticipantItem(
+                "Revoked Permission",
+                "Instructions on granting permissions in phone settings",
+                R.drawable.ic_warning,
+                R.id.aware_participant_card,
+                R.drawable.item_background
+            ),
+            AwareParticipantItem(
+                "Sync Data",
+                "Send any pending data to the AWARE server",
+                R.drawable.ic_sync,
+                R.id.aware_participant_card,
+                R.drawable.item_background
+            ),
+            AwareParticipantItem(
+                "Quit Study",
+                "Quit a study you're currently enrolled in",
+                R.drawable.ic_quit,
+                R.id.aware_participant_card,
+                R.drawable.item_background
+            )
+        )
+
+        val layoutAwareStudy = aware_participant_study_info
+        layoutRevokedPermissions = aware_participant_revoked_permission
+        val layoutSyncData = aware_participant_sync
+        val layoutQuitStudy = aware_participant_quit_study
+
+        layoutRevokedPermissions.visibility = View.GONE
+
+        val itemAwareStudy = awareParticipantItems[0]
+        itemRevokedPermission = awareParticipantItems[1]
+        val itemSyncData = awareParticipantItems[2]
+        val itemQuitStudy = awareParticipantItems[3]
+
+        populateLayout(layoutAwareStudy, itemAwareStudy)
+//        populateLayout(layoutRevokedPermissions, itemRevokedPermission)
+        populateLayout(layoutSyncData, itemSyncData)
+        populateLayout(layoutQuitStudy, itemQuitStudy)
 
         if (intent != null && intent.extras != null && intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) != null) {
 
@@ -55,6 +111,30 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
         }
     }
 
+    private fun populateLayout(layout: View, item: AwareParticipantItem) {
+
+
+
+        title = layout.aware_participant_title
+        description = layout.aware_participant_description
+        image = layout.aware_participant_image
+        card = layout.aware_participant_card
+        container = layout.aware_participant_item
+
+        title.text = item.title
+        description.text = item.description
+        image.setImageResource(item.image)
+        card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
+
+//        if(title.text == "Revoked Permission") {
+//            val backgroundDrawable = ContextCompat.getDrawable(container.context, R.drawable.item_background) as GradientDrawable
+//            backgroundDrawable.setStroke(2, ContextCompat.getColor(container.context, R.color.red))
+//            card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
+//            container.background = backgroundDrawable
+//            container.visibility = View.VISIBLE
+//        }
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionsHandler.handlePermissionsResult(requestCode, permissions, grantResults)
@@ -62,9 +142,6 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
 
     override fun onResume() {
         super.onResume()
-        device_id.text = Aware.getSetting(this, Aware_Preferences.DEVICE_ID)
-        device_name.text = Aware.getSetting(this, Aware_Preferences.DEVICE_LABEL)
-        study_url.text = Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -123,14 +200,39 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
     }
 
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
-        permissionRationale.visibility = View.VISIBLE
-        requestPermissionBtn.visibility = View.VISIBLE
-        startActivity(
-            Intent(
-                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.fromParts("package", packageName, null)
-            )
-        )
+
+        AlertDialog.Builder(this)
+            .setTitle("Aware: Permanently Denied Permissions")
+            .setMessage("You have permanently denied necessary permissions. Please follow the " +
+                    "instructions in the \"Revoked Permissions\" section to grant permissions")
+            .setNegativeButton("ok", DialogInterface.OnClickListener { _, _ ->
+                Log.d("Permissions123", "Inside neg butt")
+                //populateLayout(layoutRevokedPermissions, itemRevokedPermission)
+                title = layoutRevokedPermissions.aware_participant_title
+                description = layoutRevokedPermissions.aware_participant_description
+                image = layoutRevokedPermissions.aware_participant_image
+                card = layoutRevokedPermissions.aware_participant_card
+                container = layoutRevokedPermissions.aware_participant_item
+
+                title.text = itemRevokedPermission.title
+                description.text = itemRevokedPermission.description
+                image.setImageResource(itemRevokedPermission.image)
+
+                val backgroundDrawable = ContextCompat.getDrawable(container.context, R.drawable.item_background) as GradientDrawable
+                backgroundDrawable.setStroke(2, ContextCompat.getColor(container.context, R.color.red))
+                card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
+                container.background = backgroundDrawable
+
+                layoutRevokedPermissions.visibility = View.VISIBLE
+
+            })
+            .show()
+//        startActivity(
+//            Intent(
+//                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+//                Uri.fromParts("package", packageName, null)
+//            )
+//        )
     }
 
     override fun onPermissionDeniedWithRationale(deniedPermissions: List<String>?) {
@@ -141,5 +243,12 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
          */
     }
 
+    data class AwareParticipantItem(
+        val title: String,
+        val description: String,
+        val image: Int,
+        val card: Int,
+        val container: Int
+    )
 
 }

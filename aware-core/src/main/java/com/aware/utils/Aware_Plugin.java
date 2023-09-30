@@ -56,7 +56,7 @@ public class Aware_Plugin extends Service {
     /**
      * Permissions needed for this plugin to run
      */
-    public ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
+    public static ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
 
     /**
      * Plugin is inactive
