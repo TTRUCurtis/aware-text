@@ -16,7 +16,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.*;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.Toast;
@@ -31,8 +30,7 @@ import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.phone.ui.Aware_Activity;
 import com.aware.phone.ui.Aware_Join_Study;
-import com.aware.phone.ui.Aware_Participant;
-import com.aware.phone.ui.onboarding.JoinStudyActivity;
+import com.aware.phone.ui.AwareParticipant;
 import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
@@ -448,7 +446,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                         Aware.getSetting(this, "ui_mode").equals("1") || Aware.getSetting(this, "ui_mode").equals("2")
                 ) {
                     finish();
-                    startActivity(new Intent(this, Aware_Participant.class));
+                    startActivity(new Intent(this, AwareParticipant.class));
                 }
             }
 

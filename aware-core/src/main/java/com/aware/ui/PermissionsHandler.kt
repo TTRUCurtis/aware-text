@@ -2,9 +2,13 @@ package com.aware.ui
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
+import androidx.core.content.PermissionChecker
 import org.json.JSONArray
 import org.json.JSONException
 import java.util.ArrayList
@@ -17,26 +21,22 @@ class PermissionsHandler(private val activity: Activity) {
         permissionCallback = callback
         val permissionsToRequest: MutableList<String> = ArrayList()
         for (permission in permissions) {
-            if (ActivityCompat.checkSelfPermission(
-                    activity,
-                    permission
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
+            if (!isPermissionGranted(permission)) {
                 permissionsToRequest.add(permission)
             }
         }
         if (permissionsToRequest.isEmpty()) {
             permissionCallback!!.onPermissionGranted()
         } else {
-            ActivityCompat.requestPermissions(
-                activity,
-                permissionsToRequest.toTypedArray(),
-                RC_PERMISSIONS
-            )
+            ActivityCompat.requestPermissions(activity, permissionsToRequest.toTypedArray(), RC_PERMISSIONS)
         }
     }
 
-    fun handlePermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    fun handlePermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         if (requestCode == RC_PERMISSIONS) {
             val deniedPermissions: MutableList<String> = ArrayList()
             for (i in permissions.indices) {
@@ -57,6 +57,26 @@ class PermissionsHandler(private val activity: Activity) {
         }
     }
 
+    fun isPermissionGranted(permission: String): Boolean =
+        ActivityCompat.checkSelfPermission(
+            activity,
+            permission
+        ) == PermissionChecker.PERMISSION_GRANTED
+
+    fun getDistinctPermissionsList(deniedPermissions: List<String>?): List<String>? {
+        return deniedPermissions?.map { permission ->
+            getPhoneVersionPermission(permission)
+        }?.distinct()
+    }
+
+    fun openAppSettings() = activity.startActivity(
+        Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", activity.packageName, null)
+        )
+    )
+
+
     private fun shouldShowRationale(permissions: List<String>): Boolean {
         for (permission in permissions) {
             if (activity.shouldShowRequestPermissionRationale(permission)) {
@@ -65,6 +85,27 @@ class PermissionsHandler(private val activity: Activity) {
         }
         return false
     }
+
+    private fun getPhoneVersionPermission(permission: String): String {
+        when(permission) {
+            "android.permission.ACTIVITY_RECOGNITION" -> return "Physical activity"
+            "android.permission.FOREGROUND_SERVICE" -> return "Physical activity"
+            "android.permission.READ_CONTACTS" -> return "Contacts"
+            "android.permission.GET_ACCOUNTS" -> return "Contacts"
+            "android.permission.ACCESS_COARSE_LOCATION" -> return "Location"
+            "android.permission.ACCESS_FINE_LOCATION" -> return "Location"
+            "android.permission.WRITE_SYNC_SETTINGS" -> return "Nearby devices"
+            "android.permission.READ_SYNC_SETTINGS" -> return "Nearby devices"
+            "android.permission.READ_SYNC_STATS" -> return "Nearby devices"
+            "android.permission.READ_CALENDAR" -> return "Calendar"
+            "android.permission.READ_PHONE_STATE" -> return "Phone"
+            "android.permission.READ_SMS" -> return "SMS"
+            "android.permission.RECORD_AUDIO" -> return "Microphone"
+            "android.permission.POST_NOTIFICATIONS" -> return "Notifications"
+            else -> return ""
+        }
+    }
+
 
     interface PermissionCallback {
         fun onPermissionGranted()
@@ -174,11 +215,11 @@ class PermissionsHandler(private val activity: Activity) {
                 Manifest.permission.READ_SYNC_STATS
             )
 
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 requiredPermissions.add(Manifest.permission.FOREGROUND_SERVICE)
             }
 
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 requiredPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
             }
             return requiredPermissions
@@ -228,7 +269,6 @@ class PermissionsHandler(private val activity: Activity) {
             return ArrayList(permissions.distinct())
         }
     }
-
 
 
 }

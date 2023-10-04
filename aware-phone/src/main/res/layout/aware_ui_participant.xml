@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context=".ui.Aware_Participant">
+    tools:context=".ui.AwareParticipant">
 
     <include
         android:id="@+id/aware_participant_study_info"
