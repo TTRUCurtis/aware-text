@@ -41,70 +41,28 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private var studyConfigs: JSONArray? = null
     private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
+    private var scheme: String? = null
+    private var url: Uri? = null
     private lateinit var permissionsHandler: PermissionsHandler
+
+    companion object {
+        const val EXTRA_STUDY_URL = "study_url"
+        private var study_url: String? = null
+        private val pluginCompliance: PluginCompliance = PluginCompliance()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.aware_join_study)
-        study_url = intent.getStringExtra(EXTRA_STUDY_URL)
+        initializeMembers()
+        processSchemeIntent()
+        handleParticipantIdDetection()
+        setUpStudyData()
+        registerPluginStatusReceiver()
+    }
 
-        permissionsHandler = PermissionsHandler(this)
-
-        //If we are getting here from an AWARE study link
-        val scheme = intent.scheme
-        if (scheme != null) {
-            if (Aware.DEBUG) Log.d(
-                Aware.TAG,
-                "AWARE Link detected: " + intent.dataString + " SCHEME: " + scheme
-            )
-            study_url = intent.dataString
-            if (scheme.equals("aware", ignoreCase = true)) {
-                study_url = intent.dataString?.replace("aware://", "http://")
-            } else if (scheme.equals("aware-ssl", ignoreCase = true)) {
-                study_url = intent.dataString?.replace("aware-ssl://", "https://")
-            }
-        }
-
-        val url = Uri.parse(study_url)
-        if (participantId == null) participantId = url.getQueryParameter("pid")
-        if (participantId != null) {
-            if (Aware.DEBUG) Log.d(
-                Aware.TAG,
-                "AWARE Study participant ID detected: " + participantId
-            )
-            Aware.setSetting(applicationContext, Aware_Preferences.DEVICE_ID, participantId)
-            study_url = study_url!!.substring(0, study_url!!.indexOf("pid") - 1)
-            if (Aware.DEBUG) Log.d(Aware.TAG, "AWARE Study URL: " + study_url)
-
-            participant_id!!.setText(participantId)
-            participant_id!!.isFocusable = false
-            participant_id!!.isEnabled = false
-            participant_id!!.isCursorVisible = false
-            participant_id!!.keyListener = null
-            participant_id!!.setBackgroundColor(Color.TRANSPARENT)
-        } else {
-            if (Aware.DEBUG) Log.d(
-                Aware.TAG,
-                "AWARE Study participant ID NOT detected"
-            )
-            participant_id!!.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                    if (s.isNotEmpty()) {
-                        Aware.setSetting(
-                            applicationContext,
-                            Aware_Preferences.DEVICE_ID,
-                            s.toString()
-                        )
-                        btn_sign_up!!.isEnabled = true
-                    } else {
-                        btn_sign_up!!.isEnabled = false
-                    }
-                }
-                override fun afterTextChanged(s: Editable) {}
-            })
-        }
-        if (Aware.DEBUG) Log.d(Aware.TAG, "Study URL:" + study_url)
+    private fun setUpStudyData() {
         val qry = Aware.getStudy(this, study_url)
         if (qry == null || !qry.moveToFirst()) {
             PopulateStudy().execute(study_url)
@@ -138,8 +96,8 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 if (study != null && study.moveToFirst()) {
                     val studyData = ContentValues()
                     studyData.put(Aware_Provider.Aware_Studies.STUDY_DEVICE_ID, Aware.getSetting(
-                            applicationContext, Aware_Preferences.DEVICE_ID
-                        )
+                        applicationContext, Aware_Preferences.DEVICE_ID
+                    )
                     )
                     studyData.put(
                         Aware_Provider.Aware_Studies.STUDY_JOINED,
@@ -370,8 +328,71 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     .show()
             }
         }
+    }
 
-        registerPluginStatusReceiver()
+    private fun handleParticipantIdDetection() {
+        if (participantId == null) participantId = url?.getQueryParameter("pid")
+        if (participantId != null) {
+            if (Aware.DEBUG) Log.d(
+                Aware.TAG,
+                "AWARE Study participant ID detected: $participantId"
+            )
+            Aware.setSetting(applicationContext, Aware_Preferences.DEVICE_ID, participantId)
+            study_url = study_url!!.substring(0, study_url!!.indexOf("pid") - 1)
+            if (Aware.DEBUG) Log.d(Aware.TAG, "AWARE Study URL: $study_url")
+
+            participant_id!!.setText(participantId)
+            participant_id!!.isFocusable = false
+            participant_id!!.isEnabled = false
+            participant_id!!.isCursorVisible = false
+            participant_id!!.keyListener = null
+            participant_id!!.setBackgroundColor(Color.TRANSPARENT)
+        } else {
+            if (Aware.DEBUG) Log.d(
+                Aware.TAG,
+                "AWARE Study participant ID NOT detected"
+            )
+            participant_id!!.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                    if (s.isNotEmpty()) {
+                        Aware.setSetting(
+                            applicationContext,
+                            Aware_Preferences.DEVICE_ID,
+                            s.toString()
+                        )
+                        btn_sign_up!!.isEnabled = true
+                    } else {
+                        btn_sign_up!!.isEnabled = false
+                    }
+                }
+                override fun afterTextChanged(s: Editable) {}
+            })
+        }
+        if (Aware.DEBUG) Log.d(Aware.TAG, "Study URL: $study_url")
+    }
+
+    private fun processSchemeIntent() {
+        //If we are getting here from an AWARE study link
+        if (scheme != null) {
+            if (Aware.DEBUG) Log.d(
+                Aware.TAG,
+                "AWARE Link detected: " + intent.dataString + " SCHEME: " + scheme
+            )
+            study_url = intent.dataString
+            if (scheme.equals("aware", ignoreCase = true)) {
+                study_url = intent.dataString?.replace("aware://", "http://")
+            } else if (scheme.equals("aware-ssl", ignoreCase = true)) {
+                study_url = intent.dataString?.replace("aware-ssl://", "https://")
+            }
+        }
+    }
+
+    private fun initializeMembers() {
+        study_url = intent.getStringExtra(EXTRA_STUDY_URL)
+        permissionsHandler = PermissionsHandler(this)
+        scheme = intent.scheme
+        url = Uri.parse(study_url)
     }
 
     private fun registerPluginStatusReceiver() {
@@ -772,16 +793,17 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     override fun onResume() {
         super.onResume()
-        if(permissions != null){
-            pluginsInstalled =  true
-            for(p in permissions!!){
-                if(ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED){
-                    pluginsInstalled = false
-                    break
-                }
-            }
-        }
+        setPluginsInstalledStatus()
         if (activePlugins == null) return
+        updateLayout()
+        if (Aware.getSetting(this, Aware_Preferences.INTERFACE_LOCKED) == "true") {
+            val bottomNavigationView =
+                findViewById<View>(R.id.aware_bottombar) as BottomNavigationView
+            bottomNavigationView.visibility = View.GONE
+        }
+    }
+
+    private fun updateLayout() {
         val qry = Aware.getStudy(this, study_url)
         if (qry != null && qry.moveToFirst()) {
             if (pluginsInstalled) {
@@ -804,19 +826,21 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
             qry.close()
         }
-        if (Aware.getSetting(this, Aware_Preferences.INTERFACE_LOCKED) == "true") {
-            val bottomNavigationView =
-                findViewById<View>(R.id.aware_bottombar) as BottomNavigationView
-            bottomNavigationView.visibility = View.GONE
+    }
+
+    private fun setPluginsInstalledStatus() {
+        if(permissions != null){
+            pluginsInstalled =  true
+            for(p in permissions!!){
+                if(ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED){
+                    pluginsInstalled = false
+                    break
+                }
+            }
         }
     }
 
     inner class PluginInfo(var pluginName: String, var packageName: String, var installed: Boolean)
-    companion object {
-        const val EXTRA_STUDY_URL = "study_url"
-        private var study_url: String? = null
-        private val pluginCompliance: PluginCompliance? = PluginCompliance()
-    }
 
     override fun onPermissionGranted() {
         pluginsInstalled = true;
