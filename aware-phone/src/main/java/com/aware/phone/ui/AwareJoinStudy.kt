@@ -13,15 +13,11 @@ import android.text.Editable
 import android.text.Html
 import android.text.TextWatcher
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.aware.Applications
 import com.aware.Aware
 import com.aware.Aware_Preferences
@@ -31,6 +27,7 @@ import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.android.synthetic.main.aware_join_study.*
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -39,15 +36,9 @@ import java.util.*
 
 
 class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallback {
-    private var active_plugins: ArrayList<PluginInfo>? = null
-    private var mLayoutManager: RecyclerView.LayoutManager? = null
+    private var activePlugins: ArrayList<PluginInfo>? = null
     private var pluginsInstalled = true
-    private var participantIdEditText: EditText? = null
-    private var btnAction: Button? = null
-    private var btnQuit: Button? = null
-    private var btnPermissions: Button? = null
-    private var txtJoinDisabled: TextView? = null
-    private var study_configs: JSONArray? = null
+    private var studyConfigs: JSONArray? = null
     private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
     private lateinit var permissionsHandler: PermissionsHandler
@@ -55,19 +46,10 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.aware_join_study)
-        val txtStudyTitle = findViewById<View>(R.id.txt_title) as TextView
-        val txtStudyDescription = findViewById<View>(R.id.txt_description) as TextView
-        val txtStudyResearcher = findViewById<View>(R.id.txt_researcher) as TextView
-        btnAction = findViewById<View>(R.id.btn_sign_up) as Button
-        btnQuit = findViewById<View>(R.id.btn_quit_study) as Button
-        btnPermissions = findViewById<View>(R.id.btn_go_to_permissions) as Button
-        txtJoinDisabled = findViewById(R.id.txt_join_disabled) as TextView
-        participantIdEditText = findViewById(R.id.participant_id)
-        mLayoutManager = LinearLayoutManager(this)
         study_url = intent.getStringExtra(EXTRA_STUDY_URL)
 
         permissionsHandler = PermissionsHandler(this)
-        btnPermissions!!.visibility = View.GONE
+
         //If we are getting here from an AWARE study link
         val scheme = intent.scheme
         if (scheme != null) {
@@ -94,18 +76,18 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             study_url = study_url!!.substring(0, study_url!!.indexOf("pid") - 1)
             if (Aware.DEBUG) Log.d(Aware.TAG, "AWARE Study URL: " + study_url)
 
-            participantIdEditText!!.setText(participantId)
-            participantIdEditText!!.isFocusable = false
-            participantIdEditText!!.isEnabled = false
-            participantIdEditText!!.isCursorVisible = false
-            participantIdEditText!!.keyListener = null
-            participantIdEditText!!.setBackgroundColor(Color.TRANSPARENT)
+            participant_id!!.setText(participantId)
+            participant_id!!.isFocusable = false
+            participant_id!!.isEnabled = false
+            participant_id!!.isCursorVisible = false
+            participant_id!!.keyListener = null
+            participant_id!!.setBackgroundColor(Color.TRANSPARENT)
         } else {
             if (Aware.DEBUG) Log.d(
                 Aware.TAG,
                 "AWARE Study participant ID NOT detected"
             )
-            participantIdEditText!!.addTextChangedListener(object : TextWatcher {
+            participant_id!!.addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                     if (s.isNotEmpty()) {
@@ -114,9 +96,9 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                             Aware_Preferences.DEVICE_ID,
                             s.toString()
                         )
-                        btnAction!!.isEnabled = true
+                        btn_sign_up!!.isEnabled = true
                     } else {
-                        btnAction!!.isEnabled = false
+                        btn_sign_up!!.isEnabled = false
                     }
                 }
                 override fun afterTextChanged(s: Editable) {}
@@ -128,30 +110,30 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             PopulateStudy().execute(study_url)
         } else {
             try {
-                study_configs =
+                studyConfigs =
                     JSONArray(qry.getString(qry.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_CONFIG)))
-                txtStudyTitle.text =
+                txt_title.text =
                     qry.getString(qry.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))
-                txtStudyDescription.text = Html.fromHtml(
+                txt_description.text = Html.fromHtml(
                     qry.getString(qry.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_DESCRIPTION)),
                     null,
                     null
                 )
-                txtStudyResearcher.text =
+                txt_researcher.text =
                     qry.getString(qry.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_PI))
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
             if (!qry.isClosed) qry.close()
-            if (study_configs != null) {
-                populateStudyInfo(study_configs!!)
+            if (studyConfigs != null) {
+                populateStudyInfo(studyConfigs!!)
             }
 
 
 
-            btnAction!!.setOnClickListener {
-                btnAction!!.isEnabled = false
-                btnAction!!.alpha = 0.5f
+            btn_sign_up!!.setOnClickListener {
+                btn_sign_up!!.isEnabled = false
+                btn_sign_up!!.alpha = 0.5f
                 val study = Aware.getStudy(applicationContext, study_url)
                 if (study != null && study.moveToFirst()) {
                     val studyData = ContentValues()
@@ -174,7 +156,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 if (study != null && !study.isClosed) study.close()
                 JoinStudyAsync().execute()
             }
-            btnQuit!!.setOnClickListener {
+            btn_quit_study!!.setOnClickListener {
                 val dbStudy = Aware.getStudy(applicationContext, study_url)
                 if (dbStudy != null && dbStudy.moveToFirst()) {
                     val complianceEntry = ContentValues()
@@ -237,10 +219,10 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     .setMessage("Are you sure you want to quit the study?")
                     .setCancelable(false)
                     .setPositiveButton("Yes") { dialogInterface, i ->
-                        btnQuit!!.isEnabled = false
-                        btnQuit!!.alpha = 1f
-                        btnAction!!.isEnabled = false
-                        btnAction!!.alpha = 1f
+                        btn_quit_study!!.isEnabled = false
+                        btn_quit_study!!.alpha = 1f
+                        btn_sign_up!!.isEnabled = false
+                        btn_sign_up!!.alpha = 1f
                         val dbStudy = Aware.getStudy(
                             applicationContext,
                             Aware.getSetting(
@@ -684,7 +666,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }
 
         protected override fun doInBackground(vararg params: Void?): Void? {
-            StudyUtils.applySettings(applicationContext, study_configs)
+            StudyUtils.applySettings(applicationContext, studyConfigs)
             return null
         }
 
@@ -693,7 +675,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             mLoading!!.dismiss()
         }
     }
-
 
     class PluginCompliance : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -737,16 +718,16 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         permissionsHandler.requestPermissions(permissions!!, this)
 
         //Show the plugins' information
-        active_plugins = ArrayList()
+        activePlugins = ArrayList()
         for (i in 0 until plugins.length()) {
             try {
                 val plugin_config = plugins.getJSONObject(i)
                 val package_name = plugin_config.getString("plugin")
                 val installed = PluginsManager.isInstalled(this, package_name)
                 if (installed == null) {
-                    active_plugins!!.add(PluginInfo(package_name, package_name, false))
+                    activePlugins!!.add(PluginInfo(package_name, package_name, false))
                 } else {
-                    active_plugins!!.add(
+                    activePlugins!!.add(
                         PluginInfo(
                             PluginsManager.getPluginName(
                                 applicationContext, package_name
@@ -800,30 +781,26 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 }
             }
         }
-        if (active_plugins == null) return
+        if (activePlugins == null) return
         val qry = Aware.getStudy(this, study_url)
         if (qry != null && qry.moveToFirst()) {
             if (pluginsInstalled) {
-                btnAction!!.alpha = 1f
+                btn_sign_up!!.alpha = 1f
                 pluginsInstalled = true
-                txtJoinDisabled!!.isEnabled = false
-                txtJoinDisabled!!.visibility = View.GONE
-                btnPermissions!!.visibility = View.GONE
-                btnPermissions!!.isEnabled = false
-                if (participantIdEditText!!.text.isNotEmpty()) btnAction!!.isEnabled = true
-                btnAction!!.visibility = View.VISIBLE
+                if (participant_id!!.text.isNotEmpty()) btn_sign_up!!.isEnabled = true
+                btn_sign_up!!.visibility = View.VISIBLE
 
             } else {
-                btnAction!!.isEnabled = false
-                btnAction!!.alpha = .3f
-                btnAction!!.visibility = View.GONE
+                btn_sign_up!!.isEnabled = false
+                btn_sign_up!!.alpha = .3f
+                btn_sign_up!!.visibility = View.GONE
             }
             if (Aware.isStudy(applicationContext)) {
-                btnQuit!!.visibility = View.VISIBLE
-                btnAction!!.setOnClickListener { finish() }
-                btnAction!!.text = "OK"
+                btn_quit_study!!.visibility = View.VISIBLE
+                btn_sign_up!!.setOnClickListener { finish() }
+                btn_sign_up!!.text = "OK"
             } else {
-                btnQuit!!.visibility = View.GONE
+                btn_quit_study!!.visibility = View.GONE
             }
             qry.close()
         }
@@ -853,19 +830,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     }
 
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
-        txtJoinDisabled!!.isEnabled = true
-        txtJoinDisabled!!.visibility = View.VISIBLE
-        btnPermissions!!.visibility = View.VISIBLE
-        btnPermissions!!.isEnabled = true
-
-        btnPermissions!!.setOnClickListener {
-            startActivity(
-                Intent(
-                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts("package", packageName, null)
-                )
-            )
-        }
     }
 
     override fun onPermissionDeniedWithRationale(deniedPermissions: List<String>?) {
