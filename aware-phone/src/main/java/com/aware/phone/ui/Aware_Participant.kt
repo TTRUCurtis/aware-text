@@ -97,8 +97,8 @@ class Aware_Participant : AppCompatActivity(), PermissionsHandler.PermissionCall
             }
         }
         if (item.title.toString().equals(resources.getString(R.string.aware_study), ignoreCase = true)) {
-            val studyInfo = Intent(this@Aware_Participant, Aware_Join_Study::class.java)
-            studyInfo.putExtra(Aware_Join_Study.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
+            val studyInfo = Intent(this@Aware_Participant, AwareJoinStudy::class.java)
+            studyInfo.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
             startActivity(studyInfo)
         }
         if (item.title.toString().equals(resources.getString(R.string.aware_team), ignoreCase = true)) {

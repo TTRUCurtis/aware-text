@@ -38,10 +38,8 @@ import java.io.FileNotFoundException
 import java.util.*
 
 
-class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallback {
+class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallback {
     private var active_plugins: ArrayList<PluginInfo>? = null
-    private var pluginsRecyclerView: RecyclerView? = null
-    private var mAdapter: RecyclerView.Adapter<*>? = null
     private var mLayoutManager: RecyclerView.LayoutManager? = null
     private var pluginsInstalled = true
     private var participantIdEditText: EditText? = null
@@ -49,7 +47,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     private var btnQuit: Button? = null
     private var btnPermissions: Button? = null
     private var txtJoinDisabled: TextView? = null
-    private var llPluginsRequired: LinearLayout? = null
     private var study_configs: JSONArray? = null
     private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
@@ -66,10 +63,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         btnPermissions = findViewById<View>(R.id.btn_go_to_permissions) as Button
         txtJoinDisabled = findViewById(R.id.txt_join_disabled) as TextView
         participantIdEditText = findViewById(R.id.participant_id)
-        pluginsRecyclerView = findViewById<View>(R.id.rv_plugins) as RecyclerView
         mLayoutManager = LinearLayoutManager(this)
-        pluginsRecyclerView!!.layoutManager = mLayoutManager
-        llPluginsRequired = findViewById<View>(R.id.ll_plugins_required) as LinearLayout
         study_url = intent.getStringExtra(EXTRA_STUDY_URL)
 
         permissionsHandler = PermissionsHandler(this)
@@ -239,7 +233,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                     )
                 }
                 if (dbStudy != null && !dbStudy.isClosed) dbStudy.close()
-                AlertDialog.Builder(this@Aware_Join_Study)
+                AlertDialog.Builder(this@AwareJoinStudy)
                     .setMessage("Are you sure you want to quit the study?")
                     .setCancelable(false)
                     .setPositiveButton("Yes") { dialogInterface, i ->
@@ -394,6 +388,11 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                     .show()
             }
         }
+
+        registerPluginStatusReceiver()
+    }
+
+    private fun registerPluginStatusReceiver() {
         val pluginStatuses = IntentFilter()
         pluginStatuses.addAction(Aware.ACTION_AWARE_PLUGIN_INSTALLED)
         pluginStatuses.addAction(Aware.ACTION_AWARE_PLUGIN_UNINSTALLED)
@@ -413,7 +412,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         private var study_config = ""
         override fun onPreExecute() {
             super.onPreExecute()
-            mPopulating = ProgressDialog(this@Aware_Join_Study)
+            mPopulating = ProgressDialog(this@AwareJoinStudy)
             mPopulating!!.setMessage("Retrieving study information, please wait.")
             mPopulating!!.setCancelable(false)
             mPopulating!!.setInverseBackgroundForced(false)
@@ -517,7 +516,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 }
             } else {
                 Toast.makeText(
-                    this@Aware_Join_Study,
+                    this@AwareJoinStudy,
                     "Missing API key or study ID. Scanned: $study_url",
                     Toast.LENGTH_SHORT
                 ).show()
@@ -529,7 +528,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
             super.onPostExecute(result)
             if (result == null) {
                 mPopulating!!.dismiss()
-                val builder = android.app.AlertDialog.Builder(this@Aware_Join_Study)
+                val builder = android.app.AlertDialog.Builder(this@AwareJoinStudy)
                 builder.setPositiveButton("OK") { dialog, which ->
                     setResult(RESULT_CANCELED)
 
@@ -620,7 +619,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                     mPopulating!!.dismiss()
 
                     //Reload join study wizard. We already have the study info on the database.
-                    val studyInfo = Intent(applicationContext, Aware_Join_Study::class.java)
+                    val studyInfo = Intent(applicationContext, AwareJoinStudy::class.java)
                     studyInfo.putExtra(EXTRA_STUDY_URL, intent.getStringExtra(EXTRA_STUDY_URL))
                     studyInfo.flags =
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
@@ -637,7 +636,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         var mQuitting: ProgressDialog? = null
         override fun onPreExecute() {
             super.onPreExecute()
-            mQuitting = ProgressDialog(this@Aware_Join_Study)
+            mQuitting = ProgressDialog(this@AwareJoinStudy)
             mQuitting!!.setMessage("Quitting study, please wait.")
             mQuitting!!.setCancelable(false)
             mQuitting!!.setInverseBackgroundForced(false)
@@ -670,7 +669,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         var mLoading: ProgressDialog? = null
         override fun onPreExecute() {
             super.onPreExecute()
-            mLoading = ProgressDialog(this@Aware_Join_Study)
+            mLoading = ProgressDialog(this@AwareJoinStudy)
             mLoading!!.setMessage("Joining study, please wait.")
             mLoading!!.setCancelable(false)
             mLoading!!.setInverseBackgroundForced(false)
@@ -699,7 +698,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     class PluginCompliance : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action.equals(Aware.ACTION_AWARE_PLUGIN_INSTALLED, ignoreCase = true)) {
-                val joinStudy = Intent(context, Aware_Join_Study::class.java)
+                val joinStudy = Intent(context, AwareJoinStudy::class.java)
                 joinStudy.putExtra(EXTRA_STUDY_URL, study_url)
                 context.startActivity(joinStudy)
             }
@@ -759,8 +758,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 e.printStackTrace()
             }
         }
-        mAdapter = PluginsAdapter(active_plugins!!)
-        pluginsRecyclerView!!.adapter = mAdapter
     }
 
     private fun populatePermissionsList(plugins: JSONArray, sensors: JSONArray): ArrayList<String> {
@@ -806,7 +803,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
         if (active_plugins == null) return
         val qry = Aware.getStudy(this, study_url)
         if (qry != null && qry.moveToFirst()) {
-            llPluginsRequired!!.visibility = View.GONE
             if (pluginsInstalled) {
                 btnAction!!.alpha = 1f
                 pluginsInstalled = true
@@ -835,69 +831,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
             val bottomNavigationView =
                 findViewById<View>(R.id.aware_bottombar) as BottomNavigationView
             bottomNavigationView.visibility = View.GONE
-        }
-    }
-
-    private fun verifyInstalledPlugins(): Boolean {
-        var result = true
-        for (plugin in active_plugins!!) {
-            val installed = PluginsManager.isInstalled(this, plugin.packageName)
-            if (installed != null) {
-                plugin.installed = true
-            } else {
-                plugin.installed = false
-                result = false
-            }
-        }
-        mAdapter!!.notifyDataSetChanged()
-        return result
-    }
-
-    inner class PluginsAdapter(private val mDataset: ArrayList<PluginInfo>) :
-        RecyclerView.Adapter<PluginsAdapter.ViewHolder>() {
-        inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-            var txtPackageName: TextView
-            var btnInstall: Button
-            var cbInstalled: CheckBox
-
-            init {
-                txtPackageName = v.findViewById<View>(R.id.txt_package_name) as TextView
-                btnInstall = v.findViewById<View>(R.id.btn_install) as Button
-                cbInstalled = v.findViewById<View>(R.id.cb_installed) as CheckBox
-            }
-        }
-
-        override fun onCreateViewHolder(
-            parent: ViewGroup,
-            viewType: Int
-        ): ViewHolder {
-            val v = LayoutInflater.from(parent.context)
-                .inflate(R.layout.plugins_installation_list_item, parent, false)
-            return ViewHolder(v)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.txtPackageName.text = mDataset[position].pluginName
-            holder.btnInstall.setOnClickListener {
-                Toast.makeText(this@Aware_Join_Study, "Installing...", Toast.LENGTH_SHORT).show()
-                Aware.downloadPlugin(
-                    applicationContext,
-                    mDataset[position].packageName,
-                    study_url,
-                    false
-                )
-            }
-            if (mDataset[position].installed) {
-                holder.btnInstall.visibility = View.INVISIBLE
-                holder.cbInstalled.visibility = View.VISIBLE
-            } else {
-                holder.btnInstall.visibility = View.VISIBLE
-                holder.cbInstalled.visibility = View.INVISIBLE
-            }
-        }
-
-        override fun getItemCount(): Int {
-            return mDataset.size
         }
     }
 
@@ -948,7 +881,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
             ) { dialog, which ->
                 permissionsHandler.requestPermissions(
                     deniedPermissions!!,
-                    this@Aware_Join_Study
+                    this@AwareJoinStudy
                 )
             }
             .show()
