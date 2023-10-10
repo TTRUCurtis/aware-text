@@ -27,7 +27,6 @@ import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
 import com.aware.phone.R
-import com.aware.phone.ui.PermissionUtils.getPermissions
 import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
@@ -54,7 +53,6 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
     private var study_configs: JSONArray? = null
     private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
-    //private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var permissionsHandler: PermissionsHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -771,7 +769,7 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
             try {
                 val plugin = plugins.getJSONObject(i)
                 permissions?.addAll(
-                    getPermissions(plugin.getString("plugin"))
+                    PermissionsHandler.Companion.getPermissions(plugin.getString("plugin"))
                 )  //sends in "com.aware.plugin...."
             } catch (e: JSONException) {
                 e.printStackTrace()
@@ -782,13 +780,13 @@ class Aware_Join_Study : AppCompatActivity(), PermissionsHandler.PermissionCallb
             try {
                 val sensor = sensors.getJSONObject(i)
                 permissions?.addAll(
-                    getPermissions(sensor.getString("setting"))
+                    PermissionsHandler.Companion.getPermissions(sensor.getString("setting"))
                 )
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
         }
-        permissions?.addAll(PermissionUtils.getRequiredPermissions())
+        permissions?.addAll(PermissionsHandler.Companion.getRequiredPermissions())
 
         return ArrayList(permissions?.distinct())
 
