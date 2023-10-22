@@ -150,7 +150,7 @@
                 android:value="com.aware.phone.Aware_Client" />
         </activity>
         <activity
-            android:name="com.aware.phone.ui.Aware_Join_Study"
+            android:name="com.aware.phone.ui.AwareJoinStudy"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="Join study"
             android:launchMode="singleTop"

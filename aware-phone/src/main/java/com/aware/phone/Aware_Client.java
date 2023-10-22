@@ -16,6 +16,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.*;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.Toast;
@@ -29,8 +30,10 @@ import androidx.core.content.ContextCompat;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.phone.ui.Aware_Activity;
-import com.aware.phone.ui.Aware_Join_Study;
 import com.aware.phone.ui.AwareParticipant;
+import com.aware.phone.ui.AwareJoinStudy;
+import com.aware.phone.ui.Aware_Participant;
+import com.aware.phone.ui.onboarding.JoinStudyActivity;
 import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
@@ -240,8 +243,8 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                             Toast.makeText(getApplicationContext(), "Study URL missing...", Toast.LENGTH_SHORT).show();
                         } else if (!Aware.isStudy(getApplicationContext())) {
                             //Shows UI to allow the user to join study
-                            Intent joinStudy = new Intent(getApplicationContext(), Aware_Join_Study.class);
-                            joinStudy.putExtra(Aware_Join_Study.EXTRA_STUDY_URL, Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER));
+                            Intent joinStudy = new Intent(getApplicationContext(), AwareJoinStudy.class);
+                            joinStudy.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER));
                             startActivity(joinStudy);
                         }
                     }

@@ -91,8 +91,8 @@ public abstract class Aware_Activity extends AppCompatPreferenceActivity {
             }
         }
         if (item.getTitle().toString().equalsIgnoreCase(getResources().getString(R.string.aware_study))) {
-            Intent studyInfo = new Intent(Aware_Activity.this, Aware_Join_Study.class);
-            studyInfo.putExtra(Aware_Join_Study.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER));
+            Intent studyInfo = new Intent(Aware_Activity.this, AwareJoinStudy.class);
+            studyInfo.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER));
             startActivity(studyInfo);
         }
         if (item.getTitle().toString().equalsIgnoreCase(getResources().getString(R.string.aware_team))) {
