@@ -66,7 +66,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         registerPluginStatusReceiver()
     }
 
-
     //see if we really need contentResolver
     private fun insertComplianceData(contentResolver: ContentResolver, complianceEntry: ContentValues) {
         contentResolver.insert(Aware_Provider.Aware_Studies.CONTENT_URI, complianceEntry)
@@ -316,296 +315,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         permissionsHandler.handlePermissionsResult(requestCode, permissions, grantResults)
     }
 
-//    private open inner class PopulateStudy : AsyncTask<String?, Void?, JSONObject?>() {
-//        var mPopulating: ProgressDialog? = null
-//        private var study_url = ""
-//        private var study_api_key = ""
-//        private var study_id = ""
-//        private var study_config = ""
-//        override fun onPreExecute() {
-//            super.onPreExecute()
-//            mPopulating = ProgressDialog(this@AwareJoinStudy)
-//            mPopulating!!.setMessage("Retrieving study information, please wait.")
-//            mPopulating!!.setCancelable(false)
-//            mPopulating!!.setInverseBackgroundForced(false)
-//            mPopulating!!.show()
-//        }
-//
-//        protected override fun doInBackground(vararg params: String?): JSONObject? {
-//            study_url = params[0].toString()
-//            if (study_url.length == 0) return null
-//            if (Aware.DEBUG) Log.d(Aware.TAG, "Aware_QRCode study_url: $study_url")
-//            val study_uri = Uri.parse(study_url)
-//            val protocol = study_uri.scheme
-//            val path_segments = study_uri.pathSegments
-//            if (path_segments.size > 0) {
-//                study_api_key = path_segments[path_segments.size - 1]
-//                study_id = path_segments[path_segments.size - 2]
-//                Log.d(Aware.TAG, "Study API: $study_api_key Study ID: $study_id")
-//                val request: String?
-//                request = if (protocol == "https") {
-//                    //Note: Joining a study always downloads the certificate.
-//                    SSLManager.handleUrl(applicationContext, study_url, true)
-//                    while (!SSLManager.hasCertificate(applicationContext, study_uri.host)) {
-//                        //wait until we have the certificate downloaded
-//                    }
-//                    try {
-//                        Https(
-//                            SSLManager.getHTTPS(
-//                                applicationContext,
-//                                study_url
-//                            )
-//                        ).dataGET(
-//                            study_url.substring(
-//                                0,
-//                                study_url.indexOf("/index.php")
-//                            ) + "/index.php/webservice/client_get_study_info/" + study_api_key, true
-//                        )
-//                    } catch (e: FileNotFoundException) {
-//                        Log.d(Aware.TAG, "Failed to load certificate: " + e.message)
-//                        null
-//                    }
-//                } else {
-//                    Http().dataGET(
-//                        study_url.substring(
-//                            0,
-//                            study_url.indexOf("/index.php")
-//                        ) + "/index.php/webservice/client_get_study_info/" + study_api_key, true
-//                    )
-//                }
-//                if (request != null) {
-//                    try {
-//                        if (request == "[]") {
-//                            return null
-//                        }
-//                        val study_data = JSONObject(request)
-//
-//
-//                        //Automatically register this device on the study and create credentials for this device ID!
-//                        val data = Hashtable<String, String>()
-//                        data[Aware_Preferences.DEVICE_ID] =
-//                            Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)
-//                        data["platform"] = "android"
-//                        try {
-//                            val package_info = applicationContext.packageManager.getPackageInfo(
-//                                applicationContext.packageName, 0
-//                            )
-//                            data["package_name"] = package_info.packageName
-//                            data["package_version_code"] = package_info.versionCode.toString()
-//                            data["package_version_name"] = package_info.versionName.toString()
-//                        } catch (e: PackageManager.NameNotFoundException) {
-//                            Log.d(Aware.TAG, "Failed to put package info: $e")
-//                            e.printStackTrace()
-//                        }
-//                        val answer: String?
-//                        answer = if (protocol == "https") {
-//                            try {
-//                                Https(SSLManager.getHTTPS(applicationContext, study_url)).dataPOST(
-//                                    study_url,
-//                                    data,
-//                                    true
-//                                )
-//                            } catch (e: FileNotFoundException) {
-//                                null
-//                            }
-//                        } else {
-//                            Http().dataPOST(study_url, data, true)
-//                        }
-//                        if (answer != null) {
-//                            try {
-//                                val configs_study = JSONArray(answer)
-//                                if (!configs_study.getJSONObject(0).has("message")) {
-//                                    study_config = configs_study.toString()
-//                                }
-//                            } catch (e: JSONException) {
-//                                e.printStackTrace()
-//                            }
-//                        } else return null
-//                        return study_data
-//                    } catch (e: JSONException) {
-//                        e.printStackTrace()
-//                    }
-//                }
-//            } else {
-//                Toast.makeText(
-//                    this@AwareJoinStudy,
-//                    "Missing API key or study ID. Scanned: $study_url",
-//                    Toast.LENGTH_SHORT
-//                ).show()
-//            }
-//            return null
-//        }
-//
-//        override fun onPostExecute(result: JSONObject?) {
-//            super.onPostExecute(result)
-//            if (result == null) {
-//                mPopulating!!.dismiss()
-//                val builder = android.app.AlertDialog.Builder(this@AwareJoinStudy)
-//                builder.setPositiveButton("OK") { dialog, which ->
-//                    setResult(RESULT_CANCELED)
-//
-//                    //Reset the webservice server status because this one is not valid
-//                    Aware.setSetting(applicationContext, Aware_Preferences.STATUS_WEBSERVICE, false)
-//                    val resetClient = Intent(applicationContext, Aware_Client::class.java)
-//                    resetClient.flags =
-//                        Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-//                    startActivity(resetClient)
-//                    finish()
-//                }
-//                builder.setTitle("Study information")
-//                builder.setMessage("Unable to retrieve this study information: $study_url\nTry again.")
-//                builder.show()
-//            } else {
-//                try {
-//                    val dbStudy = Aware.getStudy(applicationContext, study_url)
-//                    if (Aware.DEBUG) Log.d(Aware.TAG, DatabaseUtils.dumpCursorToString(dbStudy))
-//                    if (dbStudy == null || !dbStudy.moveToFirst()) {
-//                        val studyData = ContentValues()
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_DEVICE_ID, Aware.getSetting(
-//                                applicationContext, Aware_Preferences.DEVICE_ID
-//                            )
-//                        )
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_TIMESTAMP,
-//                            System.currentTimeMillis()
-//                        )
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_KEY, study_id)
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_API, study_api_key)
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_URL, study_url)
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_PI,
-//                            """${result.getString("researcher_first")} ${result.getString("researcher_last")}
-//                            Contact: ${result.getString("researcher_contact")}"""
-//                        )
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_CONFIG, study_config)
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_TITLE,
-//                            result.getString("study_name")
-//                        )
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_DESCRIPTION,
-//                            result.getString("study_description")
-//                        )
-//                        contentResolver.insert(Aware_Provider.Aware_Studies.CONTENT_URI, studyData)
-//                        if (Aware.DEBUG) {
-//                            Log.d(Aware.TAG, "New study data: $studyData")
-//                        }
-//                    } else {
-//                        //Update the information to the latest
-//                        val studyData = ContentValues()
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_DEVICE_ID, Aware.getSetting(
-//                                applicationContext, Aware_Preferences.DEVICE_ID
-//                            )
-//                        )
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_TIMESTAMP,
-//                            System.currentTimeMillis()
-//                        )
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_JOINED, 0)
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_EXIT, 0)
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_KEY, study_id)
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_API, study_api_key)
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_URL, study_url)
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_PI,
-//                            """${result.getString("researcher_first")} ${result.getString("researcher_last")}
-//                            Contact: ${result.getString("researcher_contact")}"""
-//                        )
-//                        studyData.put(Aware_Provider.Aware_Studies.STUDY_CONFIG, study_config)
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_TITLE,
-//                            result.getString("study_name")
-//                        )
-//                        studyData.put(
-//                            Aware_Provider.Aware_Studies.STUDY_DESCRIPTION,
-//                            result.getString("study_description")
-//                        )
-//                        contentResolver.insert(Aware_Provider.Aware_Studies.CONTENT_URI, studyData)
-//                        if (Aware.DEBUG) {
-//                            Log.d(Aware.TAG, "Re-scanned study data: $studyData")
-//                        }
-//                    }
-//                    if (dbStudy != null && !dbStudy.isClosed) dbStudy.close()
-//                    mPopulating!!.dismiss()
-//
-//                    //Reload join study wizard. We already have the study info on the database.
-//                    val studyInfo = Intent(applicationContext, AwareJoinStudy::class.java)
-//                    studyInfo.putExtra(EXTRA_STUDY_URL, intent.getStringExtra(EXTRA_STUDY_URL))
-//                    studyInfo.flags =
-//                        Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-//                    finish()
-//                    startActivity(studyInfo)
-//                } catch (e: JSONException) {
-//                    e.printStackTrace()
-//                }
-//            }
-//        }
-//    }
-//
-//    private inner class QuitStudyAsync : AsyncTask<Void?, Void?, Void?>() {
-//        var mQuitting: ProgressDialog? = null
-//        override fun onPreExecute() {
-//            super.onPreExecute()
-//            mQuitting = ProgressDialog(this@AwareJoinStudy)
-//            mQuitting!!.setMessage("Quitting study, please wait.")
-//            mQuitting!!.setCancelable(false)
-//            mQuitting!!.setInverseBackgroundForced(false)
-//            mQuitting!!.show()
-//            mQuitting!!.setOnDismissListener {
-//                finish()
-//
-//                //Redirect the user to the main UI
-//                val mainUI = Intent(applicationContext, Aware_Client::class.java)
-//                mainUI.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-//                startActivity(mainUI)
-//            }
-//        }
-//
-//        protected override fun doInBackground(vararg params: Void?): Void? {
-//            Aware.reset(applicationContext)
-//            return null
-//        }
-//
-//        override fun onPostExecute(aVoid: Void?) {
-//            super.onPostExecute(aVoid)
-//            mQuitting!!.dismiss()
-//        }
-//    }
-//
-//    /**
-//     * Join study asynchronously
-//     */
-//    private inner class JoinStudyAsync : AsyncTask<Void?, Void?, Void?>() {
-//        var mLoading: ProgressDialog? = null
-//        override fun onPreExecute() {
-//            super.onPreExecute()
-//            mLoading = ProgressDialog(this@AwareJoinStudy)
-//            mLoading!!.setMessage("Joining study, please wait.")
-//            mLoading!!.setCancelable(false)
-//            mLoading!!.setInverseBackgroundForced(false)
-//            mLoading!!.show()
-//            mLoading!!.setOnDismissListener {
-//                finish()
-//                //Redirect the user to the main UI
-//                val mainUI = Intent(applicationContext, Aware_Client::class.java)
-//                mainUI.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-//                startActivity(mainUI)
-//            }
-//        }
-//
-//        protected override fun doInBackground(vararg params: Void?): Void? {
-//            StudyUtils.applySettings(applicationContext, studyConfigs)
-//            return null
-//        }
-//
-//        override fun onPostExecute(aVoid: Void?) {
-//            super.onPostExecute(aVoid)
-//            mLoading!!.dismiss()
-//        }
-//    }
-
     private fun populateStudy(studyUrl: String) {
         lifecycleScope.launch(Dispatchers.Main) {
             val progressDialog = ProgressDialog(this@AwareJoinStudy).apply {
@@ -623,7 +332,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 handleStudyData(studyData, studyUrl)
 
             } catch (e: Exception) {
-                handleError(e, studyUrl)
+                Log.e(Aware.TAG, "Error fetching study data for URL: $studyUrl", e)
             } finally {
                 progressDialog.dismiss()
             }
@@ -755,18 +464,43 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             builder.setMessage("Unable to retrieve this study information: $studyUrl\nTry again.")
             builder.show()
         } else {
-            try {
-                // [Your original handling of studyData from onPostExecute]
-                // ...
-            } catch (e: JSONException) {
+            try  {
+                Aware.getStudy(applicationContext, study_url)?.use { cursor ->
+
+                    if(!cursor.moveToFirst()) {
+
+                        if (Aware.DEBUG) Log.d(Aware.TAG, DatabaseUtils.dumpCursorToString(cursor))
+
+                        val studyData = extractStudyData(cursor, "")
+                        studyData.remove(Aware_Provider.Aware_Studies.STUDY_JOINED)
+                        studyData.remove(Aware_Provider.Aware_Studies.STUDY_EXIT)
+                        studyData.remove(Aware_Provider.Aware_Studies.STUDY_COMPLIANCE)
+                        insertComplianceData(contentResolver, studyData)
+                        if (Aware.DEBUG) {
+                            Log.d(Aware.TAG, "New study data: $studyData")
+                        }
+                    }else {
+                        //Update the information to the latest
+                        val studyData = extractStudyData(cursor, "")
+                        studyData.remove(Aware_Provider.Aware_Studies.STUDY_COMPLIANCE)
+                        insertComplianceData(contentResolver, studyData)
+                        if (Aware.DEBUG) {
+                            Log.d(Aware.TAG, "Re-scanned study data: $studyData")
+                        }
+                    }
+                }
+
+                //Reload join study wizard. We already have the study info on the database.
+                val studyInfo = Intent(applicationContext, AwareJoinStudy::class.java)
+                studyInfo.putExtra(EXTRA_STUDY_URL, intent.getStringExtra(EXTRA_STUDY_URL))
+                studyInfo.flags =
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                finish()
+                startActivity(studyInfo)
+            }  catch (e: JSONException) {
                 e.printStackTrace()
             }
         }
-    }
-
-    private fun handleError(e: Exception, studyUrl: String) {
-        // Log error, notify user, or handle error as appropriate
-        Log.e(Aware.TAG, "Error fetching study data for URL: $studyUrl", e)
     }
 
     private fun quitStudy() {
@@ -826,9 +560,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
         }
     }
-
-
-
 
     class PluginCompliance : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -984,8 +715,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     }
 
-    override fun onPermissionDenied(deniedPermissions: List<String>?) {
-    }
+    override fun onPermissionDenied(deniedPermissions: List<String>?) {   }
 
     override fun onPermissionDeniedWithRationale(deniedPermissions: List<String>?) {
 
