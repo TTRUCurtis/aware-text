@@ -127,7 +127,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:31.1.1')
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-perf'
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
 
 
     api (project(':aware-core'))
