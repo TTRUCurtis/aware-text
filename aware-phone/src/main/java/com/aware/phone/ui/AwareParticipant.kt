@@ -78,8 +78,8 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         aware_participant_quit_study.aware_participant_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
         aware_participant_quit_study.aware_participant_image.setImageResource(AwareParticipantItems.awareParticipantItems[3].image)
         aware_participant_quit_study.aware_participant_item.setOnClickListener {
-            val quitStudy = Intent(this@AwareParticipant, Aware_Join_Study::class.java)
-            quitStudy.putExtra(Aware_Join_Study.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
+            val quitStudy = Intent(this@AwareParticipant, AwareJoinStudy::class.java)
+            quitStudy.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
             startActivity(quitStudy)
         }
     }
@@ -178,8 +178,8 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             }
         }
         if (item.title.toString().equals(resources.getString(R.string.aware_study), ignoreCase = true)) {
-            val studyInfo = Intent(this@AwareParticipant, Aware_Join_Study::class.java)
-            studyInfo.putExtra(Aware_Join_Study.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
+            val studyInfo = Intent(this@AwareParticipant, AwareJoinStudy::class.java)
+            studyInfo.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
             startActivity(studyInfo)
         }
         if (item.title.toString().equals(resources.getString(R.string.aware_team), ignoreCase = true)) {
