@@ -6,7 +6,6 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -132,10 +131,8 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         updatePermissionList()
 
         if(revokedPermissions.isNotEmpty()) {
-            Log.d("Permissions123", "revokedPermissions is not null or not empty")
             populateRevokedPermissionLayout()
         }else {
-            Log.d("Permissions123", "revokedPermissions is either null or empty")
             removeRevokedPermissionLayout()
         }
     }
@@ -195,18 +192,14 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     override fun onPermissionGranted() {
-        // This does not get called when you grant permission!
-        Log.d("Permissions123", "onGranted!")
 
         for(permission in revokedPermissions) {
            if(permissionsHandler.isPermissionGranted(permission)) {
-               Log.d("Permissions123", "permissions revoked!")
                revokedPermissions.remove(permission)
            }
         }
 
         if(revokedPermissions.isEmpty()) {
-            Log.d("Permissions123", "remove the layout")
             removeRevokedPermissionLayout()
         }
         val redirectService = Intent()

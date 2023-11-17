@@ -1,13 +1,13 @@
 package com.aware.phone.ui
 
 import com.aware.providers.Aware_Provider.Aware_Studies as Key
-import android.app.Dialog
 import android.app.ProgressDialog
 import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.database.DatabaseUtils
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -30,6 +30,7 @@ import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
 import kotlinx.android.synthetic.main.aware_join_study.*
+import kotlinx.android.synthetic.main.aware_participant_item_layout.view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,13 +47,14 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private var studyConfigs: JSONArray? = null
     private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
+    private val missingPermissions = mutableListOf<String>()
     private lateinit var permissionsHandler: PermissionsHandler
 
     companion object {
         const val EXTRA_STUDY_URL = "study_url"
-        const val CONSTANT_KEY = "Aware_Provider.Aware_Studies"
         private var studyUrl: String? = null
         private val pluginCompliance: PluginCompliance? = PluginCompliance()
+
     }
 
     data class PluginInfo(val pluginName: String, val packageName: String, val installed: Boolean)
@@ -541,12 +543,21 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     }
 
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
-        startActivity(
-            Intent(
-                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.fromParts("package", packageName, null)
-            )
-        )
+
+        deniedPermissions?.forEach {
+            missingPermissions.add(it)
+        }
+        enableDeniedPermissionButton()
+    }
+
+    private fun getPermissionRationale(missingPermissions: MutableList<String>): String {
+
+        val mobileVersionPermission = permissionsHandler.getDistinctPermissionsList(missingPermissions)
+        val permissionString = mobileVersionPermission!!.joinToString(separator = ", ")
+        return "Permissions are required to join a study. Tap on " +
+                "\"OPEN SETTINGS\", click on \"Permissions\" and Please select " +
+                "\"Allow\" or \"Allow only while using the app\" or \"Ask every time\" for " +
+                "the following permissions: $permissionString"
     }
 
     override fun onPermissionDeniedWithRationale(deniedPermissions: List<String>?) {
@@ -601,5 +612,72 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
         }
 
+        missingPermissions.iterator().let {
+            while(it.hasNext()) {
+                val permission = it.next()
+                if(permissionsHandler.isPermissionGranted(permission))
+                    it.remove()
+            }
+        }
+
+        if(missingPermissions.isEmpty()) {
+            denied_permissions.aware_participant_item.visibility = View.GONE
+            participant_id.apply {
+                isEnabled = true
+                alpha = 1f
+            }
+            txt_title.apply {
+                alpha = 1f
+            }
+            txt_description.apply {
+                alpha = 1f
+            }
+            txt_researcher.apply {
+                alpha = 1f
+            }
+            textView.apply {
+                alpha = 1f
+            }
+        } else {
+            enableDeniedPermissionButton()
+        }
+    }
+
+    private fun enableDeniedPermissionButton() {
+
+        participant_id.apply {
+            isEnabled = false
+            alpha = 0.24f
+        }
+        txt_title.apply {
+            alpha = 0.24f
+        }
+        txt_description.apply {
+            alpha = 0.24f
+        }
+        txt_researcher.apply {
+            alpha = 0.24f
+        }
+        textView.apply {
+            alpha = 0.24f
+        }
+
+        denied_permissions.aware_participant_item.visibility = View.VISIBLE
+        denied_permissions.aware_participant_title.text = "Denied Permissions"
+        denied_permissions.aware_participant_description.text = "See more ..."
+        denied_permissions.aware_participant_image.setImageResource(R.drawable.ic_warning)
+        val backgroundDrawable = ContextCompat.getDrawable(denied_permissions.aware_participant_card.context, R.drawable.item_background_2) as GradientDrawable
+        denied_permissions.aware_participant_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
+        denied_permissions.aware_participant_item.background = backgroundDrawable
+
+        denied_permissions.aware_participant_item.setOnClickListener {
+            AlertDialog.Builder(this@AwareJoinStudy).apply {
+                setMessage(getPermissionRationale(missingPermissions))
+                setPositiveButton("go to settings") { _, _ ->
+                    permissionsHandler.openAppSettings()
+                }
+                show()
+            }
+        }
     }
 }
