@@ -108,7 +108,12 @@ if (System.getenv("storeFile") != null && System.getenv("storePassword") != null
     android.buildTypes.release.signingConfig = null
 }
 
+configurations.implementation {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
+
 dependencies {
+
     implementation "com.google.dagger:hilt-android:$hilt_version"
     kapt "com.google.dagger:hilt-compiler:$hilt_version"
 
@@ -122,6 +127,8 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:31.1.1')
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-perf'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+
 
     api (project(':aware-core'))
     api (project(":com.aware.plugin.ambient_noise"))

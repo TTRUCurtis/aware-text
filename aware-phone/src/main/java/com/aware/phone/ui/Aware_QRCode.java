@@ -300,8 +300,8 @@ public class Aware_QRCode extends Aware_Activity implements ZBarScannerView.Resu
                     if (dbStudy != null && !dbStudy.isClosed()) dbStudy.close();
 
                     //Load join study wizard. We already have the study info on the database.
-                    Intent studyInfo = new Intent(getApplicationContext(), Aware_Join_Study.class);
-                    studyInfo.putExtra(Aware_Join_Study.EXTRA_STUDY_URL, study_url);
+                    Intent studyInfo = new Intent(getApplicationContext(), AwareJoinStudy.class);
+                    studyInfo.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, study_url);
                     studyInfo.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(studyInfo);
 
