@@ -1,7 +1,7 @@
 package com.aware.phone.ui
 
+import android.annotation.SuppressLint
 import com.aware.providers.Aware_Provider.Aware_Studies as Key
-import android.app.Dialog
 import android.app.ProgressDialog
 import android.content.*
 import android.content.pm.PackageManager
@@ -50,9 +50,8 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     companion object {
         const val EXTRA_STUDY_URL = "study_url"
-        const val CONSTANT_KEY = "Aware_Provider.Aware_Studies"
         private var studyUrl: String? = null
-        private val pluginCompliance: PluginCompliance? = PluginCompliance()
+        private val pluginCompliance: PluginCompliance = PluginCompliance()
     }
 
     data class PluginInfo(val pluginName: String, val packageName: String, val installed: Boolean)
@@ -66,14 +65,14 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         processIntentScheme()
         handleParticipantIdDetection()
         setupStudyInfo()
-        registerPluginStatusReciever()
+        registerPluginStatusReceiver()
     }
 
-    fun Cursor.getIntValue(columnName: String): Int = getInt(getColumnIndexOrThrow(columnName))
+    private fun Cursor.getIntValue(columnName: String): Int = getInt(getColumnIndexOrThrow(columnName))
 
-    fun Cursor.getStringValue(columnName: String): String = getString(getColumnIndexOrThrow(columnName))
+    private fun Cursor.getStringValue(columnName: String): String = getString(getColumnIndexOrThrow(columnName))
 
-    fun Cursor.getLongValue(columnName: String): Long = getLong(getColumnIndexOrThrow(columnName))
+    private fun Cursor.getLongValue(columnName: String): Long = getLong(getColumnIndexOrThrow(columnName))
 
     private fun processIntentScheme() {
 
@@ -240,7 +239,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }
     }
 
-    private fun registerPluginStatusReciever() {
+    private fun registerPluginStatusReceiver() {
 
         val pluginStatuses = IntentFilter()
         pluginStatuses.addAction(Aware.ACTION_AWARE_PLUGIN_INSTALLED)
@@ -268,7 +267,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }
     }
 
-    private suspend fun fetchStudyData(studyUrl: String?): JSONObject? {
+    private fun fetchStudyData(studyUrl: String?): JSONObject? {
 
         if(studyUrl.isNullOrEmpty()) return null
         logDebug("Aware_QRCode study url: $studyUrl")
@@ -334,7 +333,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                         try {
                             val configsStudy = JSONArray(answer)
                             if(!configsStudy.getJSONObject(0).has("message")){
-                                // this might get used inside of onPostExecute
                                 val studyConfigs = configsStudy.toString()
                                 studyData.put(Key.STUDY_CONFIG, studyConfigs)
                             }
@@ -450,7 +448,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         if(Aware.DEBUG) Log.d(Aware.TAG, message)
     }
 
-    fun navigateToMainClient(flag: Int = Intent.FLAG_ACTIVITY_CLEAR_TASK) {
+    private fun navigateToMainClient(flag: Int = Intent.FLAG_ACTIVITY_CLEAR_TASK) {
         val intent = Intent(applicationContext, Aware_Client::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or flag
         }
@@ -487,7 +485,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     private fun populatePermissionsList(plugins: JSONArray, sensors: JSONArray): ArrayList<String> {
 
-        var permissions = HashSet<String>()
+        val permissions = HashSet<String>()
 
         for (i in 0 until plugins.length()) {
             try {
@@ -520,17 +518,16 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     override fun onDestroy() {
         super.onDestroy()
-        if (pluginCompliance != null) {
-            try {
-                unregisterReceiver(pluginCompliance)
-            } catch (e: IllegalArgumentException) {
-                //no-op we can get here if we still need to retrieve the study.
-            }
+        try {
+            unregisterReceiver(pluginCompliance)
+        } catch (e: IllegalArgumentException) {
+            //no-op we can get here if we still need to retrieve the study.
         }
     }
 
+    @SuppressLint("BatteryLife")
     override fun onPermissionGranted() {
-        pluginsInstalled = true;
+        pluginsInstalled = true
         if (!Aware.is_watch(this)) {
             Applications.isAccessibilityServiceActive(this)
         }
@@ -593,7 +590,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     if (Aware.isStudy(applicationContext)) {
                         btn_sign_up?.apply {
                             setOnClickListener { finish() }
-                            text = "OK"
+                            text = R.string.ok.toString()
                         }
                     }
 
