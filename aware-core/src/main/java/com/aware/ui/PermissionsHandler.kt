@@ -76,7 +76,6 @@ class PermissionsHandler(private val activity: Activity) {
         )
     )
 
-
     private fun shouldShowRationale(permissions: List<String>): Boolean {
         for (permission in permissions) {
             if (activity.shouldShowRequestPermissionRationale(permission)) {
@@ -105,7 +104,6 @@ class PermissionsHandler(private val activity: Activity) {
             else -> return ""
         }
     }
-
 
     interface PermissionCallback {
         fun onPermissionGranted()
