@@ -1,5 +1,6 @@
 package com.aware.phone.ui
 
+import android.annotation.SuppressLint
 import com.aware.providers.Aware_Provider.Aware_Studies as Key
 import android.app.ProgressDialog
 import android.content.*
@@ -54,7 +55,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         const val EXTRA_STUDY_URL = "study_url"
         private var studyUrl: String? = null
         private val pluginCompliance: PluginCompliance = PluginCompliance()
-
     }
 
     data class PluginInfo(val pluginName: String, val packageName: String, val installed: Boolean)
@@ -339,7 +339,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                         try {
                             val configsStudy = JSONArray(answer)
                             if(!configsStudy.getJSONObject(0).has("message")){
-                                // this might get used inside of onPostExecute
                                 val studyConfigs = configsStudy.toString()
                                 studyData.put(Key.STUDY_CONFIG, studyConfigs)
                             }
@@ -491,7 +490,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     private fun populatePermissionsList(plugins: JSONArray, sensors: JSONArray): ArrayList<String> {
 
-        var permissions = HashSet<String>()
+        val permissions = HashSet<String>()
 
         for (i in 0 until plugins.length()) {
             try {
@@ -535,15 +534,14 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     override fun onDestroy() {
         super.onDestroy()
-        if (pluginCompliance != null) {
-            try {
-                unregisterReceiver(pluginCompliance)
-            } catch (e: IllegalArgumentException) {
-                //no-op we can get here if we still need to retrieve the study.
-            }
+        try {
+            unregisterReceiver(pluginCompliance)
+        } catch (e: IllegalArgumentException) {
+            //no-op we can get here if we still need to retrieve the study.
         }
     }
 
+    @SuppressLint("BatteryLife")
     override fun onPermissionGranted() {
 
         requestBatteryOptimization()
@@ -610,11 +608,9 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     btn_quit_study?.visibility = if (Aware.isStudy(applicationContext)) View.VISIBLE else View.GONE
                     if (Aware.isStudy(applicationContext)) {
                         btn_sign_up?.apply {
-                            isEnabled = true
-                            setOnClickListener {
-                                finish()
-                            }
-                            text = "OK"
+                            isEnabled = true                          
+                            setOnClickListener { finish() }
+                            text = R.string.ok.toString()
                         }
                     }
 
