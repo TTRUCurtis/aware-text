@@ -9,28 +9,28 @@
 
     <include
         android:id="@+id/aware_participant_study_info"
-        layout="@layout/aware_participant_item_layout"
+        layout="@layout/aware_item_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"/>
 
     <include
         android:id="@+id/aware_participant_revoked_permission"
-        layout="@layout/aware_participant_item_layout"
+        layout="@layout/aware_item_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp" />
 
     <include
         android:id="@+id/aware_participant_sync"
-        layout="@layout/aware_participant_item_layout"
+        layout="@layout/aware_item_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"/>
 
     <include
         android:id="@+id/aware_participant_quit_study"
-        layout="@layout/aware_participant_item_layout"
+        layout="@layout/aware_item_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"/>

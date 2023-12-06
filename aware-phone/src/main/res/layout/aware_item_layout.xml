@@ -8,7 +8,7 @@
     android:layout_margin="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/aware_participant_item"
+        android:id="@+id/aware_item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/item_background"
@@ -19,7 +19,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/aware_participant_card"
+            android:id="@+id/aware_item_card"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginStart="16dp"
@@ -30,7 +30,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:id="@+id/aware_participant_image"
+                android:id="@+id/aware_item_image"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:src="@drawable/ic_launcher_aware"/>
@@ -38,7 +38,7 @@
         </androidx.cardview.widget.CardView>
 
         <TextView
-            android:id="@+id/aware_participant_title"
+            android:id="@+id/aware_item_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
@@ -48,11 +48,11 @@
             android:textSize="20sp"
             android:textStyle="italic"
             tools:text="Title"
-            app:layout_constraintStart_toEndOf="@id/aware_participant_card"
+            app:layout_constraintStart_toEndOf="@id/aware_item_card"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/aware_participant_description"
+            android:id="@+id/aware_item_description"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -65,8 +65,27 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="@id/aware_participant_title"
-            app:layout_constraintTop_toBottomOf="@+id/aware_participant_title"
+            app:layout_constraintStart_toStartOf="@id/aware_item_title"
+            app:layout_constraintTop_toBottomOf="@+id/aware_item_title"
+            app:layout_constraintVertical_bias="0.0" />
+
+        <TextView
+            android:id="@+id/aware_item_extra"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone"
+            android:maxLength="300"
+            android:maxLines="10"
+            tools:text="This is extra"
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@id/aware_item_title"
+            app:layout_constraintTop_toBottomOf="@+id/aware_item_description"
             app:layout_constraintVertical_bias="0.0" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
