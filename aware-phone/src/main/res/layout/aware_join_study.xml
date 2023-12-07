@@ -1,77 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
     <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_margin="8dp"
+        android:layout_weight="1">
 
-        <LinearLayout
+        <include
+            android:id="@+id/aware_join_study_info"
+            layout="@layout/aware_item_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="5dp"/>
 
-            <TextView
-                android:id="@+id/txt_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Study Name"
-                android:textSize="18dp"
-                android:textStyle="bold" />
+        <TextView
+            android:id="@+id/aware_join_onboarding"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Onboarding"
+            android:textSize="14sp"
+            android:textColor="@color/black"/>
 
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="5dp">
+        <EditText
+            android:id="@+id/aware_join_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Your participant id"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/primary"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/txt_description"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Description" />
 
-                    <TextView
-                        android:id="@+id/txt_researcher"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="15dp"
-                        android:text="Researcher" />
-                    <TextView
-                            android:text="Onboarding"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:id="@+id/textView"
-                            android:textStyle="bold"
-                            android:layout_marginTop="15dp"/>
-                    <EditText
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:ems="10"
-                            android:id="@+id/participant_id"
-                            android:hint="Your Participant ID"/>
-                </LinearLayout>
-            </ScrollView>
-        </LinearLayout>
-
+        <include
+            android:id="@+id/aware_join_revoked_permission"
+            layout="@layout/aware_item_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="5dp">
+        android:layout_margin="5dp">
 
         <Button
             android:id="@+id/btn_quit_study"
@@ -79,23 +58,19 @@
             android:layout_height="wrap_content"
             android:layout_gravity="start"
             android:layout_weight="0.09"
-            android:layout_marginRight="5dp"
             android:layout_marginEnd="5dp"
             android:background="@android:color/holo_red_light"
             android:text="Quit study"
             android:textColor="@android:color/white" />
-
 
         <Button
             android:id="@+id/btn_sign_up"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:layout_margin="0dp"
             android:layout_weight="1"
             android:background="@color/primaryDark"
             android:enabled="false"
-            android:padding="0dp"
             android:text="@string/sign_up"
             android:textColor="@android:color/white" />
 

@@ -25,7 +25,7 @@ import android.widget.TextView;
 import com.aware.Applications;
 import com.aware.Aware;
 import com.aware.phone.R;
-import com.aware.phone.ui.Aware_Participant;
+import com.aware.phone.ui.AwareParticipant;
 import com.aware.ui.PermissionsHandler;
 
 import java.text.MessageFormat;
@@ -73,7 +73,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
 
         if (Aware.isStudy(this)) {
             //Redirect the user to the main UI
-            Intent mainUI = new Intent(getApplicationContext(), Aware_Participant.class);
+            Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
             mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(mainUI);
             finish();
@@ -195,7 +195,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             actionButton.setText("Done");
             actionButton.setOnClickListener(v -> {
                 //Redirect the user to the main UI
-                Intent mainUI = new Intent(getApplicationContext(), Aware_Participant.class);
+                Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
                 mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(mainUI);
                 finish();
@@ -231,7 +231,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
     @Override
     public void onPermissionGranted() {
 
-        Intent mainUI = new Intent(getApplicationContext(), Aware_Participant.class);
+        Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
         mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(mainUI);
         finish();

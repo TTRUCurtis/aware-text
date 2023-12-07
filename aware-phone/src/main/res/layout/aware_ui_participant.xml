@@ -1,74 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/aware_container"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".ui.AwareParticipant">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Study ID"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Title" />
-
-        <TextView
-            android:id="@+id/study_url"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Device ID"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Title" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/device_id"
-            android:text="Device ID" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Device name"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Title" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/device_name" />
-
-    </LinearLayout>
-
-    <LinearLayout
+    <include
+        android:id="@+id/aware_participant_study_info"
+        layout="@layout/aware_item_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="bottom">
+        android:layout_marginBottom="8dp"/>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/permission_rationale"
-            android:text="Grant Permission to continue in the study"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Title" />
+    <include
+        android:id="@+id/aware_participant_revoked_permission"
+        layout="@layout/aware_item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp" />
 
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/request_permission"
-            android:text="Grant Permission"
-            android:padding="16dp"
-            android:background="@color/primaryDark"
-            android:textColor="@android:color/white"
-            />
+    <include
+        android:id="@+id/aware_participant_sync"
+        layout="@layout/aware_item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"/>
 
-    </LinearLayout>
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    <include
+        android:id="@+id/aware_participant_quit_study"
+        layout="@layout/aware_item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"/>
+
+</LinearLayout>

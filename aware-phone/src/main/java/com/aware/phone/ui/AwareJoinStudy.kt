@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.database.Cursor
 import android.database.DatabaseUtils
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -30,6 +31,7 @@ import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
 import kotlinx.android.synthetic.main.aware_join_study.*
+import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,6 +48,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private var studyConfigs: JSONArray? = null
     private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
+    private val missingPermissions = mutableListOf<String>()
     private lateinit var permissionsHandler: PermissionsHandler
 
     companion object {
@@ -96,7 +99,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             Aware.setSetting(applicationContext, Aware_Preferences.DEVICE_ID, participantId)
             studyUrl = studyUrl!!.substring(0, studyUrl!!.indexOf("pid") - 1)
             logDebug("AWARE Study URL: $studyUrl")
-            participant_id?.apply {
+            aware_join_id.apply {
                 setText(participantId)
                 isFocusable = false
                 isEnabled = false
@@ -106,14 +109,14 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
         } else {
             logDebug("AWARE Study participant ID NOT detected")
-            participant_id?.addTextChangedListener(object : TextWatcher {
+            aware_join_id?.addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                     btn_sign_up?.apply {
                         isEnabled = s.isNotEmpty()
                     }
                     if (s.isNotEmpty()) {
-                        Aware.setSetting(applicationContext, Aware_Preferences.DEVICE_ID, s.toString())
+                        Aware.setSetting(applicationContext, Aware_Preferences.DEVICE_ID, s.trim().toString())
                     }
                 }
                 override fun afterTextChanged(s: Editable) {}
@@ -130,9 +133,13 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }else {
                 try{
                     studyConfigs = JSONArray(study.getStringValue(Key.STUDY_CONFIG))
-                    txt_title.text = study.getStringValue(Key.STUDY_TITLE)
-                    txt_description.text = Html.fromHtml(study.getStringValue(Key.STUDY_DESCRIPTION), 0)
-                    txt_researcher.text = study.getStringValue(Key.STUDY_PI)
+                    aware_join_study_info.aware_item_image.setImageResource(R.drawable.ic_launcher_aware)
+                    aware_join_study_info.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
+                    aware_join_study_info.aware_item_title.text = study.getStringValue(Key.STUDY_TITLE)
+                    aware_join_study_info.aware_item_description.text = Html.fromHtml(study.getStringValue(Key.STUDY_DESCRIPTION), 0)
+                    aware_join_study_info.aware_item_extra.visibility = View.VISIBLE
+                    aware_join_study_info.aware_item_extra.text =
+                        "Researcher: ${study.getStringValue(Key.STUDY_PI)}"
                 } catch(e: JSONException) { e.printStackTrace() }
                 studyConfigs?.let { populateStudyInfo(it) }
                 setupSignUpButton()
@@ -147,7 +154,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
         btn_sign_up.setOnClickListener {
             btn_sign_up!!.isEnabled = false
-            btn_sign_up!!.alpha = 0.5f
             Aware.getStudy(applicationContext, studyUrl)?.use { _ ->
                 ContentValues().apply {
                     put(Key.STUDY_DEVICE_ID, Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID))
@@ -467,7 +473,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             } catch (e: JSONException) { e.printStackTrace() }
         }
 
-        //Show the plugins' information
         activePlugins = plugins.run {
             (0 until length()).mapNotNull { index ->
                 optJSONObject(index)?.let { pluginConfig ->
@@ -506,6 +511,17 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         return ArrayList(permissions)
     }
 
+    private fun requestBatteryOptimization() {
+
+        pluginsInstalled = true
+        if (!Aware.is_watch(this)) {
+            Applications.isAccessibilityServiceActive(this)
+        }
+        val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+        whitelisting.data = Uri.parse("package:$packageName")
+        startActivity(whitelisting)
+    }
+
     class PluginCompliance : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action.equals(Aware.ACTION_AWARE_PLUGIN_INSTALLED, ignoreCase = true)) {
@@ -527,23 +543,26 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     @SuppressLint("BatteryLife")
     override fun onPermissionGranted() {
-        pluginsInstalled = true
-        if (!Aware.is_watch(this)) {
-            Applications.isAccessibilityServiceActive(this)
-        }
-        val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-        whitelisting.data = Uri.parse("package:$packageName")
-        startActivity(whitelisting)
 
+        requestBatteryOptimization()
     }
 
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
-        startActivity(
-            Intent(
-                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.fromParts("package", packageName, null)
-            )
-        )
+
+        deniedPermissions?.forEach {
+            missingPermissions.add(it)
+        }
+        enableDeniedPermissionButton()
+    }
+
+    private fun getPermissionRationale(missingPermissions: MutableList<String>): String {
+
+        val mobileVersionPermission = permissionsHandler.getDistinctPermissionsList(missingPermissions)
+        val permissionString = mobileVersionPermission!!.joinToString(separator = ", ")
+        return "Permissions are required to join a study. Tap on " +
+                "\"OPEN SETTINGS\", click on \"Permissions\" and Please select " +
+                "\"Allow\" or \"Allow only while using the app\" or \"Ask every time\" for " +
+                "the following permissions: $permissionString"
     }
 
     override fun onPermissionDeniedWithRationale(deniedPermissions: List<String>?) {
@@ -572,23 +591,24 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     override fun onResume() {
         super.onResume()
+
         permissions?.let {
             pluginsInstalled = it.all {
-                    permission -> ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+                    permission -> permissionsHandler.isPermissionGranted(permission)
             }
         }
-        aware_bottombar.visibility = View.GONE
         activePlugins?.let {
             Aware.getStudy(this@AwareJoinStudy, studyUrl)?.use { study ->
                 if(study.moveToFirst()) {
                     btn_sign_up?.apply {
-                        isEnabled = pluginsInstalled && participant_id?.text?.isNotEmpty() == true
+                        isEnabled = pluginsInstalled && aware_join_id?.text?.isNotEmpty() == true
                         visibility = if (pluginsInstalled) View.VISIBLE else View.GONE
                         alpha = if (pluginsInstalled) 1f else 0.3f
                     }
                     btn_quit_study?.visibility = if (Aware.isStudy(applicationContext)) View.VISIBLE else View.GONE
                     if (Aware.isStudy(applicationContext)) {
                         btn_sign_up?.apply {
+                            isEnabled = true                          
                             setOnClickListener { finish() }
                             text = R.string.ok.toString()
                         }
@@ -598,5 +618,69 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
         }
 
+        if(missingPermissions.isNotEmpty()){
+            missingPermissions.iterator().let {
+                while(it.hasNext()) {
+                    val permission = it.next()
+                    if(permissionsHandler.isPermissionGranted(permission))
+                        it.remove()
+                }
+            }
+
+            if(missingPermissions.isEmpty()) {
+                requestBatteryOptimization()
+            }
+        }
+
+        if(missingPermissions.isEmpty()) {
+            aware_join_revoked_permission.aware_item.visibility = View.GONE
+            listOf(
+                aware_join_id,
+                aware_join_study_info,
+                aware_join_onboarding
+            ).forEach { view ->
+                view.apply {
+                    isEnabled = true
+                    alpha = 1f
+                }
+            }
+        } else {
+            enableDeniedPermissionButton()
+        }
+    }
+
+    private fun enableDeniedPermissionButton() {
+
+        listOf(
+            aware_join_id,
+            aware_join_onboarding,
+            aware_join_study_info
+        ).forEach { view ->
+            view.apply {
+                isEnabled = false
+                alpha = 0.25f
+            }
+        }
+
+        aware_join_revoked_permission.aware_item.visibility = View.VISIBLE
+        aware_join_revoked_permission.aware_item_title.text = "Denied Permissions"
+        aware_join_revoked_permission.aware_item_description.text = "Grant permissions from app settings"
+        aware_join_revoked_permission.aware_item_image.setImageResource(R.drawable.ic_warning)
+        val backgroundDrawable = ContextCompat.getDrawable(aware_join_revoked_permission.aware_item_card.context, R.drawable.item_background_2) as GradientDrawable
+        aware_join_revoked_permission.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
+        aware_join_revoked_permission.aware_item.background = backgroundDrawable
+
+        aware_join_revoked_permission.aware_item.setOnClickListener {
+            AlertDialog.Builder(this@AwareJoinStudy).apply {
+                setMessage(getPermissionRationale(missingPermissions))
+                setPositiveButton("go to settings") { _, _ ->
+                    permissionsHandler.openAppSettings()
+                }
+                setNegativeButton("cancel") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                show()
+            }
+        }
     }
 }

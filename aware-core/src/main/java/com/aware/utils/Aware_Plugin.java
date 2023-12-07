@@ -56,7 +56,7 @@ public class Aware_Plugin extends Service {
     /**
      * Permissions needed for this plugin to run
      */
-    public ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
+    public static ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
 
     /**
      * Plugin is inactive
@@ -72,6 +72,8 @@ public class Aware_Plugin extends Service {
      * Indicates if permissions were accepted OK
      */
     public boolean PERMISSIONS_OK = true;
+
+    public boolean SHOULD_NOTIFY = true;
 
     /**
      * Integration with sync adapters
@@ -109,7 +111,9 @@ public class Aware_Plugin extends Service {
             PERMISSIONS_OK = true;
         }
 
-        if (!PERMISSIONS_OK) {
+        if (!PERMISSIONS_OK && SHOULD_NOTIFY) {
+
+            SHOULD_NOTIFY = false;
 
             NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -153,6 +157,8 @@ public class Aware_Plugin extends Service {
                 if (Aware.DEBUG) Log.d(Aware.TAG, "Notification exception: " + e);
             }
         } else {
+
+            SHOULD_NOTIFY = true;
 
             if (Aware.getSetting(this, Aware_Preferences.STATUS_WEBSERVICE).equals("true")) {
                 SSLManager.handleUrl(getApplicationContext(), Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER), true);
