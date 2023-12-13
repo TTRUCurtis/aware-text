@@ -1,5 +1,6 @@
 package com.aware.phone.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import com.aware.providers.Aware_Provider.Aware_Studies as Key
 import android.app.ProgressDialog
@@ -11,6 +12,8 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.text.Editable
 import android.text.Html
@@ -30,6 +33,7 @@ import com.aware.phone.R
 import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
+import com.aware.utils.studyeligibility.StudyEligibility
 import kotlinx.android.synthetic.main.aware_join_study.*
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +52,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private var studyConfigs: JSONArray? = null
     private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
+    private var studyEligibility = StudyEligibility(this@AwareJoinStudy)
     private val missingPermissions = mutableListOf<String>()
     private lateinit var permissionsHandler: PermissionsHandler
 
@@ -141,9 +146,16 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     aware_join_study_info.aware_item_extra.text =
                         "Researcher: ${study.getStringValue(Key.STUDY_PI)}"
                 } catch(e: JSONException) { e.printStackTrace() }
-                studyConfigs?.let { populateStudyInfo(it) }
-                setupSignUpButton()
-                setupQuitButton()
+                studyConfigs?.let {
+                    populateStudyInfo(it)
+                }
+                if(studyEligibility.isSmsEnabled(studyConfigs)){
+                    studyEligibility.showStudyEligibilityConsent(permissionsHandler, this@AwareJoinStudy)
+                }else{
+                    setupSignUpButton()
+                    setupQuitButton()
+                    permissionsHandler.requestPermissions(permissions!!, this)
+                }
             }
         } ?: run {
             populateStudy(studyUrl)
@@ -485,7 +497,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }.toCollection(ArrayList())
 
         permissions = populatePermissionsList(plugins, sensors)
-        permissionsHandler.requestPermissions(permissions!!, this)
     }
 
     private fun populatePermissionsList(plugins: JSONArray, sensors: JSONArray): ArrayList<String> {
@@ -532,6 +543,31 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }
     }
 
+    private fun displayStudyEligibilityResult(isEligible: Boolean) {
+
+        if(isEligible) {
+            AlertDialog.Builder(this@AwareJoinStudy).apply {
+                setTitle("")
+                setMessage("You passed!")
+                Handler(Looper.getMainLooper()).postDelayed({
+                    setupSignUpButton()
+                    setupQuitButton()
+                    permissionsHandler.requestPermissions(permissions!!, this@AwareJoinStudy)
+                }, 2000)
+                show()
+            }
+        }else {
+            AlertDialog.Builder(this@AwareJoinStudy).apply {
+                setTitle("")
+                setMessage("You did not pass!")
+                Handler(Looper.getMainLooper()).postDelayed({
+                    navigateToMainClient()
+                }, 2000)
+                show()
+            }
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         try {
@@ -544,7 +580,15 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     @SuppressLint("BatteryLife")
     override fun onPermissionGranted() {
 
-        requestBatteryOptimization()
+        if(studyEligibility.isSmsEnabled(studyConfigs) && permissionsHandler.isPermissionGranted(Manifest.permission.READ_SMS)){
+            studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback{
+                override fun onEligibilityChecked(isEligible: Boolean) {
+                    displayStudyEligibilityResult(isEligible)
+                }
+            })
+        }else {
+            requestBatteryOptimization()
+        }
     }
 
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
