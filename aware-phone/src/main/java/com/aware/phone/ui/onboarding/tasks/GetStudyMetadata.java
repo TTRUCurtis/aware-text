@@ -15,10 +15,10 @@ import androidx.annotation.Nullable;
 
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
-import com.aware.phone.ui.PermissionUtils;
 import com.aware.phone.ui.onboarding.data.Result;
 import com.aware.phone.ui.onboarding.data.StudyMetadata;
 import com.aware.providers.Aware_Provider;
+import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Http;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
@@ -93,7 +93,7 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
                                         .getString("researcher_first") + " " + studyInfo
                                         .getString("researcher_last") + "\nContact: " + studyInfo
                                         .getString("researcher_contact"))
-                                .setPermissions(PermissionUtils.populatePermissionsList(new JSONArray(studyBuilderWithConfig.getData().configuration)))
+                                .setPermissions(PermissionsHandler.Companion.populatePermissionsList(new JSONArray(studyBuilderWithConfig.getData().configuration)))
                                 .build());
             } catch (JSONException e) {
                 e.printStackTrace();

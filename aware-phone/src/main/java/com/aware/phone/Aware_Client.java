@@ -30,10 +30,8 @@ import androidx.core.content.ContextCompat;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.phone.ui.Aware_Activity;
-import com.aware.phone.ui.Aware_Join_Study;
-import com.aware.phone.ui.Aware_Participant;
-import com.aware.phone.ui.Aware_QRCode;
-import com.aware.phone.ui.onboarding.JoinStudyActivity;
+import com.aware.phone.ui.AwareParticipant;
+import com.aware.phone.ui.AwareJoinStudy;
 import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
@@ -65,20 +63,8 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
 
         prefs = getSharedPreferences("com.aware.phone", Context.MODE_PRIVATE);
         addPreferencesFromResource(R.xml.aware_preferences);
+
         setContentView(R.layout.aware_ui);
-
-        PreferenceScreen awarePreferences = getPreferenceScreen();
-        PreferenceCategory deviceIdsCategory = (PreferenceCategory) findPreference("device_ids");
-        PreferenceCategory sensorsCategory = (PreferenceCategory) findPreference("sensors");
-        PreferenceCategory dataExchangeCategory = (PreferenceCategory) findPreference("data_exchange");
-        PreferenceCategory advanceSettingsCategory = (PreferenceCategory) findPreference("advanced_settings");
-
-        if (awarePreferences != null) {
-            awarePreferences.removePreference(deviceIdsCategory);
-            awarePreferences.removePreference(sensorsCategory);
-            awarePreferences.removePreference(dataExchangeCategory);
-            awarePreferences.removePreference(advanceSettingsCategory);
-        }
 
         optionalSensors.put(Aware_Preferences.STATUS_ACCELEROMETER, Sensor.TYPE_ACCELEROMETER);
         optionalSensors.put(Aware_Preferences.STATUS_SIGNIFICANT_MOTION, Sensor.TYPE_ACCELEROMETER);
@@ -104,44 +90,26 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         awarePackages.addAction(Intent.ACTION_PACKAGE_REMOVED);
         awarePackages.addDataScheme("package");
         registerReceiver(packageMonitor, awarePackages);
-
     }
 
     @Override
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, final Preference preference) {
+        if (preference instanceof PreferenceScreen) {
+            Dialog subpref = ((PreferenceScreen) preference).getDialog();
+            ViewGroup root = (ViewGroup) subpref.findViewById(android.R.id.content).getParent();
+            Toolbar toolbar = new Toolbar(this);
+            toolbar.setBackgroundColor(ContextCompat.getColor(preferenceScreen.getContext(), R.color.primary));
+            toolbar.setTitleTextColor(ContextCompat.getColor(preferenceScreen.getContext(), android.R.color.white));
+            toolbar.setTitle(preference.getTitle());
+            root.addView(toolbar, 0); //add to the top
 
-        if (preference.getKey().equals("qrcode")) {
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                ArrayList<String> permission = new ArrayList<>();
-                permission.add(android.Manifest.permission.CAMERA);
-
-                Intent permissions = new Intent(Aware_Client.this, Aware_Client.class);
-                permissions.putExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, permission);
-                permissions.putExtra(PermissionsHandler.EXTRA_REDIRECT_ACTIVITY, getPackageName() + "/" + getPackageName() + ".ui.Aware_QRCode");
-                permissions.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(permissions);
-            } else {
-                Intent qrcode = new Intent(Aware_Client.this, Aware_QRCode.class);
-                qrcode.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(qrcode);
-            }
+            subpref.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    new SettingsSync().execute(preference);
+                }
+            });
         }
-//        if (preference instanceof PreferenceScreen) {
-//            Dialog subpref = ((PreferenceScreen) preference).getDialog();
-//            ViewGroup root = (ViewGroup) subpref.findViewById(android.R.id.content).getParent();
-//            Toolbar toolbar = new Toolbar(this);
-//            toolbar.setBackgroundColor(ContextCompat.getColor(preferenceScreen.getContext(), R.color.primary));
-//            toolbar.setTitleTextColor(ContextCompat.getColor(preferenceScreen.getContext(), android.R.color.white));
-//            toolbar.setTitle(preference.getTitle());
-//            root.addView(toolbar, 0); //add to the top
-//
-//            subpref.setOnDismissListener(new DialogInterface.OnDismissListener() {
-//                @Override
-//                public void onDismiss(DialogInterface dialog) {
-//                    new SettingsSync().execute(preference);
-//                }
-//            });
-//        }
         return super.onPreferenceTreeClick(preferenceScreen, preference);
     }
 
@@ -273,8 +241,8 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                             Toast.makeText(getApplicationContext(), "Study URL missing...", Toast.LENGTH_SHORT).show();
                         } else if (!Aware.isStudy(getApplicationContext())) {
                             //Shows UI to allow the user to join study
-                            Intent joinStudy = new Intent(getApplicationContext(), Aware_Join_Study.class);
-                            joinStudy.putExtra(Aware_Join_Study.EXTRA_STUDY_URL, Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER));
+                            Intent joinStudy = new Intent(getApplicationContext(), AwareJoinStudy.class);
+                            joinStudy.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER));
                             startActivity(joinStudy);
                         }
                     }
@@ -354,21 +322,13 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     protected void onResume() {
         super.onResume();
 
-//            Set<String> keys = optionalSensors.keySet();
-//            for (String optionalSensor : keys) {
-//                Preference pref = findPreference(optionalSensor);
-//                PreferenceGroup parent = getPreferenceParent(pref);
-//                if (pref.getKey().equalsIgnoreCase(optionalSensor) && !listSensorType.containsKey(optionalSensors.get(optionalSensor)))
-//                    parent.setEnabled(false);
-//            }
-
-        PreferenceScreen awarePreferences = getPreferenceScreen();
-        PreferenceCategory awareStudyCategory = (PreferenceCategory) findPreference("aware_study");
-        if (awarePreferences != null && awareStudyCategory != null) {
-            awarePreferences.addPreference(awareStudyCategory);
-            awareStudyCategory.setEnabled(true);
-        }
-
+            Set<String> keys = optionalSensors.keySet();
+            for (String optionalSensor : keys) {
+                Preference pref = findPreference(optionalSensor);
+                PreferenceGroup parent = getPreferenceParent(pref);
+                if (pref.getKey().equalsIgnoreCase(optionalSensor) && !listSensorType.containsKey(optionalSensors.get(optionalSensor)))
+                    parent.setEnabled(false);
+            }
 
             prefs.registerOnSharedPreferenceChangeListener(this);
 
@@ -487,7 +447,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                         Aware.getSetting(this, "ui_mode").equals("1") || Aware.getSetting(this, "ui_mode").equals("2")
                 ) {
                     finish();
-                    startActivity(new Intent(this, Aware_Participant.class));
+                    startActivity(new Intent(this, AwareParticipant.class));
                 }
             }
 

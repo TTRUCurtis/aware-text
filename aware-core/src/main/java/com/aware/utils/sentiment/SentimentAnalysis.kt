@@ -39,26 +39,28 @@ class SentimentAnalysis @Inject constructor(private val sentimentDictionary: Sen
         }
     }
 
-    fun tokenizer(text: String): MutableList<Token> {
-        val tokenizer: Tokenizer = EnglishTokenizer()
-        val stream: InputStream = ByteArrayInputStream(
-            text.lowercase().toByteArray(StandardCharsets.UTF_8)
-        )
-        val input: BufferedReader = IOUtils.createBufferedReader(stream)
-
-        var tokens: MutableList<Token> = mutableListOf()
-        var line: String?
-
-        while (input.readLine().also { line = it } != null) {
-            tokens = tokenizer.tokenize(line)
-        }
-
-        input.close()
-        return tokens
-    }
-
     fun getInstance(): SentimentAnalysis {
         return this
+    }
+
+    companion object {
+        fun tokenizer(text: String): MutableList<Token> {
+            val tokenizer: Tokenizer = EnglishTokenizer()
+            val stream: InputStream = ByteArrayInputStream(
+                text.lowercase().toByteArray(StandardCharsets.UTF_8)
+            )
+            val input: BufferedReader = IOUtils.createBufferedReader(stream)
+
+            var tokens: MutableList<Token> = mutableListOf()
+            var line: String?
+
+            while (input.readLine().also { line = it } != null) {
+                tokens = tokenizer.tokenize(line)
+            }
+
+            input.close()
+            return tokens
+        }
     }
 }
 
