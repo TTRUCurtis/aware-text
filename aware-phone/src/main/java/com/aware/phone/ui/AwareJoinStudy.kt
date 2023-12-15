@@ -524,9 +524,11 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         return ArrayList(permissions)
     }
 
+    @SuppressLint("BatteryLife")
     private fun requestBatteryOptimization() {
 
         pluginsInstalled = true
+
         if (!Aware.is_watch(this)) {
             Applications.isAccessibilityServiceActive(this)
         }
@@ -545,7 +547,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }
     }
 
-    private fun displayStudyEligibilityResult(isEligible: Boolean) {
+    private fun handleStudyEligibilityResult(isEligible: Boolean) {
 
         if(isEligible) {
             val builder = AlertDialog.Builder(this@AwareJoinStudy)
@@ -554,15 +556,11 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             val dialog = builder.create()
 
             Handler(Looper.getMainLooper()).postDelayed({
-                // Dismiss the dialog
                 dialog.dismiss()
-
-                // Following actions after the dialog is dismissed
                 setupSignUpButton()
                 setupQuitButton()
                 permissionsHandler.requestPermissions(permissions!!, this@AwareJoinStudy)
-            }, 2000) // 2000 milliseconds delay for auto-dismiss
-
+            }, 2000)
             dialog.show()
 
         }else {
@@ -572,15 +570,11 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             val dialog = builder.create()
 
             Handler(Looper.getMainLooper()).postDelayed({
-                // Dismiss the dialog
                 dialog.dismiss()
-
-                // Following actions after the dialog is dismissed
                 navigateToMainClient()
-            }, 2000) // 2000 milliseconds delay for auto-dismiss
+            }, 2000)
 
             dialog.show()
-
         }
     }
 
@@ -593,13 +587,12 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }
     }
 
-    @SuppressLint("BatteryLife")
     override fun onPermissionGranted() {
 
         if(studyEligibility.isSmsPluginEnabled() && studyEligibility.shouldPerformStudyEligibility()){
             studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback{
                 override fun onEligibilityChecked(isEligible: Boolean) {
-                    displayStudyEligibilityResult(isEligible)
+                    handleStudyEligibilityResult(isEligible)
                 }
             })
         }else {
@@ -688,7 +681,16 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
 
             if(missingPermissions.isEmpty()) {
-                requestBatteryOptimization()
+                if(studyEligibility.shouldPerformStudyEligibility()) {
+                    studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback {
+                        override fun onEligibilityChecked(isEligible: Boolean) {
+                            handleStudyEligibilityResult(isEligible)
+                        }
+
+                    })
+                }else {
+                    requestBatteryOptimization()
+                }
             }
         }
 
