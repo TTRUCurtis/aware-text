@@ -16,12 +16,19 @@ import org.json.JSONObject
 class StudyEligibility(private val activity: Activity) {
 
     private var smsPluginObject: JSONObject? = null
+    private var isSmsPluginEnabled: Boolean
+    private var shouldPerformStudyEligibility: Boolean
+
+    init {
+        isSmsPluginEnabled = false
+        shouldPerformStudyEligibility = false
+    }
 
     interface EligibilityCheckCallback {
         fun onEligibilityChecked(isEligible: Boolean)
     }
 
-    fun isSmsEnabled(studyConfig: JSONArray?): Boolean {
+    fun checkForSmsPluginStatus(studyConfig: JSONArray?) {
 
         studyConfig?.let {
             for(i in 0 until studyConfig.length()) {
@@ -32,7 +39,8 @@ class StudyEligibility(private val activity: Activity) {
                             getJSONObject(index).let { pluginConfig ->
                                 if(pluginConfig.getString("plugin") == "com.aware.plugin.sms"){
                                     smsPluginObject = pluginConfig
-                                    return true
+                                    isSmsPluginEnabled = true
+                                    shouldPerformStudyEligibility = true
                                 }
 
                             }
@@ -40,10 +48,13 @@ class StudyEligibility(private val activity: Activity) {
                     }
             }
         }
-        return false
     }
 
-    fun showStudyEligibilityConsent(permissionsHandler: PermissionsHandler, permissionCallback:PermissionsHandler.PermissionCallback) {
+    fun isSmsPluginEnabled() = isSmsPluginEnabled
+
+    fun shouldPerformStudyEligibility() = shouldPerformStudyEligibility
+
+    fun showSMSPermissionDialog(permissionsHandler: PermissionsHandler, permissionCallback:PermissionsHandler.PermissionCallback) {
         AlertDialog.Builder(activity).apply {
             setTitle("AWARE: Study Eligibility Check")
             setMessage("To join study, AWARE must perform an eligibility check on your device. \n" +
@@ -95,6 +106,7 @@ class StudyEligibility(private val activity: Activity) {
                 CoroutineScope(Dispatchers.Main).cancel()
             }
         }
+        shouldPerformStudyEligibility = false
     }
 
     private fun hasEnoughWords(cursor: Cursor, wordCount: Int): Boolean {

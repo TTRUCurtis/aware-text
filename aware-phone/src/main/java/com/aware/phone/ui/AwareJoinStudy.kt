@@ -52,9 +52,9 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private var studyConfigs: JSONArray? = null
     private var participantId: String? = null
     private var permissions: ArrayList<String>? = null
-    private var studyEligibility = StudyEligibility(this@AwareJoinStudy)
     private val missingPermissions = mutableListOf<String>()
     private lateinit var permissionsHandler: PermissionsHandler
+    private lateinit var studyEligibility: StudyEligibility
 
     companion object {
         const val EXTRA_STUDY_URL = "study_url"
@@ -69,7 +69,8 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         super.onCreate(savedInstanceState)
         setContentView(R.layout.aware_join_study)
         studyUrl = intent.getStringExtra(EXTRA_STUDY_URL)
-        permissionsHandler = PermissionsHandler(this)
+        permissionsHandler = PermissionsHandler(this@AwareJoinStudy)
+        studyEligibility = StudyEligibility(this@AwareJoinStudy)
         processIntentScheme()
         handleParticipantIdDetection()
         setupStudyInfo()
@@ -148,9 +149,10 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 } catch(e: JSONException) { e.printStackTrace() }
                 studyConfigs?.let {
                     populateStudyInfo(it)
+                    studyEligibility.checkForSmsPluginStatus(it)
                 }
-                if(studyEligibility.isSmsEnabled(studyConfigs)){
-                    studyEligibility.showStudyEligibilityConsent(permissionsHandler, this@AwareJoinStudy)
+                if(studyEligibility.isSmsPluginEnabled()){
+                    studyEligibility.showSMSPermissionDialog(permissionsHandler, this@AwareJoinStudy)
                 }else{
                     setupSignUpButton()
                     setupQuitButton()
@@ -546,25 +548,39 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private fun displayStudyEligibilityResult(isEligible: Boolean) {
 
         if(isEligible) {
-            AlertDialog.Builder(this@AwareJoinStudy).apply {
-                setTitle("")
-                setMessage("You passed!")
-                Handler(Looper.getMainLooper()).postDelayed({
-                    setupSignUpButton()
-                    setupQuitButton()
-                    permissionsHandler.requestPermissions(permissions!!, this@AwareJoinStudy)
-                }, 2000)
-                show()
-            }
+            val builder = AlertDialog.Builder(this@AwareJoinStudy)
+            builder.setMessage("You passed!")
+
+            val dialog = builder.create()
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                // Dismiss the dialog
+                dialog.dismiss()
+
+                // Following actions after the dialog is dismissed
+                setupSignUpButton()
+                setupQuitButton()
+                permissionsHandler.requestPermissions(permissions!!, this@AwareJoinStudy)
+            }, 2000) // 2000 milliseconds delay for auto-dismiss
+
+            dialog.show()
+
         }else {
-            AlertDialog.Builder(this@AwareJoinStudy).apply {
-                setTitle("")
-                setMessage("You did not pass!")
-                Handler(Looper.getMainLooper()).postDelayed({
-                    navigateToMainClient()
-                }, 2000)
-                show()
-            }
+            val builder = AlertDialog.Builder(this@AwareJoinStudy)
+            builder.setMessage("You passed!")
+
+            val dialog = builder.create()
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                // Dismiss the dialog
+                dialog.dismiss()
+
+                // Following actions after the dialog is dismissed
+                navigateToMainClient()
+            }, 2000) // 2000 milliseconds delay for auto-dismiss
+
+            dialog.show()
+
         }
     }
 
@@ -580,7 +596,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     @SuppressLint("BatteryLife")
     override fun onPermissionGranted() {
 
-        if(studyEligibility.isSmsEnabled(studyConfigs) && permissionsHandler.isPermissionGranted(Manifest.permission.READ_SMS)){
+        if(studyEligibility.isSmsPluginEnabled() && studyEligibility.shouldPerformStudyEligibility()){
             studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback{
                 override fun onEligibilityChecked(isEligible: Boolean) {
                     displayStudyEligibilityResult(isEligible)
