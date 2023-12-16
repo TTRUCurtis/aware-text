@@ -2,6 +2,7 @@
 package com.aware.phone;
 
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.*;
 import android.content.pm.PackageInfo;
@@ -17,8 +18,11 @@ import android.os.Bundle;
 import android.preference.*;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -26,12 +30,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.phone.ui.Aware_Activity;
 import com.aware.phone.ui.AwareParticipant;
 import com.aware.phone.ui.AwareJoinStudy;
+import com.aware.phone.ui.Aware_QRCode;
 import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
@@ -55,6 +62,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
     public static final String ACTION_AWARE_PERMISSIONS_CHECK = "ACTION_AWARE_PERMISSIONS_CHECK";
     private PermissionsHandler permissionsHandler;
     private String redirectActivityComponent;
+    private View awareQRButton;
 
 
     @Override
@@ -65,6 +73,9 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         addPreferencesFromResource(R.xml.aware_preferences);
 
         setContentView(R.layout.aware_ui);
+
+        awareQRButton = findViewById(R.id.aware_qrcode_join);
+        setUpQRButton(awareQRButton);
 
         optionalSensors.put(Aware_Preferences.STATUS_ACCELEROMETER, Sensor.TYPE_ACCELEROMETER);
         optionalSensors.put(Aware_Preferences.STATUS_SIGNIFICANT_MOTION, Sensor.TYPE_ACCELEROMETER);
@@ -90,6 +101,39 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         awarePackages.addAction(Intent.ACTION_PACKAGE_REMOVED);
         awarePackages.addDataScheme("package");
         registerReceiver(packageMonitor, awarePackages);
+    }
+
+    private void setUpQRButton(View awareQRButton) {
+
+        ConstraintLayout item = awareQRButton.findViewById(R.id.aware_item);
+        TextView title = awareQRButton.findViewById(R.id.aware_item_title);
+        TextView description = awareQRButton.findViewById(R.id.aware_item_description);
+        CardView card = awareQRButton.findViewById(R.id.aware_item_card);
+        ImageView image = awareQRButton.findViewById(R.id.aware_item_image);
+        card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary));
+        title.setText("Join study via QR");
+        description.setText("Open QR code");
+        image.setImageResource(R.drawable.ic_launcher_aware);
+
+        item.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ContextCompat.checkSelfPermission(Aware_Client.this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    ArrayList<String> permission = new ArrayList<>();
+                    permission.add(Manifest.permission.CAMERA);
+
+                    Intent permissions = new Intent(Aware_Client.this, Aware_Client.class);
+                    permissions.putExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, permission);
+                    permissions.putExtra(PermissionsHandler.EXTRA_REDIRECT_ACTIVITY, getPackageName() + "/" + getPackageName() + ".ui.Aware_QRCode");
+                    permissions.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(permissions);
+                } else {
+                    Intent qrcode = new Intent(Aware_Client.this, Aware_QRCode.class);
+                    qrcode.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(qrcode);
+                }
+            }
+        });
     }
 
     @Override
@@ -314,9 +358,6 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             }
         }
     }
-
-
-
 
     @Override
     protected void onResume() {
