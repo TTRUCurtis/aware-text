@@ -471,6 +471,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private fun navigateToMainClient(flag: Int = Intent.FLAG_ACTIVITY_CLEAR_TASK) {
         val intent = Intent(applicationContext, Aware_Client::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or flag
+            putExtra("studyUrl", studyUrl)
         }
         startActivity(intent)
     }
@@ -565,16 +566,17 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
         }else {
             val builder = AlertDialog.Builder(this@AwareJoinStudy)
-            builder.setMessage("You passed!")
+            builder.setMessage("You did not pass!")
 
             val dialog = builder.create()
+            dialog.show()
 
             Handler(Looper.getMainLooper()).postDelayed({
                 dialog.dismiss()
                 navigateToMainClient()
             }, 2000)
 
-            dialog.show()
+
         }
     }
 

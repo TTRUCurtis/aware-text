@@ -67,21 +67,16 @@ class StudyEligibility(private val activity: Activity) {
     }
 
     fun performStudyEligibilityCheck(callback: EligibilityCheckCallback) {
-
+        val progressDialog = ProgressDialog(activity).apply {
+            setCancelable(false)
+            setMessage("Performing study eligibility check, please wait.")
+            setInverseBackgroundForced(false)
+            show()
+        }
         CoroutineScope(Dispatchers.Main).launch {
-
-            val progressDialog = ProgressDialog(activity).apply {
-                setCancelable(false)
-                setMessage("Performing study eligibility check, please wait.")
-                setInverseBackgroundForced(false)
-                show()
-            }
-
             var messageCount = 0
             var wordCount = 0
-
             withContext(Dispatchers.Main) {
-
                 smsPluginObject?.getJSONArray("settings")?.let { settings ->
                     (0 until settings.length()).mapNotNull { index ->
                         settings.getJSONObject(index)?.let { setting ->
@@ -92,7 +87,8 @@ class StudyEligibility(private val activity: Activity) {
                         }
                     }
                 }
-
+                Log.d("Miguel", "message count $messageCount")
+                Log.d("Miguel", "wordCount $wordCount")
                 val isEligible = activity.applicationContext.contentResolver.query(
                     Uri.parse("content://sms/"), null, null, null, null
                 )?.use { cursor ->
@@ -117,9 +113,8 @@ class StudyEligibility(private val activity: Activity) {
                 val message = cursor.getString(cursor.getColumnIndexOrThrow("body"))
                 val tokens = SentimentAnalysis.tokenizer(message)
                 words += tokens.size
-            } while(cursor.moveToNext() || words >= wordCount)
+            } while(cursor.moveToNext() && words <= wordCount)
         }
-
         return words >= wordCount
     }
 
