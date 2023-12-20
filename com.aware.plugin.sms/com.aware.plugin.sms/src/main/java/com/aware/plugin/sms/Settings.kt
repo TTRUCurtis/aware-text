@@ -35,8 +35,6 @@ class Settings : AppCompatPreferenceActivity(), SharedPreferences.OnSharedPrefer
         val PLUGIN_SMS_CURRENT_OFFSET_DEFAULT = 0L
         val PLUGIN_SMS_LAST_SERVER_SYNC_TIMESTAMP_DEFAULT = 0L
         val PLUGIN_SMS_SERVER_SYNC_FREQUENCY_DEFAULT = 6L
-        val PLUGIN_SMS_MESSAGE_COUNT_DEFAULT = 500L
-        val PLUGIN_SMS_WORD_COUNT_DEFAULT = 500L
         val STATUS_PLUGIN_SMS_SENT = "status_retrieve_sent_messages"
         val STATUS_PLUGIN_SMS_RECEIVED = "status_retrieve_received_messages"
         val STATUS_SENTIMENT_ANALYSIS_RECEIVED = "status_sentiment_analysis_received_messages"

@@ -110,15 +110,17 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         registerReceiver(packageMonitor, awarePackages);
 
         if(getIntent() != null && getIntent().hasExtra("studyUrl")) {
+
             ConstraintLayout item = awareStudyResultButton.findViewById(R.id.aware_item);
             TextView title = awareStudyResultButton.findViewById(R.id.aware_item_title);
             TextView description = awareStudyResultButton.findViewById(R.id.aware_item_description);
             CardView card = awareStudyResultButton.findViewById(R.id.aware_item_card);
             ImageView image = awareStudyResultButton.findViewById(R.id.aware_item_image);
+            awareStudyResultButton.setVisibility(View.VISIBLE);
             card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red));
             title.setText("Study Eligibility Test Failed");
             description.setText("Click to see more ...");
-            image.setImageResource(R.drawable.ic_warning);
+            image.setImageResource(R.drawable.ic_error);
             GradientDrawable drawable = (GradientDrawable) ContextCompat.getDrawable(this, R.drawable.item_background_2);
             item.setBackground(drawable);
 
@@ -142,7 +144,8 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                                 public void onClick(DialogInterface dialog, int which) {
                                     dialog.dismiss();
                                 }
-                            });
+                            })
+                            .show();
                 }
             });
         }

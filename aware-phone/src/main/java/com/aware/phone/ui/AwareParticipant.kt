@@ -211,7 +211,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             AwareParticipantItem(
                 "Revoked Permission",
                 "Granting permissions from app settings",
-                R.drawable.ic_warning,
+                R.drawable.ic_error,
                 R.id.aware_item_card,
                 R.drawable.item_background_2
             ),

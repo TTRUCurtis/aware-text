@@ -24,6 +24,11 @@ class StudyEligibility(private val activity: Activity) {
         shouldPerformStudyEligibility = false
     }
 
+    object Values {
+        const val SMS_MESSAGE_COUNT_DEFAULT = 500
+        const val SMS_WORD_COUNT_DEFAULT = 500
+    }
+
     interface EligibilityCheckCallback {
         fun onEligibilityChecked(isEligible: Boolean)
     }
@@ -73,9 +78,9 @@ class StudyEligibility(private val activity: Activity) {
             setInverseBackgroundForced(false)
             show()
         }
-        CoroutineScope(Dispatchers.Main).launch {
-            var messageCount = 0
-            var wordCount = 0
+        CoroutineScope(Dispatchers.IO).launch {
+            var messageCount = Values.SMS_MESSAGE_COUNT_DEFAULT
+            var wordCount = Values.SMS_WORD_COUNT_DEFAULT
             withContext(Dispatchers.Main) {
                 smsPluginObject?.getJSONArray("settings")?.let { settings ->
                     (0 until settings.length()).mapNotNull { index ->
@@ -87,8 +92,6 @@ class StudyEligibility(private val activity: Activity) {
                         }
                     }
                 }
-                Log.d("Miguel", "message count $messageCount")
-                Log.d("Miguel", "wordCount $wordCount")
                 val isEligible = activity.applicationContext.contentResolver.query(
                     Uri.parse("content://sms/"), null, null, null, null
                 )?.use { cursor ->
@@ -117,5 +120,4 @@ class StudyEligibility(private val activity: Activity) {
         }
         return words >= wordCount
     }
-
 }

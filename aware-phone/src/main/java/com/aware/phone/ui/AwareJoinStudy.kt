@@ -51,6 +51,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private var pluginsInstalled = true
     private var studyConfigs: JSONArray? = null
     private var participantId: String? = null
+    private var deviceId: String? = null
     private var permissions: ArrayList<String>? = null
     private val missingPermissions = mutableListOf<String>()
     private lateinit var permissionsHandler: PermissionsHandler
@@ -499,6 +500,18 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
         }.toCollection(ArrayList())
 
+        deviceId = sensors.run {
+            var foundDeviceId: String? = null
+            for (i in 0 until this.length()) {
+                val item = this.getJSONObject(i)
+                if (item.getString("setting") == "mqtt_username") {
+                    foundDeviceId = item.getString("value")
+                    break
+                }
+            }
+            foundDeviceId
+        }
+
         permissions = populatePermissionsList(plugins, sensors)
     }
 
@@ -550,33 +563,40 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     private fun handleStudyEligibilityResult(isEligible: Boolean) {
 
-        if(isEligible) {
-            val builder = AlertDialog.Builder(this@AwareJoinStudy)
-            builder.setMessage("You passed!")
+        val message = if (isEligible) "You passed!" else "You did not pass!"
+        val dialog = AlertDialog.Builder(this@AwareJoinStudy)
+            .setMessage(message)
+            .create()
 
-            val dialog = builder.create()
+        dialog.show()
 
-            Handler(Looper.getMainLooper()).postDelayed({
-                dialog.dismiss()
+        Handler(Looper.getMainLooper()).postDelayed({
+            dialog.dismiss()
+
+            if (isEligible) {
                 setupSignUpButton()
                 setupQuitButton()
                 permissionsHandler.requestPermissions(permissions!!, this@AwareJoinStudy)
-            }, 2000)
-            dialog.show()
-
-        }else {
-            val builder = AlertDialog.Builder(this@AwareJoinStudy)
-            builder.setMessage("You did not pass!")
-
-            val dialog = builder.create()
-            dialog.show()
-
-            Handler(Looper.getMainLooper()).postDelayed({
-                dialog.dismiss()
+            } else {
                 navigateToMainClient()
-            }, 2000)
+            }
 
+            performServerPing(
+                JSONObject().apply {
+                    put("Participant Id", participantId ?: deviceId)
+                    put("Study Eligibility Test Result", isEligible)
+                }
+            )
+        }, 2000)
+    }
 
+    private fun performServerPing(data: JSONObject) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val response = Https().dataPOSTJson(
+                "https://survey.wwbp.org/test/registerAware/update/",
+                data,
+                true)
+            Log.d("Miguel", "Response: $response")
         }
     }
 
@@ -729,7 +749,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         aware_join_revoked_permission.aware_item.visibility = View.VISIBLE
         aware_join_revoked_permission.aware_item_title.text = "Denied Permissions"
         aware_join_revoked_permission.aware_item_description.text = "Grant permissions from app settings"
-        aware_join_revoked_permission.aware_item_image.setImageResource(R.drawable.ic_warning)
+        aware_join_revoked_permission.aware_item_image.setImageResource(R.drawable.ic_error)
         val backgroundDrawable = ContextCompat.getDrawable(aware_join_revoked_permission.aware_item_card.context, R.drawable.item_background_2) as GradientDrawable
         aware_join_revoked_permission.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
         aware_join_revoked_permission.aware_item.background = backgroundDrawable
