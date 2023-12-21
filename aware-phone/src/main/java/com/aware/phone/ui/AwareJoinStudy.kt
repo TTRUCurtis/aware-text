@@ -1,6 +1,5 @@
 package com.aware.phone.ui
 
-import android.Manifest
 import android.annotation.SuppressLint
 import com.aware.providers.Aware_Provider.Aware_Studies as Key
 import android.app.ProgressDialog
@@ -53,7 +52,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private var participantId: String? = null
     private var deviceId: String? = null
     private var permissions: ArrayList<String>? = null
-    private val missingPermissions = mutableListOf<String>()
+    private lateinit var missingPermissions: MutableList<String>
     private lateinit var permissionsHandler: PermissionsHandler
     private lateinit var studyEligibility: StudyEligibility
 
@@ -72,6 +71,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         studyUrl = intent.getStringExtra(EXTRA_STUDY_URL)
         permissionsHandler = PermissionsHandler(this@AwareJoinStudy)
         studyEligibility = StudyEligibility(this@AwareJoinStudy)
+        missingPermissions = mutableListOf()
         processIntentScheme()
         handleParticipantIdDetection()
         setupStudyInfo()
@@ -178,6 +178,15 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                         Key.CONTENT_URI,this,Key.STUDY_URL + " LIKE '" + studyUrl + "'",null)
                 }
             }
+            performServerPing(
+                JSONObject().apply {
+                    put("Participant Id", participantId ?: deviceId)
+                    put("Study Eligibility Result", true)
+                    permissions?.forEach {
+                        put(it, permissionsHandler.isPermissionGranted(it))
+                    }
+                }
+            )
             joinStudy()
         }
     }
@@ -382,7 +391,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     setResult(RESULT_CANCELED)
                     // Reset the webservice server status because this one is not valid
                     Aware.setSetting(applicationContext, Aware_Preferences.WEBSERVICE_SERVER, false)
-                    navigateToMainClient(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    navigateToMainClient(null, Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     finish()
                 }
                 show()
@@ -469,10 +478,10 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         if(Aware.DEBUG) Log.d(Aware.TAG, message)
     }
 
-    private fun navigateToMainClient(flag: Int = Intent.FLAG_ACTIVITY_CLEAR_TASK) {
+    private fun navigateToMainClient(extras: Bundle? = null, flag: Int = Intent.FLAG_ACTIVITY_CLEAR_TASK) {
         val intent = Intent(applicationContext, Aware_Client::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or flag
-            putExtra("studyUrl", studyUrl)
+            extras?.let { putExtras(it) }
         }
         startActivity(intent)
     }
@@ -578,15 +587,18 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 setupQuitButton()
                 permissionsHandler.requestPermissions(permissions!!, this@AwareJoinStudy)
             } else {
-                navigateToMainClient()
+                performServerPing(
+                    JSONObject().apply {
+                        put("Participant Id", participantId ?: deviceId)
+                        put("Study Eligibility Test Result", isEligible)
+                    }
+                )
+                navigateToMainClient(
+                    Bundle().apply {
+                        putString("studyUrl", studyUrl)
+                    }
+                )
             }
-
-            performServerPing(
-                JSONObject().apply {
-                    put("Participant Id", participantId ?: deviceId)
-                    put("Study Eligibility Test Result", isEligible)
-                }
-            )
         }, 2000)
     }
 
@@ -596,7 +608,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 "https://survey.wwbp.org/test/registerAware/update/",
                 data,
                 true)
-            Log.d("Miguel", "Response: $response")
+            Log.d("Miguel", response)
         }
     }
 

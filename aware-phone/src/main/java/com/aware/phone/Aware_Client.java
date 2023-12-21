@@ -118,7 +118,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
             ImageView image = awareStudyResultButton.findViewById(R.id.aware_item_image);
             awareStudyResultButton.setVisibility(View.VISIBLE);
             card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red));
-            title.setText("Study Eligibility Test Failed");
+            title.setText("Study Eligibility Result");
             description.setText("Click to see more ...");
             image.setImageResource(R.drawable.ic_error);
             GradientDrawable drawable = (GradientDrawable) ContextCompat.getDrawable(this, R.drawable.item_background_2);
@@ -138,7 +138,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                 public void onClick(View v) {
                     new AlertDialog.Builder(Aware_Client.this)
                             .setMessage("You are not eligible to join study: " + finalStudy + "." +
-                                    "\nIf you feel this is a mistake, please contact Researcher: " + finalResearcher)
+                                    "\n\nIf you feel this is a mistake, please contact researcher " + finalResearcher)
                             .setPositiveButton("ok", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
