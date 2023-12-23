@@ -8,6 +8,8 @@ import android.content.*;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteException;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -16,6 +18,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.*;
 import android.provider.Settings;
@@ -149,6 +152,8 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                 }
             });
         }
+
+        Aware.get_device_info(getApplicationContext());
     }
 
     private void setUpQRButton(View awareQRButton) {

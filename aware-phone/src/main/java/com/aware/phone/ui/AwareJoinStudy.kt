@@ -603,6 +603,19 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     }
 
     private fun performServerPing(data: JSONObject) {
+
+        applicationContext.contentResolver.query(Aware_Provider.Aware_Device.CONTENT_URI,
+            null, null, null, null)?.use { cursor ->
+            if(cursor.moveToFirst()) {
+                data.put("Device", cursor.getStringValue(Aware_Provider.Aware_Device.DEVICE))
+                data.put("Device Brand", cursor.getStringValue(Aware_Provider.Aware_Device.BRAND))
+                data.put("Device Manufacturer", cursor.getStringValue(Aware_Provider.Aware_Device.MANUFACTURER))
+                data.put("Device Model", cursor.getStringValue(Aware_Provider.Aware_Device.MODEL))
+                data.put("Device Product", cursor.getStringValue(Aware_Provider.Aware_Device.PRODUCT))
+                data.put("Device Release", cursor.getStringValue(Aware_Provider.Aware_Device.RELEASE))
+                data.put("Device SDK", cursor.getStringValue(Aware_Provider.Aware_Device.SDK))
+            }
+        }
         lifecycleScope.launch(Dispatchers.IO) {
             val response = Https().dataPOSTJson(
                 "https://survey.wwbp.org/test/registerAware/update/",
