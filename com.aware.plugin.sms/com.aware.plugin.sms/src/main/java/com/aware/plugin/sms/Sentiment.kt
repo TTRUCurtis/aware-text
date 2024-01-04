@@ -28,7 +28,7 @@ class Sentiment @Inject constructor(
                 address = message.address.toString()
                 type = message.type.toString()
                 val text: String = message.msg.toString()
-                val tokens: List<Token> = sentimentAnalysis.tokenizer(text)
+                val tokens: List<Token> = SentimentAnalysis.tokenizer(text)
                 totalWords = tokens.size
                 val scores = sentimentAnalysis.getScores(tokens)
                 scores.map { (category, pair) ->

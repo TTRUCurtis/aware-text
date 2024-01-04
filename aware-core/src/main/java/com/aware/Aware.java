@@ -558,12 +558,12 @@ public class Aware extends Service {
         }
     }
 
-    private void get_device_info() {
-        Cursor awareContextDevice = getContentResolver().query(Aware_Device.CONTENT_URI, null, null, null, null);
+    public static void get_device_info(Context c) {
+        Cursor awareContextDevice = c.getContentResolver().query(Aware_Device.CONTENT_URI, null, null, null, null);
         if (awareContextDevice == null || !awareContextDevice.moveToFirst()) {
             ContentValues rowData = new ContentValues();
             rowData.put(Aware_Device.TIMESTAMP, System.currentTimeMillis());
-            rowData.put(Aware_Device.DEVICE_ID, Aware.getSetting(this, Aware_Preferences.DEVICE_ID));
+            rowData.put(Aware_Device.DEVICE_ID, Aware.getSetting(c, Aware_Preferences.DEVICE_ID));
             rowData.put(Aware_Device.BOARD, Build.BOARD);
             rowData.put(Aware_Device.BRAND, Build.BRAND);
             rowData.put(Aware_Device.DEVICE, Build.DEVICE);
@@ -576,13 +576,13 @@ public class Aware extends Service {
             rowData.put(Aware_Device.RELEASE, Build.VERSION.RELEASE);
             rowData.put(Aware_Device.RELEASE_TYPE, Build.TYPE);
             rowData.put(Aware_Device.SDK, String.valueOf(Build.VERSION.SDK_INT));
-            rowData.put(Aware_Device.LABEL, Aware.getSetting(this, Aware_Preferences.DEVICE_LABEL));
+            rowData.put(Aware_Device.LABEL, Aware.getSetting(c, Aware_Preferences.DEVICE_LABEL));
 
             try {
-                getContentResolver().insert(Aware_Device.CONTENT_URI, rowData);
+                c.getContentResolver().insert(Aware_Device.CONTENT_URI, rowData);
 
                 Intent deviceData = new Intent(ACTION_AWARE_DEVICE_INFORMATION);
-                sendBroadcast(deviceData);
+                c.sendBroadcast(deviceData);
 
                 if (Aware.DEBUG) Log.d(TAG, "Device information:" + rowData.toString());
 
@@ -661,8 +661,6 @@ public class Aware extends Service {
 
             DEBUG = Aware.getSetting(this, Aware_Preferences.DEBUG_FLAG).equals("true");
             TAG = Aware.getSetting(this, Aware_Preferences.DEBUG_TAG).length() > 0 ? Aware.getSetting(this, Aware_Preferences.DEBUG_TAG) : TAG;
-
-            get_device_info();
 
             if (Aware.getSetting(getApplicationContext(), Aware_Preferences.AWARE_DONATE_USAGE).equals("true")) {
                 new AsyncPing().execute();

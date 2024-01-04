@@ -141,7 +141,7 @@ open class Plugin : Aware_Plugin() {
                                 var interstring2 = interstring1.replace("]", "");
                                 Log.i("ABTest", "After corrections prev text is");
                                 Log.i("ABTest", interstring2);
-                                val tokens = sentimentAnalysis.tokenizer(interstring1)
+                                val tokens = SentimentAnalysis.tokenizer(interstring1)
                                 val testHash = sentimentAnalysis.getScores(tokens)
                             }
                             textBufferNew = tempCurrTextBuffer;
@@ -162,7 +162,7 @@ open class Plugin : Aware_Plugin() {
                             val interstring2 = interstring1.replace("]", "");
 
                             Log.i("ABTest", "Echoed before reset $interstring2");
-                            val tokens = sentimentAnalysis.tokenizer(interstring2)
+                            val tokens = SentimentAnalysis.tokenizer(interstring2)
                             //val testHash = Sentiment.getScoreFromInput(interstring2);
                             val testHash = sentimentAnalysis.getScores(tokens)
                             val contentValues = ContentValues()

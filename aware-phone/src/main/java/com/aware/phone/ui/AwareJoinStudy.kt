@@ -11,6 +11,8 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.text.Editable
 import android.text.Html
@@ -30,8 +32,9 @@ import com.aware.phone.R
 import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
-import kotlinx.android.synthetic.main.aware_join_study.*
+import com.aware.utils.studyeligibility.StudyEligibility
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
+import kotlinx.android.synthetic.main.aware_join_study.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,9 +50,11 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private var pluginsInstalled = true
     private var studyConfigs: JSONArray? = null
     private var participantId: String? = null
+    private var deviceId: String? = null
     private var permissions: ArrayList<String>? = null
-    private val missingPermissions = mutableListOf<String>()
+    private lateinit var missingPermissions: MutableList<String>
     private lateinit var permissionsHandler: PermissionsHandler
+    private lateinit var studyEligibility: StudyEligibility
 
     companion object {
         const val EXTRA_STUDY_URL = "study_url"
@@ -64,7 +69,9 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         super.onCreate(savedInstanceState)
         setContentView(R.layout.aware_join_study)
         studyUrl = intent.getStringExtra(EXTRA_STUDY_URL)
-        permissionsHandler = PermissionsHandler(this)
+        permissionsHandler = PermissionsHandler(this@AwareJoinStudy)
+        studyEligibility = StudyEligibility(this@AwareJoinStudy)
+        missingPermissions = mutableListOf()
         processIntentScheme()
         handleParticipantIdDetection()
         setupStudyInfo()
@@ -141,9 +148,17 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     aware_join_study_info.aware_item_extra.text =
                         "Researcher: ${study.getStringValue(Key.STUDY_PI)}"
                 } catch(e: JSONException) { e.printStackTrace() }
-                studyConfigs?.let { populateStudyInfo(it) }
-                setupSignUpButton()
-                setupQuitButton()
+                studyConfigs?.let {
+                    populateStudyInfo(it)
+                    studyEligibility.checkForSmsPluginStatus(it)
+                }
+                if(studyEligibility.isSmsPluginEnabled()){
+                    studyEligibility.showSMSPermissionDialog(permissionsHandler, this@AwareJoinStudy)
+                }else{
+                    setupSignUpButton()
+                    setupQuitButton()
+                    permissionsHandler.requestPermissions(permissions!!, this)
+                }
             }
         } ?: run {
             populateStudy(studyUrl)
@@ -163,6 +178,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                         Key.CONTENT_URI,this,Key.STUDY_URL + " LIKE '" + studyUrl + "'",null)
                 }
             }
+            performServerPing(true)
             joinStudy()
         }
     }
@@ -367,7 +383,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     setResult(RESULT_CANCELED)
                     // Reset the webservice server status because this one is not valid
                     Aware.setSetting(applicationContext, Aware_Preferences.WEBSERVICE_SERVER, false)
-                    navigateToMainClient(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    navigateToMainClient(null, Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     finish()
                 }
                 show()
@@ -454,9 +470,10 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         if(Aware.DEBUG) Log.d(Aware.TAG, message)
     }
 
-    private fun navigateToMainClient(flag: Int = Intent.FLAG_ACTIVITY_CLEAR_TASK) {
+    private fun navigateToMainClient(extras: Bundle? = null, flag: Int = Intent.FLAG_ACTIVITY_CLEAR_TASK) {
         val intent = Intent(applicationContext, Aware_Client::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or flag
+            extras?.let { putExtras(it) }
         }
         startActivity(intent)
     }
@@ -484,8 +501,19 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
         }.toCollection(ArrayList())
 
+        deviceId = sensors.run {
+            var foundDeviceId: String? = null
+            for (i in 0 until this.length()) {
+                val item = this.getJSONObject(i)
+                if (item.getString("setting") == "mqtt_username") {
+                    foundDeviceId = item.getString("value")
+                    break
+                }
+            }
+            foundDeviceId
+        }
+
         permissions = populatePermissionsList(plugins, sensors)
-        permissionsHandler.requestPermissions(permissions!!, this)
     }
 
     private fun populatePermissionsList(plugins: JSONArray, sensors: JSONArray): ArrayList<String> {
@@ -511,9 +539,11 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         return ArrayList(permissions)
     }
 
+    @SuppressLint("BatteryLife")
     private fun requestBatteryOptimization() {
 
         pluginsInstalled = true
+
         if (!Aware.is_watch(this)) {
             Applications.isAccessibilityServiceActive(this)
         }
@@ -532,6 +562,80 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }
     }
 
+    private fun handleStudyEligibilityResult(isEligible: Boolean) {
+
+        val message = if (isEligible) "You passed!" else "You did not pass!"
+        val dialog = AlertDialog.Builder(this@AwareJoinStudy)
+            .setMessage(message)
+            .create()
+
+        dialog.show()
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            dialog.dismiss()
+
+            if (isEligible) {
+                setupSignUpButton()
+                setupQuitButton()
+                permissionsHandler.requestPermissions(permissions!!, this@AwareJoinStudy)
+            } else {
+                performServerPing(false)
+                navigateToMainClient(
+                    Bundle().apply {
+                        putString("studyUrl", studyUrl)
+                    }
+                )
+            }
+        }, 2000)
+    }
+
+    private fun performServerPing(isEligible: Boolean) {
+
+        try {
+            val deviceInfo = JSONObject()
+            applicationContext.contentResolver.query(Aware_Provider.Aware_Device.CONTENT_URI,
+                null, null, null, null)?.use { cursor ->
+                if(cursor.moveToFirst()) {
+                    deviceInfo.put("Device Id", participantId ?: deviceId)
+                    deviceInfo.put("Device", cursor.getStringValue(Aware_Provider.Aware_Device.DEVICE))
+                    deviceInfo.put("Device Brand", cursor.getStringValue(Aware_Provider.Aware_Device.BRAND))
+                    deviceInfo.put("Device Manufacturer", cursor.getStringValue(Aware_Provider.Aware_Device.MANUFACTURER))
+                    deviceInfo.put("Device Model", cursor.getStringValue(Aware_Provider.Aware_Device.MODEL))
+                    deviceInfo.put("Device Product", cursor.getStringValue(Aware_Provider.Aware_Device.PRODUCT))
+                    deviceInfo.put("Device Release", cursor.getStringValue(Aware_Provider.Aware_Device.RELEASE))
+                    deviceInfo.put("Device SDK", cursor.getStringValue(Aware_Provider.Aware_Device.SDK))
+                }
+            }
+
+            val permissionsStatus = JSONObject()
+            permissions?.forEach {
+                permissionsStatus.put(it, permissionsHandler.isPermissionGranted(it))
+            }
+
+            val studyEligibilityData = JSONObject()
+            studyEligibilityData.put("Message Count", studyEligibility.getMessageCount())
+            studyEligibilityData.put("Word Count", studyEligibility.getWordCount())
+            studyEligibilityData.put("Result", isEligible)
+
+            val data = JSONObject().apply {
+                put("Device Information", deviceInfo)
+                put("Permissions Status", permissionsStatus)
+                put("Study Eligibility Information", studyEligibilityData)
+            }
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                Https().dataPOSTJson(
+                    "https://survey.wwbp.org/test/registerAware/update/",
+                    data,
+                    true)
+            }
+
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         try {
@@ -541,10 +645,17 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }
     }
 
-    @SuppressLint("BatteryLife")
     override fun onPermissionGranted() {
 
-        requestBatteryOptimization()
+        if(studyEligibility.isSmsPluginEnabled() && studyEligibility.shouldPerformStudyEligibility()){
+            studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback{
+                override fun onEligibilityChecked(isEligible: Boolean) {
+                    handleStudyEligibilityResult(isEligible)
+                }
+            })
+        }else {
+            requestBatteryOptimization()
+        }
     }
 
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
@@ -628,7 +739,16 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
 
             if(missingPermissions.isEmpty()) {
-                requestBatteryOptimization()
+                if(studyEligibility.shouldPerformStudyEligibility()) {
+                    studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback {
+                        override fun onEligibilityChecked(isEligible: Boolean) {
+                            handleStudyEligibilityResult(isEligible)
+                        }
+
+                    })
+                }else {
+                    requestBatteryOptimization()
+                }
             }
         }
 
@@ -665,7 +785,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         aware_join_revoked_permission.aware_item.visibility = View.VISIBLE
         aware_join_revoked_permission.aware_item_title.text = "Denied Permissions"
         aware_join_revoked_permission.aware_item_description.text = "Grant permissions from app settings"
-        aware_join_revoked_permission.aware_item_image.setImageResource(R.drawable.ic_warning)
+        aware_join_revoked_permission.aware_item_image.setImageResource(R.drawable.ic_error)
         val backgroundDrawable = ContextCompat.getDrawable(aware_join_revoked_permission.aware_item_card.context, R.drawable.item_background_2) as GradientDrawable
         aware_join_revoked_permission.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
         aware_join_revoked_permission.aware_item.background = backgroundDrawable

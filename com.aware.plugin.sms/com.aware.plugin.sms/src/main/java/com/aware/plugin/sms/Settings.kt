@@ -16,7 +16,6 @@ class Settings : AppCompatPreferenceActivity(), SharedPreferences.OnSharedPrefer
     companion object {
         val PLUGIN_SMS_CONTINUE_WITH_SMS_ONLY = "plugin_sms_contiue_with_sms_only"
         val PLUGIN_SMS_CONTINUE_WITH_MMS_ONLY = "plugin_sms_contiue_with_mms_only"
-        //val STATUS_PLUGIN_SMS = "status_plugin_sms"
         val PLUGIN_SMS_SEND_FULL_DATA = "plugin_sms_send_full_data"
         val PLUGIN_SMS_STARTDATE = "plugin_sms_start_date"
         val PLUGIN_SMS_ENDDATE = "plugin_sms_end_date"
@@ -28,10 +27,8 @@ class Settings : AppCompatPreferenceActivity(), SharedPreferences.OnSharedPrefer
         val PLUGIN_SMS_CURRENT_OFFSET_SMS = "plugin_sms_current_offset_sms"
         val PLUGIN_SMS_LAST_SERVER_SYNC_TIMESTAMP = "plugin_sms_last_server_sync_timestamp"
         val PLUGIN_SMS_SYNC_MIN_SELECT_DATE = "2000-01-01T00:00:01"
-        //val PLUGIN_SMS_SEND_RECEIVED_DATA = "plugin_sms_send_received_data"
         val PLUGIN_SMS_SERVER_SYNC_FREQUENCY = "plugin_sms_server_sync_frequency"
         val PLUGIN_SMS_SEND_FULL_DATA_DEFAULT = false
-        val PLUGIN_SMS_SEND_RECEIVED_DATA_DEFAULT = false
         val PLUGIN_SMS_SYNC_FREQUENCY_DEFAULT = 1L
         val PLUGIN_SMS_MESSAGE_BATCH_LIMIT_DEFAULT = 0
         val PLUGIN_SMS_MESSAGE_SINGLE_UPLOAD_LIMIT_DEFAULT = 200L
@@ -50,8 +47,6 @@ class Settings : AppCompatPreferenceActivity(), SharedPreferences.OnSharedPrefer
     }
 
     private val LOCAL_TAG  = "AWARE::sms::Settings"
-    //lateinit var status : CheckBoxPreference
-    //lateinit var send_received_data : CheckBoxPreference
     lateinit var send_full_data: CheckBoxPreference
     lateinit var start_date : EditTextPreference
     lateinit var end_date : EditTextPreference
@@ -76,15 +71,6 @@ class Settings : AppCompatPreferenceActivity(), SharedPreferences.OnSharedPrefer
 
     override fun onResume() {
         super.onResume()
-//        status = findPreference(STATUS_PLUGIN_SMS) as CheckBoxPreference
-//        if (Aware.getSetting(this, STATUS_PLUGIN_SMS).isEmpty())
-//            Aware.setSetting(this, STATUS_PLUGIN_SMS, true)
-//        status.isChecked = Aware.getSetting(this, STATUS_PLUGIN_SMS) == "true"
-//
-//        send_received_data = findPreference(PLUGIN_SMS_SEND_RECEIVED_DATA) as CheckBoxPreference
-//        if (Aware.getSetting(this, PLUGIN_SMS_SEND_RECEIVED_DATA).isEmpty())
-//            Aware.setSetting(this, PLUGIN_SMS_SEND_RECEIVED_DATA, PLUGIN_SMS_SEND_RECEIVED_DATA_DEFAULT)
-//        send_received_data.isChecked = Aware.getSetting(this, PLUGIN_SMS_SEND_RECEIVED_DATA) == "true"
 
         sent_messages = findPreference(STATUS_PLUGIN_SMS_SENT) as CheckBoxPreference
         if(Aware.getSetting(this, STATUS_PLUGIN_SMS_SENT).isEmpty())
