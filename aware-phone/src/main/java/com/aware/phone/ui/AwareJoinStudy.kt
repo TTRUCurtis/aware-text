@@ -33,8 +33,8 @@ import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.*
 import com.aware.utils.studyeligibility.StudyEligibility
-import kotlinx.android.synthetic.main.aware_join_study.*
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
+import kotlinx.android.synthetic.main.aware_join_study.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -178,15 +178,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                         Key.CONTENT_URI,this,Key.STUDY_URL + " LIKE '" + studyUrl + "'",null)
                 }
             }
-            performServerPing(
-                JSONObject().apply {
-                    put("Participant Id", participantId ?: deviceId)
-                    put("Study Eligibility Result", true)
-                    permissions?.forEach {
-                        put(it, permissionsHandler.isPermissionGranted(it))
-                    }
-                }
-            )
+            performServerPing(true)
             joinStudy()
         }
     }
@@ -587,12 +579,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 setupQuitButton()
                 permissionsHandler.requestPermissions(permissions!!, this@AwareJoinStudy)
             } else {
-                performServerPing(
-                    JSONObject().apply {
-                        put("Participant Id", participantId ?: deviceId)
-                        put("Study Eligibility Test Result", isEligible)
-                    }
-                )
+                performServerPing(false)
                 navigateToMainClient(
                     Bundle().apply {
                         putString("studyUrl", studyUrl)
@@ -602,27 +589,51 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         }, 2000)
     }
 
-    private fun performServerPing(data: JSONObject) {
+    private fun performServerPing(isEligible: Boolean) {
 
-        applicationContext.contentResolver.query(Aware_Provider.Aware_Device.CONTENT_URI,
-            null, null, null, null)?.use { cursor ->
-            if(cursor.moveToFirst()) {
-                data.put("Device", cursor.getStringValue(Aware_Provider.Aware_Device.DEVICE))
-                data.put("Device Brand", cursor.getStringValue(Aware_Provider.Aware_Device.BRAND))
-                data.put("Device Manufacturer", cursor.getStringValue(Aware_Provider.Aware_Device.MANUFACTURER))
-                data.put("Device Model", cursor.getStringValue(Aware_Provider.Aware_Device.MODEL))
-                data.put("Device Product", cursor.getStringValue(Aware_Provider.Aware_Device.PRODUCT))
-                data.put("Device Release", cursor.getStringValue(Aware_Provider.Aware_Device.RELEASE))
-                data.put("Device SDK", cursor.getStringValue(Aware_Provider.Aware_Device.SDK))
+        try {
+            val deviceInfo = JSONObject()
+            applicationContext.contentResolver.query(Aware_Provider.Aware_Device.CONTENT_URI,
+                null, null, null, null)?.use { cursor ->
+                if(cursor.moveToFirst()) {
+                    deviceInfo.put("Device Id", participantId ?: deviceId)
+                    deviceInfo.put("Device", cursor.getStringValue(Aware_Provider.Aware_Device.DEVICE))
+                    deviceInfo.put("Device Brand", cursor.getStringValue(Aware_Provider.Aware_Device.BRAND))
+                    deviceInfo.put("Device Manufacturer", cursor.getStringValue(Aware_Provider.Aware_Device.MANUFACTURER))
+                    deviceInfo.put("Device Model", cursor.getStringValue(Aware_Provider.Aware_Device.MODEL))
+                    deviceInfo.put("Device Product", cursor.getStringValue(Aware_Provider.Aware_Device.PRODUCT))
+                    deviceInfo.put("Device Release", cursor.getStringValue(Aware_Provider.Aware_Device.RELEASE))
+                    deviceInfo.put("Device SDK", cursor.getStringValue(Aware_Provider.Aware_Device.SDK))
+                }
             }
+
+            val permissionsStatus = JSONObject()
+            permissions?.forEach {
+                permissionsStatus.put(it, permissionsHandler.isPermissionGranted(it))
+            }
+
+            val studyEligibilityData = JSONObject()
+            studyEligibilityData.put("Message Count", studyEligibility.getMessageCount())
+            studyEligibilityData.put("Word Count", studyEligibility.getWordCount())
+            studyEligibilityData.put("Result", isEligible)
+
+            val data = JSONObject().apply {
+                put("Device Information", deviceInfo)
+                put("Permissions Status", permissionsStatus)
+                put("Study Eligibility Information", studyEligibilityData)
+            }
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                Https().dataPOSTJson(
+                    "https://survey.wwbp.org/test/registerAware/update/",
+                    data,
+                    true)
+            }
+
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
-        lifecycleScope.launch(Dispatchers.IO) {
-            val response = Https().dataPOSTJson(
-                "https://survey.wwbp.org/test/registerAware/update/",
-                data,
-                true)
-            Log.d("Miguel", response)
-        }
+
     }
 
     override fun onDestroy() {

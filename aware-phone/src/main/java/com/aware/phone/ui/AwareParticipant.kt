@@ -1,25 +1,23 @@
 package com.aware.phone.ui
 
-import android.Manifest
+
 import android.content.ComponentName
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
 import com.aware.phone.R
 import com.aware.phone.ui.AwareParticipant.AwareParticipantItems.revokedPermissions
+import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.android.synthetic.main.aware_ui_participant.*
@@ -61,8 +59,13 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         aware_participant_study_info.aware_item_description.text =
             "Device Id: ${Aware.getSetting(this@AwareParticipant, Aware_Preferences.DEVICE_ID)}"
         aware_participant_study_info.aware_item_extra.visibility = View.VISIBLE
-        aware_participant_study_info.aware_item_extra.text =
-            "Study Url: ${Aware.getSetting(this@AwareParticipant, Aware_Preferences.WEBSERVICE_SERVER)}"
+        applicationContext.contentResolver.query(Aware_Provider.Aware_Studies.CONTENT_URI, null, null, null, null)?.use {
+            if(it.moveToFirst()){
+                aware_participant_study_info.aware_item_extra.text =
+                    "Study Name: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))}"
+            }
+        }
+
         aware_participant_study_info.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
         aware_participant_study_info.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[0].image)
 

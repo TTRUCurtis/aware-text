@@ -6,7 +6,6 @@ import android.app.AlertDialog
 import android.app.ProgressDialog
 import android.database.Cursor
 import android.net.Uri
-import android.util.Log
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.sentiment.SentimentAnalysis
 import kotlinx.coroutines.*
@@ -18,10 +17,14 @@ class StudyEligibility(private val activity: Activity) {
     private var smsPluginObject: JSONObject? = null
     private var isSmsPluginEnabled: Boolean
     private var shouldPerformStudyEligibility: Boolean
+    private var messageCount: Int
+    private var wordCount: Int
 
     init {
         isSmsPluginEnabled = false
         shouldPerformStudyEligibility = false
+        messageCount = Values.SMS_MESSAGE_COUNT_DEFAULT
+        wordCount = Values.SMS_WORD_COUNT_DEFAULT
     }
 
     object Values {
@@ -59,6 +62,10 @@ class StudyEligibility(private val activity: Activity) {
 
     fun shouldPerformStudyEligibility() = shouldPerformStudyEligibility
 
+    fun getWordCount() = wordCount
+
+    fun getMessageCount() = messageCount
+
     fun showSMSPermissionDialog(permissionsHandler: PermissionsHandler, permissionCallback:PermissionsHandler.PermissionCallback) {
         AlertDialog.Builder(activity).apply {
             setTitle("AWARE: Study Eligibility Check")
@@ -79,8 +86,6 @@ class StudyEligibility(private val activity: Activity) {
             show()
         }
         CoroutineScope(Dispatchers.IO).launch {
-            var messageCount = Values.SMS_MESSAGE_COUNT_DEFAULT
-            var wordCount = Values.SMS_WORD_COUNT_DEFAULT
             withContext(Dispatchers.Main) {
                 smsPluginObject?.getJSONArray("settings")?.let { settings ->
                     (0 until settings.length()).mapNotNull { index ->
