@@ -1,7 +1,6 @@
 package com.aware.phone.ui
 
 import android.annotation.SuppressLint
-import com.aware.providers.Aware_Provider.Aware_Studies as Key
 import android.app.ProgressDialog
 import android.content.*
 import android.content.pm.PackageManager
@@ -19,7 +18,8 @@ import android.text.Html
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
-import android.widget.*
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -43,6 +43,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.FileNotFoundException
 import java.util.*
+import com.aware.providers.Aware_Provider.Aware_Studies as Key
 
 class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallback {
 
@@ -117,7 +118,13 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         } else {
             logDebug("AWARE Study participant ID NOT detected")
             aware_join_id?.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
+                    if(Aware.isBatteryOptimizationIgnored(this@AwareJoinStudy, packageName)) {
+                        requestIgnoreBatteryOptimization()
+                    }else if(Applications.isAccessibilityEnabled(this@AwareJoinStudy)) {
+                        grantAccessibility()
+                    }
+                }
                 override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                     btn_sign_up?.apply {
                         isEnabled = s.isNotEmpty()
@@ -540,16 +547,39 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     }
 
     @SuppressLint("BatteryLife")
-    private fun requestBatteryOptimization() {
-
-        pluginsInstalled = true
-
-        if (!Aware.is_watch(this)) {
-            Applications.isAccessibilityServiceActive(this)
-        }
+    private fun requestIgnoreBatteryOptimization() {
         val whitelisting = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
         whitelisting.data = Uri.parse("package:$packageName")
-        startActivity(whitelisting)
+        whitelistingResult.launch(whitelisting)
+    }
+
+    private var whitelistingResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
+        Log.d("Miguel", "${result.resultCode}")
+        if(!Aware.isBatteryOptimizationIgnored(this@AwareJoinStudy, packageName)) {
+            AlertDialog.Builder(this@AwareJoinStudy).apply {
+                setMessage("To proceed, please allow AWARE to run in the background.")
+                setPositiveButton("ok"){ _, _ ->
+                    requestIgnoreBatteryOptimization()
+                }
+                show()
+            }
+        }
+    }
+
+    private fun grantAccessibility() {
+        if (!Aware.is_watch(this)) {
+            AlertDialog.Builder(this@AwareJoinStudy).apply {
+                setMessage("Redirect to accessibility, allow AWARE.")
+                setPositiveButton("ok"){ dialog, _ ->
+                    dialog.dismiss()
+                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                }
+                setOnDismissListener {
+                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                }
+                show()
+            }
+        }
     }
 
     class PluginCompliance : BroadcastReceiver() {
@@ -647,14 +677,15 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     override fun onPermissionGranted() {
 
-        if(studyEligibility.isSmsPluginEnabled() && studyEligibility.shouldPerformStudyEligibility()){
-            studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback{
+        if(studyEligibility.isSmsPluginEnabled() && studyEligibility.shouldPerformStudyEligibility()) {
+            studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback {
                 override fun onEligibilityChecked(isEligible: Boolean) {
                     handleStudyEligibilityResult(isEligible)
                 }
             })
         }else {
-            requestBatteryOptimization()
+            pluginsInstalled = true
+            requestIgnoreBatteryOptimization()
         }
     }
 
@@ -746,8 +777,6 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                         }
 
                     })
-                }else {
-                    requestBatteryOptimization()
                 }
             }
         }
@@ -766,6 +795,10 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
         } else {
             enableDeniedPermissionButton()
+        }
+
+        if(Aware.isBatteryOptimizationIgnored(this, packageName) && !Applications.isAccessibilityEnabled(this)) {
+            grantAccessibility()
         }
     }
 

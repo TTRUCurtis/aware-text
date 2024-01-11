@@ -593,7 +593,7 @@ public class Applications extends AccessibilityService {
         void onTouch(ContentValues data);
     }
 
-    private synchronized static boolean isAccessibilityEnabled(Context context) {
+    public synchronized static boolean isAccessibilityEnabled(Context context) {
         boolean enabled = false;
 
         AccessibilityManager accessibilityManager = (AccessibilityManager) context.getSystemService(ACCESSIBILITY_SERVICE);

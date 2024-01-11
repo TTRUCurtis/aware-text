@@ -459,31 +459,6 @@ public class Aware extends Service {
             PowerManager pm = (PowerManager) context.getApplicationContext().getSystemService(Context.POWER_SERVICE);
             is_ignored = pm.isIgnoringBatteryOptimizations(package_name);
         }
-
-        if (!is_ignored) {
-            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
-            mBuilder.setSmallIcon(R.drawable.ic_stat_aware_recharge);
-            mBuilder.setContentTitle(context.getApplicationContext().getResources().getString(R.string.aware_activate_battery_optimize_ignore_title));
-            mBuilder.setContentText(context.getApplicationContext().getResources().getString(R.string.aware_activate_battery_optimize_ignore));
-            mBuilder.setAutoCancel(true);
-            mBuilder.setOnlyAlertOnce(true); //notify the user only once
-            mBuilder.setDefaults(NotificationCompat.DEFAULT_ALL);
-            mBuilder = setNotificationProperties(mBuilder, AWARE_NOTIFICATION_IMPORTANCE_GENERAL);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                mBuilder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
-
-            Intent batteryIntent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-            batteryIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-            PendingIntent clickIntent =
-                    PendingIntent.getActivity(context, 0, batteryIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            mBuilder.setContentIntent(clickIntent);
-
-            NotificationManager notManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-            notManager.notify(Aware.AWARE_BATTERY_OPTIMIZATION_ID, mBuilder.build());
-        }
-
         Log.d(Aware.TAG, "Battery Optimizations: " + is_ignored);
 
         return is_ignored;
