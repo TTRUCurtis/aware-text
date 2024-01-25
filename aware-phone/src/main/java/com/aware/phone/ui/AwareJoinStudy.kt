@@ -554,7 +554,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     }
 
     private var whitelistingResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
-        Log.d("Miguel", "${result.resultCode}")
+
         if(!Aware.isBatteryOptimizationIgnored(this@AwareJoinStudy, packageName)) {
             AlertDialog.Builder(this@AwareJoinStudy).apply {
                 setMessage("To proceed, please allow AWARE to run in the background.")

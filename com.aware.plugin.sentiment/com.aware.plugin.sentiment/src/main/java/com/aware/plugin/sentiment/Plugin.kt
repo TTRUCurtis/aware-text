@@ -108,7 +108,7 @@ open class Plugin : Aware_Plugin() {
                         if (Aware.getSetting(applicationContext, Settings.PLUGIN_SENTIMENT_PACKAGES).isNotBlank()) {
                             Log.i("ABTest", "Plugin packages is not blank ");
                             packagesOfInterest = Aware.getSetting(applicationContext, Settings.PLUGIN_SENTIMENT_PACKAGES).split(",")
-                            if (packagesOfInterest.contains(data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME))) {
+                            if (packagesOfInterest.contains(data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME).trim())) {
                                 flag = 1;
                             }
                         } else {
