@@ -61,7 +61,7 @@ open class Plugin : Aware_Plugin() {
     var prevTextBuffer = ""
 
     override fun onCreate() {
-        Log.i("ABTest", "This is echoed on create");
+        Log.i("ABTest", "This is echoed on create")
         super.onCreate()
         AUTHORITY = Provider.getAuthority(this)
         TAG = "AWARE: Sentiment"
@@ -75,7 +75,7 @@ open class Plugin : Aware_Plugin() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        Log.i("ABTest", "This is echoed on start");
+        Log.i("ABTest", "This is echoed on start")
         if (PERMISSIONS_OK) {
 
             DEBUG = Aware.getSetting(this, Aware_Preferences.DEBUG_FLAG).equals("true")
@@ -88,11 +88,11 @@ open class Plugin : Aware_Plugin() {
                     return Service.START_STICKY
                 }
             }
-            Log.i("ABTest", "this is echoed if permissions are correct");
+            Log.i("ABTest", "this is echoed if permissions are correct")
             if (Applications.isAccessibilityServiceActive(this)) {
-                Log.i("ABTest", "This is echoed before set sensor observer");
+                Log.i("ABTest", "This is echoed before set sensor observer")
                 Aware.setSetting(this, Aware_Preferences.STATUS_APPLICATIONS, true)
-                Aware.startKeyboard(this);
+                Aware.startKeyboard(this)
 
 
                 Log.i("ABTest", "Sentiment object is ")
@@ -104,88 +104,73 @@ open class Plugin : Aware_Plugin() {
                     override fun onKeyboard(data: ContentValues?) {
 
                         var packagesOfInterest: List<String> = listOf()
-                        var flag = 0;
+                        var flag = 0
                         if (Aware.getSetting(applicationContext, Settings.PLUGIN_SENTIMENT_PACKAGES).isNotBlank()) {
-                            Log.i("ABTest", "Plugin packages is not blank ");
+                            Log.i("ABTest", "Plugin packages is not blank ")
                             packagesOfInterest = Aware.getSetting(applicationContext, Settings.PLUGIN_SENTIMENT_PACKAGES).split(",")
                             if (packagesOfInterest.contains(data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME).trim())) {
-                                flag = 1;
+                                flag = 1
                             }
                         } else {
-                            Log.i("ABTest", "Plugin packages is blank ");
-                            packagesOfInterest.plus(data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME));
-                            flag = 1;
+                            Log.i("ABTest", "Plugin packages is blank ")
+                            packagesOfInterest.plus(data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME))
+                            flag = 1
                         }
 
-                        Log.i("ABTest", "package data is " + data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME));
+                        Log.i("ABTest", "package data is " + data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME))
                         //if (packagesOfInterest.contains(data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME))) {
                         if (flag == 1) {
 
                             keyboardInApp = data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME)
                             textBuffer = textBuffer.plus(". ").plus(data.getAsString(Keyboard_Provider.Keyboard_Data.CURRENT_TEXT))
 
-                            val tempCurrTextBuffer = data.getAsString(Keyboard_Provider.Keyboard_Data.CURRENT_TEXT);
-                            val tempTextBuffer = data.getAsString(Keyboard_Provider.Keyboard_Data.BEFORE_TEXT);
+                            val currentText = data.getAsString(Keyboard_Provider.Keyboard_Data.CURRENT_TEXT)
+                            val beforeText = data.getAsString(Keyboard_Provider.Keyboard_Data.BEFORE_TEXT)
 
-                            Log.i("ABTest", "Current Text is ");
-                            Log.i("ABTest", tempCurrTextBuffer);
-                            Log.i("ABTest", "Before text is");
-                            Log.i("ABTest", tempTextBuffer);
+                            Log.i("ABTest", "Current Text is ")
+                            Log.i("ABTest", currentText)
+                            Log.i("ABTest", "Before text is")
+                            Log.i("ABTest", beforeText)
 
                             //log only when input ends for corrected text values only
                             // this happens when prevTextBuffer has 0 length and textBufferNew has length>0
-                            if (tempCurrTextBuffer.length > 0 && tempTextBuffer.length == 0) {
+                            if (currentText.length > 0 && beforeText.length == 0) {
 
                                 //replace the [ and ] with blanks
-                                var interstring1 = textBufferNew.replace("[", "");
-                                var interstring2 = interstring1.replace("]", "");
-                                Log.i("ABTest", "After corrections prev text is");
-                                Log.i("ABTest", interstring2);
+                                var interstring1 = textBufferNew.replace("[", "")
+                                var interstring2 = interstring1.replace("]", "")
+                                Log.i("ABTest", "After corrections prev text is")
+                                Log.i("ABTest", interstring2)
                                 val tokens = SentimentAnalysis.tokenizer(interstring1)
                                 val testHash = sentimentAnalysis.getScores(tokens)
+
+                                insertSentimentAnalysisResult(testHash, tokens.size)
                             }
-                            textBufferNew = tempCurrTextBuffer;
-                            prevTextBuffer = tempTextBuffer;
+                            textBufferNew = currentText
+                            prevTextBuffer = beforeText
                         }
                     }
 
                     override fun onTouch(data: ContentValues?) {}
                     override fun onForeground(data: ContentValues?) {
-                        Log.i("ABTest", "echoed on foreground");
+                        Log.i("ABTest", "echoed on foreground")
                         val currentApp = data!!.getAsString(Applications_Provider.Applications_Foreground.PACKAGE_NAME)
                         if (installedKeyboards.contains(currentApp)) return //we ignore foreground package of keyboard input
 
                         if (!textBuffer.isEmpty() && currentApp != keyboardInApp) { //we were using an app of interest and changed app
 
                             //replace the [ and ] with blanks
-                            val interstring1 = textBufferNew.replace("[", "");
-                            val interstring2 = interstring1.replace("]", "");
+                            val interstring1 = textBufferNew.replace("[", "")
+                            val interstring2 = interstring1.replace("]", "")
 
-                            Log.i("ABTest", "Echoed before reset $interstring2");
+                            Log.i("ABTest", "Echoed before reset $interstring2")
                             val tokens = SentimentAnalysis.tokenizer(interstring2)
-                            //val testHash = Sentiment.getScoreFromInput(interstring2);
                             val testHash = sentimentAnalysis.getScores(tokens)
-                            val contentValues = ContentValues()
-                            contentValues.put(Provider.Sentiment_Data.DEVICE_ID, Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID))
-                            contentValues.put(Provider.Sentiment_Data.TIMESTAMP, System.currentTimeMillis())
-                            contentValues.put(Provider.Sentiment_Data.TYPE, keyboardInApp)
-                            contentValues.put(Provider.Sentiment_Data.TOTAL_WORDS, tokens.size)
 
-
-                            for ((category, pair) in testHash) {
-                                if(pair.second > 0){
-                                    contentValues.put(Provider.Sentiment_Data.CATEGORY, category)
-                                    contentValues.put(Provider.Sentiment_Data.SCORE, pair.first)
-                                    contentValues.put(Provider.Sentiment_Data.DICTIONARY_WORDS, pair.second)
-                                    contentResolver.insert(Provider.Sentiment_Data.CONTENT_URI, contentValues) //does the actual data insert
-                                    Log.i("ABTest", "Inserted into database: $contentValues")
-                                }
-                                awareSensor?.onTextContextChanged(contentValues)
-                            }
-
+                            insertSentimentAnalysisResult(testHash, tokens.size)
                             textBuffer = ""
                             textBufferNew = ""
-                            prevTextBuffer = "";
+                            prevTextBuffer = ""
                             keyboardInApp = ""
                         }
                     }
@@ -210,17 +195,38 @@ open class Plugin : Aware_Plugin() {
         return Service.START_STICKY
     }
 
+    private fun insertSentimentAnalysisResult(testHash: HashMap<String, Pair<Double, Int>>, size: Int) {
+
+        val contentValues = ContentValues()
+        contentValues.put(Provider.Sentiment_Data.DEVICE_ID, Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID))
+        contentValues.put(Provider.Sentiment_Data.TIMESTAMP, System.currentTimeMillis())
+        contentValues.put(Provider.Sentiment_Data.TYPE, keyboardInApp)
+        contentValues.put(Provider.Sentiment_Data.TOTAL_WORDS, size)
+
+
+        for ((category, pair) in testHash) {
+            if(pair.second > 0){
+                contentValues.put(Provider.Sentiment_Data.CATEGORY, category)
+                contentValues.put(Provider.Sentiment_Data.SCORE, pair.first)
+                contentValues.put(Provider.Sentiment_Data.DICTIONARY_WORDS, pair.second)
+                contentResolver.insert(Provider.Sentiment_Data.CONTENT_URI, contentValues) //does the actual data insert
+                Log.i("ABTest", "Inserted into database: $contentValues")
+            }
+            awareSensor?.onTextContextChanged(contentValues)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         Aware.setSetting(this, Aware_Preferences.STATUS_APPLICATIONS, false)
         Aware.setSetting(this, Settings.STATUS_PLUGIN_SENTIMENT, false)
         Aware.stopKeyboard(this)
 
-        ContentResolver.setSyncAutomatically(Aware.getAWAREAccount(this), Provider.getAuthority(this), false);
+        ContentResolver.setSyncAutomatically(Aware.getAWAREAccount(this), Provider.getAuthority(this), false)
         ContentResolver.removePeriodicSync(
                 Aware.getAWAREAccount(this),
                 Provider.getAuthority(this),
                 Bundle.EMPTY
-        );
+        )
     }
 }
