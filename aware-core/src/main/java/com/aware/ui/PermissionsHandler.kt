@@ -76,6 +76,12 @@ class PermissionsHandler(private val activity: Activity) {
         )
     )
 
+    fun openAccessibilitySettings() = activity.startActivity(
+        Intent(
+            Settings.ACTION_ACCESSIBILITY_SETTINGS
+        )
+    )
+
     private fun shouldShowRationale(permissions: List<String>): Boolean {
         for (permission in permissions) {
             if (activity.shouldShowRequestPermissionRationale(permission)) {

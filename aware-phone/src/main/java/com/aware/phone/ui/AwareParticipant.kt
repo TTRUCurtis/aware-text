@@ -1,6 +1,5 @@
 package com.aware.phone.ui
 
-
 import android.content.ComponentName
 import android.content.DialogInterface
 import android.content.Intent
@@ -40,17 +39,36 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     private fun checkForRevokedPermissions() {
-        if (intent != null && intent.extras != null && intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) != null) {
+        if (intent != null && intent.extras != null) {
+            if(intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) != null) {
+                val permissions =
+                    intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) as java.util.ArrayList<String>?
 
-            val permissions =
-                intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) as java.util.ArrayList<String>?
-
-            for(p in permissions!!) {
-                if(!permissionsHandler.isPermissionGranted(p)) {
-                    revokedPermissions.add(p)
+                for(p in permissions!!) {
+                    if(!permissionsHandler.isPermissionGranted(p)) {
+                        revokedPermissions.add(p)
+                    }
                 }
+                permissionsHandler.requestPermissions(permissions, this)
             }
-            permissionsHandler.requestPermissions(permissions, this)
+            if(intent.getStringExtra("Method") == "redirectToAccessibility") grantAccessibility()
+
+        }
+    }
+
+    private fun grantAccessibility() {
+        if (!Aware.is_watch(this)) {
+            AlertDialog.Builder(this@AwareParticipant).apply {
+                setMessage("Redirect to accessibility, allow AWARE.")
+                setPositiveButton("ok"){ dialog, _ ->
+                    dialog.dismiss()
+                    permissionsHandler.openAccessibilitySettings()
+                }
+                setOnDismissListener {
+                    permissionsHandler.openAccessibilitySettings()
+                }
+                show()
+            }
         }
     }
 

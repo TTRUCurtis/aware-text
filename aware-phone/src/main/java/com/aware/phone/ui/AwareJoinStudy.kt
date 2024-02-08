@@ -572,10 +572,10 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 setMessage("Redirect to accessibility, allow AWARE.")
                 setPositiveButton("ok"){ dialog, _ ->
                     dialog.dismiss()
-                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    permissionsHandler.openAccessibilitySettings()
                 }
                 setOnDismissListener {
-                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    permissionsHandler.openAccessibilitySettings()
                 }
                 show()
             }
