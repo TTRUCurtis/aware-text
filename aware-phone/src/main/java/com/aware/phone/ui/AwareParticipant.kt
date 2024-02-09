@@ -11,6 +11,7 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.aware.Applications
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
@@ -159,6 +160,10 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             populateRevokedPermissionLayout()
         }else {
             removeRevokedPermissionLayout()
+        }
+
+        if(!Applications.isAccessibilityEnabled(this@AwareParticipant)) {
+            grantAccessibility()
         }
     }
 
