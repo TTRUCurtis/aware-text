@@ -553,8 +553,8 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         whitelistingResult.launch(whitelisting)
     }
 
-    private var whitelistingResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
-        Log.d("Miguel", "${result.resultCode}")
+    private var whitelistingResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+
         if(!Aware.isBatteryOptimizationIgnored(this@AwareJoinStudy, packageName)) {
             AlertDialog.Builder(this@AwareJoinStudy).apply {
                 setMessage("To proceed, please allow AWARE to run in the background.")
@@ -569,8 +569,9 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private fun grantAccessibility() {
         if (!Aware.is_watch(this)) {
             AlertDialog.Builder(this@AwareJoinStudy).apply {
-                setMessage("Redirect to accessibility, allow AWARE.")
-                setPositiveButton("ok"){ dialog, _ ->
+                setMessage("AWARE requires Accessibility access to participate in studies. " +
+                        "Please click \"SETTINGS\" and turn on Accessibility access to continue.")
+                setPositiveButton("settings"){ dialog, _ ->
                     dialog.dismiss()
                     permissionsHandler.openAccessibilitySettings()
                 }

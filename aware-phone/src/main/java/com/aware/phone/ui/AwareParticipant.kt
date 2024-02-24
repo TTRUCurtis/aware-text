@@ -60,8 +60,9 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     private fun grantAccessibility() {
         if (!Aware.is_watch(this)) {
             AlertDialog.Builder(this@AwareParticipant).apply {
-                setMessage("Redirect to accessibility, allow AWARE.")
-                setPositiveButton("ok"){ dialog, _ ->
+                setMessage("AWARE requires Accessibility access to participate in studies. " +
+                        "Please click \"SETTINGS\" and turn on Accessibility access to continue.")
+                setPositiveButton("settings"){ dialog, _ ->
                     dialog.dismiss()
                     permissionsHandler.openAccessibilitySettings()
                 }
