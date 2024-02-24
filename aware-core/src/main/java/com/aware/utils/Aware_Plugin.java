@@ -127,7 +127,7 @@ public class Aware_Plugin extends Service {
                     getApplicationContext().getPackageName() + "/" + getClass().getName()
             );
             requestPermissions.setFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
             );
 
             PendingIntent pi = PendingIntent.getActivity(
