@@ -157,7 +157,9 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 } catch(e: JSONException) { e.printStackTrace() }
                 studyConfigs?.let {
                     populateStudyInfo(it)
-                    studyEligibility.checkForSmsPluginStatus(it)
+                    if(!studyEligibility.hasEligibilityBeenChecked())
+                        studyEligibility.checkForSmsPluginStatus(it)
+
                 }
                 if(studyEligibility.isSmsPluginEnabled()){
                     studyEligibility.showSMSPermissionDialog(permissionsHandler, this@AwareJoinStudy)
@@ -232,6 +234,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     btn_quit_study!!.alpha = 1f
                     btn_sign_up!!.isEnabled = false
                     btn_sign_up!!.alpha = 1f
+                    studyEligibility.markEligibilityAsUnchecked()
                     Aware.getStudy(applicationContext, Aware.getSetting(applicationContext, Aware_Preferences.WEBSERVICE_SERVER))?.use { study ->
 
                         if(study.moveToFirst()){
@@ -553,7 +556,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         whitelistingResult.launch(whitelisting)
     }
 
-    private var whitelistingResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
+    private var whitelistingResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
 
         if(!Aware.isBatteryOptimizationIgnored(this@AwareJoinStudy, packageName)) {
             AlertDialog.Builder(this@AwareJoinStudy).apply {
@@ -569,13 +572,14 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
     private fun grantAccessibility() {
         if (!Aware.is_watch(this)) {
             AlertDialog.Builder(this@AwareJoinStudy).apply {
-                setMessage("Redirect to accessibility, allow AWARE.")
-                setPositiveButton("ok"){ dialog, _ ->
+                setMessage("AWARE requires Accessibility access to participate in studies. " +
+                        "Please click \"SETTINGS\" and turn on Accessibility access to continue.")
+                setPositiveButton("settings"){ dialog, _ ->
                     dialog.dismiss()
-                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    permissionsHandler.openAccessibilitySettings()
                 }
                 setOnDismissListener {
-                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    permissionsHandler.openAccessibilitySettings()
                 }
                 show()
             }
@@ -677,7 +681,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     override fun onPermissionGranted() {
 
-        if(studyEligibility.isSmsPluginEnabled() && studyEligibility.shouldPerformStudyEligibility()) {
+        if(studyEligibility.isSmsPluginEnabled() && !studyEligibility.hasEligibilityBeenChecked()) {
             studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback {
                 override fun onEligibilityChecked(isEligible: Boolean) {
                     handleStudyEligibilityResult(isEligible)
@@ -739,6 +743,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     permission -> permissionsHandler.isPermissionGranted(permission)
             }
         }
+
         activePlugins?.let {
             Aware.getStudy(this@AwareJoinStudy, studyUrl)?.use { study ->
                 if(study.moveToFirst()) {
@@ -749,10 +754,12 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     }
                     btn_quit_study?.visibility = if (Aware.isStudy(applicationContext)) View.VISIBLE else View.GONE
                     if (Aware.isStudy(applicationContext)) {
+                        aware_join_id.visibility = View.GONE
+                        aware_join_onboarding.visibility = View.GONE
                         btn_sign_up?.apply {
-                            isEnabled = true                          
+                            isEnabled = true
                             setOnClickListener { finish() }
-                            text = R.string.ok.toString()
+                            text = getString(R.string.ok)
                         }
                     }
 
@@ -770,7 +777,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
             }
 
             if(missingPermissions.isEmpty()) {
-                if(studyEligibility.shouldPerformStudyEligibility()) {
+                if(studyEligibility.hasEligibilityBeenChecked()) {
                     studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback {
                         override fun onEligibilityChecked(isEligible: Boolean) {
                             handleStudyEligibilityResult(isEligible)

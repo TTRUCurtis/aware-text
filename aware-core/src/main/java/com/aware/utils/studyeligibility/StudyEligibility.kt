@@ -16,13 +16,11 @@ class StudyEligibility(private val activity: Activity) {
 
     private var smsPluginObject: JSONObject? = null
     private var isSmsPluginEnabled: Boolean
-    private var shouldPerformStudyEligibility: Boolean
     private var messageCount: Int
     private var wordCount: Int
 
     init {
         isSmsPluginEnabled = false
-        shouldPerformStudyEligibility = false
         messageCount = Values.SMS_MESSAGE_COUNT_DEFAULT
         wordCount = Values.SMS_WORD_COUNT_DEFAULT
     }
@@ -30,13 +28,32 @@ class StudyEligibility(private val activity: Activity) {
     object Values {
         const val SMS_MESSAGE_COUNT_DEFAULT = 500
         const val SMS_WORD_COUNT_DEFAULT = 500
+        const val PREFS_NAME = "StudyEligibilityPrefs"
+        const val PREF_ELIGIBILITY_CHECKED_KEY = "EligibilityChecked"
+    }
+
+    private val sharedPreferences by lazy {
+        activity.getSharedPreferences(Values.PREFS_NAME, Activity.MODE_PRIVATE)
     }
 
     interface EligibilityCheckCallback {
         fun onEligibilityChecked(isEligible: Boolean)
     }
 
-    fun checkForSmsPluginStatus(studyConfig: JSONArray?) {
+    fun hasEligibilityBeenChecked(): Boolean {
+        return sharedPreferences.getBoolean(Values.PREF_ELIGIBILITY_CHECKED_KEY, false)
+    }
+
+    private fun markEligibilityAsChecked() {
+        sharedPreferences.edit().putBoolean(Values.PREF_ELIGIBILITY_CHECKED_KEY, true).apply()
+    }
+
+    fun markEligibilityAsUnchecked() {
+        sharedPreferences.edit().putBoolean(Values.PREF_ELIGIBILITY_CHECKED_KEY, false).apply()
+    }
+
+
+    fun checkForSmsPluginStatus(studyConfig: JSONArray?){
 
         studyConfig?.let {
             for(i in 0 until studyConfig.length()) {
@@ -48,7 +65,6 @@ class StudyEligibility(private val activity: Activity) {
                                 if(pluginConfig.getString("plugin") == "com.aware.plugin.sms"){
                                     smsPluginObject = pluginConfig
                                     isSmsPluginEnabled = true
-                                    shouldPerformStudyEligibility = true
                                 }
 
                             }
@@ -59,8 +75,6 @@ class StudyEligibility(private val activity: Activity) {
     }
 
     fun isSmsPluginEnabled() = isSmsPluginEnabled
-
-    fun shouldPerformStudyEligibility() = shouldPerformStudyEligibility
 
     fun getWordCount() = wordCount
 
@@ -79,6 +93,7 @@ class StudyEligibility(private val activity: Activity) {
     }
 
     fun performStudyEligibilityCheck(callback: EligibilityCheckCallback) {
+
         val progressDialog = ProgressDialog(activity).apply {
             setCancelable(false)
             setMessage("Performing study eligibility check, please wait.")
@@ -105,12 +120,12 @@ class StudyEligibility(private val activity: Activity) {
 
                 delay(2000)
 
+                markEligibilityAsChecked()
                 callback.onEligibilityChecked(isEligible)
                 progressDialog.dismiss()
                 CoroutineScope(Dispatchers.Main).cancel()
             }
         }
-        shouldPerformStudyEligibility = false
     }
 
     private fun hasEnoughWords(cursor: Cursor, wordCount: Int): Boolean {

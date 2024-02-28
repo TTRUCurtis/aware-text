@@ -1,6 +1,5 @@
 package com.aware.phone.ui
 
-
 import android.content.ComponentName
 import android.content.DialogInterface
 import android.content.Intent
@@ -12,6 +11,7 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.aware.Applications
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
@@ -40,17 +40,37 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     private fun checkForRevokedPermissions() {
-        if (intent != null && intent.extras != null && intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) != null) {
+        if (intent != null && intent.extras != null) {
+            if(intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) != null) {
+                val permissions =
+                    intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) as java.util.ArrayList<String>?
 
-            val permissions =
-                intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) as java.util.ArrayList<String>?
-
-            for(p in permissions!!) {
-                if(!permissionsHandler.isPermissionGranted(p)) {
-                    revokedPermissions.add(p)
+                for(p in permissions!!) {
+                    if(!permissionsHandler.isPermissionGranted(p)) {
+                        revokedPermissions.add(p)
+                    }
                 }
+                permissionsHandler.requestPermissions(permissions, this)
             }
-            permissionsHandler.requestPermissions(permissions, this)
+            if(intent.getStringExtra("Method") == "redirectToAccessibility") grantAccessibility()
+
+        }
+    }
+
+    private fun grantAccessibility() {
+        if (!Aware.is_watch(this)) {
+            AlertDialog.Builder(this@AwareParticipant).apply {
+                setMessage("AWARE requires Accessibility access to participate in studies. " +
+                        "Please click \"SETTINGS\" and turn on Accessibility access to continue.")
+                setPositiveButton("settings"){ dialog, _ ->
+                    dialog.dismiss()
+                    permissionsHandler.openAccessibilitySettings()
+                }
+                setOnDismissListener {
+                    permissionsHandler.openAccessibilitySettings()
+                }
+                show()
+            }
         }
     }
 
@@ -141,6 +161,10 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             populateRevokedPermissionLayout()
         }else {
             removeRevokedPermissionLayout()
+        }
+
+        if(!Applications.isAccessibilityEnabled(this@AwareParticipant)) {
+            grantAccessibility()
         }
     }
 

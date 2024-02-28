@@ -34,6 +34,7 @@ import com.aware.providers.Applications_Provider.Applications_History;
 import com.aware.providers.Applications_Provider.Applications_Notifications;
 import com.aware.providers.Keyboard_Provider;
 import com.aware.providers.Screen_Provider;
+import com.aware.ui.PermissionHandler;
 import com.aware.utils.Converters;
 import com.aware.utils.Encrypter;
 import com.aware.utils.Scheduler;
@@ -42,6 +43,10 @@ import org.json.JSONException;
 
 import java.util.Iterator;
 import java.util.List;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * Service that logs application usage on the device.
@@ -53,10 +58,14 @@ import java.util.List;
  *
  * @author denzil
  */
+@AndroidEntryPoint
 public class Applications extends AccessibilityService {
 
     private static String TAG = "AWARE::Applications";
     private static boolean DEBUG = false;
+    @Inject
+    public PermissionHandler permissionHandler;
+    public static PermissionHandler staticPermissionHandler;
 
     public static final String STATUS_AWARE_ACCESSIBILITY = "STATUS_AWARE_ACCESSIBILITY";
 
@@ -533,6 +542,16 @@ public class Applications extends AccessibilityService {
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        Applications.setPermissionHandler(permissionHandler);
+    }
+
+    private static void setPermissionHandler(PermissionHandler permissionHandler) {
+        staticPermissionHandler = permissionHandler;
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
         //Aware.debug(this, "destroyed: " + getClass().getName() + " package: " + getPackageName());
@@ -658,7 +677,8 @@ public class Applications extends AccessibilityService {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 mBuilder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
 
-            Intent accessibilitySettings = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            Intent accessibilitySettings = staticPermissionHandler.getPermissionHandlerIntent(c);
+            accessibilitySettings.putExtra("Method", "redirectToAccessibility");
             accessibilitySettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
             PendingIntent clickIntent = PendingIntent.getActivity(c, 0, accessibilitySettings,
