@@ -19,8 +19,6 @@ import javax.inject.Inject
 open class Plugin : Aware_Plugin() {
 
     companion object {
-        const val PACKAGE_NAME = "packageName"
-        const val TYPED_TEXT = "typedText"
 
         interface AWARESensorObserver {
             fun onTextContextChanged(data: ContentValues)
@@ -30,10 +28,6 @@ open class Plugin : Aware_Plugin() {
 
         fun setSensorObserver(observer: AWARESensorObserver) {
             awareSensor = observer
-        }
-
-        fun getSensorObserver(): AWARESensorObserver {
-            return awareSensor!!
         }
     }
 
@@ -107,8 +101,8 @@ open class Plugin : Aware_Plugin() {
                         var flag = 0
                         if (Aware.getSetting(applicationContext, Settings.PLUGIN_SENTIMENT_PACKAGES).isNotBlank()) {
                             Log.i("ABTest", "Plugin packages is not blank ")
-                            packagesOfInterest = Aware.getSetting(applicationContext, Settings.PLUGIN_SENTIMENT_PACKAGES).split(",")
-                            if (packagesOfInterest.contains(data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME).trim())) {
+                            packagesOfInterest = Aware.getSetting(applicationContext, Settings.PLUGIN_SENTIMENT_PACKAGES).split(",").map{ it.trim()}
+                            if (packagesOfInterest.contains(data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME))) {
                                 flag = 1
                             }
                         } else {
@@ -117,33 +111,27 @@ open class Plugin : Aware_Plugin() {
                             flag = 1
                         }
 
-                        Log.i("ABTest", "package data is " + data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME))
-                        //if (packagesOfInterest.contains(data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME))) {
+                        Log.i("ABTest", "package data is " + data.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME))
+
                         if (flag == 1) {
 
-                            keyboardInApp = data!!.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME)
+                            keyboardInApp = data.getAsString(Keyboard_Provider.Keyboard_Data.PACKAGE_NAME)
                             textBuffer = textBuffer.plus(". ").plus(data.getAsString(Keyboard_Provider.Keyboard_Data.CURRENT_TEXT))
 
                             val currentText = data.getAsString(Keyboard_Provider.Keyboard_Data.CURRENT_TEXT)
                             val beforeText = data.getAsString(Keyboard_Provider.Keyboard_Data.BEFORE_TEXT)
 
-                            Log.i("ABTest", "Current Text is ")
-                            Log.i("ABTest", currentText)
-                            Log.i("ABTest", "Before text is")
-                            Log.i("ABTest", beforeText)
+                            Log.i("ABTest", "Current Text is: $currentText ")
+                            Log.i("ABTest", "Before text is: $beforeText")
 
                             //log only when input ends for corrected text values only
                             // this happens when prevTextBuffer has 0 length and textBufferNew has length>0
-                            if (currentText.length > 0 && beforeText.length == 0) {
-
+                            if (currentText.isNotEmpty() && beforeText.isEmpty()) {
                                 //replace the [ and ] with blanks
-                                var interstring1 = textBufferNew.replace("[", "")
-                                var interstring2 = interstring1.replace("]", "")
-                                Log.i("ABTest", "After corrections prev text is")
-                                Log.i("ABTest", interstring2)
-                                val tokens = SentimentAnalysis.tokenizer(interstring1)
+                                val sentimentText = textBufferNew.replace("[", "").replace("]", "")
+                                Log.i("ABTest", "After corrections prev text is: $sentimentText")
+                                val tokens = SentimentAnalysis.tokenizer(sentimentText)
                                 val testHash = sentimentAnalysis.getScores(tokens)
-
                                 insertSentimentAnalysisResult(testHash, tokens.size)
                             }
                             textBufferNew = currentText
@@ -156,17 +144,12 @@ open class Plugin : Aware_Plugin() {
                         Log.i("ABTest", "echoed on foreground")
                         val currentApp = data!!.getAsString(Applications_Provider.Applications_Foreground.PACKAGE_NAME)
                         if (installedKeyboards.contains(currentApp)) return //we ignore foreground package of keyboard input
-
-                        if (!textBuffer.isEmpty() && currentApp != keyboardInApp) { //we were using an app of interest and changed app
-
+                        if (textBuffer.isNotEmpty() && currentApp != keyboardInApp) { //we were using an app of interest and changed app
                             //replace the [ and ] with blanks
-                            val interstring1 = textBufferNew.replace("[", "")
-                            val interstring2 = interstring1.replace("]", "")
-
-                            Log.i("ABTest", "Echoed before reset $interstring2")
-                            val tokens = SentimentAnalysis.tokenizer(interstring2)
+                            val sentimentText = textBufferNew.replace("[", "").replace("]", "")
+                            Log.i("ABTest", "Echoed before reset $sentimentText")
+                            val tokens = SentimentAnalysis.tokenizer(sentimentText)
                             val testHash = sentimentAnalysis.getScores(tokens)
-
                             insertSentimentAnalysisResult(testHash, tokens.size)
                             textBuffer = ""
                             textBufferNew = ""
@@ -178,15 +161,15 @@ open class Plugin : Aware_Plugin() {
             }
 
             if (Aware.isStudy(this)) {
-                val aware_account = Aware.getAWAREAccount(applicationContext)
+                val awareAccount = Aware.getAWAREAccount(applicationContext)
                 val authority = Provider.getAuthority(applicationContext)
                 val frequency = java.lang.Long.parseLong(Aware.getSetting(this, Aware_Preferences.FREQUENCY_WEBSERVICE)) * 60
 
-                ContentResolver.setIsSyncable(aware_account, authority, 1)
-                ContentResolver.setSyncAutomatically(aware_account, authority, true)
+                ContentResolver.setIsSyncable(awareAccount, authority, 1)
+                ContentResolver.setSyncAutomatically(awareAccount, authority, true)
                 val request = SyncRequest.Builder()
                         .syncPeriodic(frequency, frequency / 3)
-                        .setSyncAdapter(aware_account, authority)
+                        .setSyncAdapter(awareAccount, authority)
                         .setExtras(Bundle()).build()
                 ContentResolver.requestSync(request)
             }
