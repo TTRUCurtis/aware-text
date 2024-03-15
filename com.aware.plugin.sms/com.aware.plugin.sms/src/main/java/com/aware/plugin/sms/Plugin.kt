@@ -185,7 +185,9 @@ open class Plugin : Aware_Plugin() {
         )
         serverSync.syncMessages(finalMessageList)
         val finalSentimentList = syncSettings.filterList(joinedList, sentimentAnalysisOnSent, sentimentAnalysisOnReceived)
+
         val sentimentDataList: ArrayList<SentimentData> = sentiment.getList(finalSentimentList)
+
         serverSync.syncSentiment(sentimentDataList)
 
         /* If this is the first run, save off the current time in case we need to be

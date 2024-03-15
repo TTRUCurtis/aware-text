@@ -12,28 +12,36 @@ import javax.inject.Singleton
 @Singleton
 class SentimentDictionary @Inject constructor(@ApplicationContext private val context: Context) {
 
-    private val dictionaryMap by lazy {
-        buildDictionaryMap()
+    private val regularWordsMap = hashMapOf<String, HashMap<String, Double>>()
+    private val wildcardWordsMap = hashMapOf<String, HashMap<String, Double>>()
+
+    init {
+        buildDictionaryMaps()
     }
 
-   private fun buildDictionaryMap(): HashMap<String, HashMap<String, Double>> {
-        val dictionaryHashMap = HashMap<String, HashMap<String, Double>>()
+    private fun buildDictionaryMaps() {
         val dictionaryJson = JSONObject(loadDictionary())
         val words: JSONObject = dictionaryJson.getJSONObject("words")
+        val wildcardWords: JSONObject = dictionaryJson.optJSONObject("wildcards") ?: JSONObject()
+
+        processWordEntries(words, regularWordsMap)
+        processWordEntries(wildcardWords, wildcardWordsMap)
+    }
+
+    private fun processWordEntries(words: JSONObject, targetMap: HashMap<String, HashMap<String, Double>>) {
         val wordList: Iterator<String> = words.keys()
         while (wordList.hasNext()) {
-            val word: String = wordList.next()
-            val categoryAndScore: HashMap<String, Double> = HashMap()
-            val categories: JSONObject = words.getJSONObject(word)
+            val word = wordList.next()
+            val categoryAndScore = HashMap<String, Double>()
+            val categories = words.getJSONObject(word)
             val categoriesList: Iterator<String> = categories.keys()
             while (categoriesList.hasNext()) {
-                val category: String = categoriesList.next()
-                val score: Double = categories.getDouble(category)
+                val category = categoriesList.next()
+                val score = categories.getDouble(category)
                 categoryAndScore[category] = score
             }
-            dictionaryHashMap[word] = categoryAndScore
+            targetMap[word] = categoryAndScore
         }
-        return dictionaryHashMap
     }
 
     private fun loadDictionary(): String {
@@ -41,7 +49,7 @@ class SentimentDictionary @Inject constructor(@ApplicationContext private val co
         try {
             val inputStream: InputStream
             val identifier =
-                context.resources.getIdentifier("sentiment", "raw", context.packageName)
+                context.resources.getIdentifier("newdictionary", "raw", context.packageName)
             inputStream = context.resources.openRawResource(identifier)
             val size = inputStream.available()
             val buffer = ByteArray(size)
@@ -56,7 +64,11 @@ class SentimentDictionary @Inject constructor(@ApplicationContext private val co
         return json
     }
 
-    fun getDictionary(): HashMap<String, HashMap<String, Double>> {
-        return dictionaryMap
+    fun getRegularWordsMap(): HashMap<String, HashMap<String, Double>> {
+        return regularWordsMap
+    }
+
+    fun getRegularWildcardWordsMap(): HashMap<String, HashMap<String, Double>> {
+        return wildcardWordsMap
     }
 }
