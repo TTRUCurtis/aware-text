@@ -13,7 +13,7 @@ import javax.inject.Singleton
 class SentimentDictionary @Inject constructor(@ApplicationContext private val context: Context) {
 
     private val regularWordsMap = hashMapOf<String, HashMap<String, Double>>()
-    private val wildcardWordsMap = hashMapOf<String, HashMap<String, Double>>()
+    private val wildcardWordsMap = hashMapOf<Int, HashMap<String, HashMap<String, Double>>>()
 
     init {
         buildDictionaryMaps()
@@ -25,7 +25,19 @@ class SentimentDictionary @Inject constructor(@ApplicationContext private val co
         val wildcardWords: JSONObject = dictionaryJson.optJSONObject("wildcards") ?: JSONObject()
 
         processWordEntries(words, regularWordsMap)
-        processWordEntries(wildcardWords, wildcardWordsMap)
+        processWildcardEntries(wildcardWords, wildcardWordsMap)
+    }
+
+    private fun processWildcardEntries(wildcardWords: JSONObject, targetMap: HashMap<Int, HashMap<String, HashMap<String, Double>>>) {
+        for(key in wildcardWords.keys()) {
+            val length = key.length - 1
+            val categoriesScores = wildcardWords.getJSONObject(key)
+            val categoriesScoresMap = hashMapOf<String, Double>()
+            for(category in categoriesScores.keys()) {
+                categoriesScoresMap[category] = categoriesScores.getDouble(category)
+            }
+            targetMap.getOrPut(length) { hashMapOf() }[key] = categoriesScoresMap
+        }
     }
 
     private fun processWordEntries(words: JSONObject, targetMap: HashMap<String, HashMap<String, Double>>) {
@@ -68,7 +80,7 @@ class SentimentDictionary @Inject constructor(@ApplicationContext private val co
         return regularWordsMap
     }
 
-    fun getRegularWildcardWordsMap(): HashMap<String, HashMap<String, Double>> {
+    fun getWildcardWordsMap(): HashMap<Int, HashMap<String, HashMap<String, Double>>> {
         return wildcardWordsMap
     }
 }

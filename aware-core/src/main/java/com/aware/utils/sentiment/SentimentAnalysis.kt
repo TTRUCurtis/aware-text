@@ -22,13 +22,17 @@ class SentimentAnalysis @Inject constructor(private val sentimentDictionary: Sen
         }
 
         for (token in tokens) {
-            sentimentDictionary.getRegularWildcardWordsMap().entries.forEach { (wildcardWord, map) ->
-                if (token.toString().matches("(?i:${wildcardWord.replace("*", ".*")})".toRegex())) {
-                    updateSentimentDataMap(sentimentDataMap, map)
+            for(length in 1..token.toString().length){
+                sentimentDictionary.getWildcardWordsMap()[length]?.let { entries ->
+                    for((wildcard, categoriesScores) in entries){
+                        if(token.toString().startsWith(wildcard.dropLast(1), ignoreCase = true)) {
+                            updateSentimentDataMap(sentimentDataMap, categoriesScores)
+                        }
+                    }
+
                 }
             }
         }
-        
         return sentimentDataMap
     }
 
