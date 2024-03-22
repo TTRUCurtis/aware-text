@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-
 class Sentiment @Inject constructor(
     private val sentimentAnalysis: SentimentAnalysis
 ) {
