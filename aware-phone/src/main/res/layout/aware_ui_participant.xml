@@ -35,4 +35,11 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"/>
 
+    <include
+        android:id="@+id/aware_participant_esm"
+        layout="@layout/aware_item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"/>
+
 </LinearLayout>

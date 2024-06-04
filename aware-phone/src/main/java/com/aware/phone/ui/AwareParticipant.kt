@@ -5,6 +5,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
@@ -107,6 +108,14 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             val quitStudy = Intent(this@AwareParticipant, AwareJoinStudy::class.java)
             quitStudy.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
             startActivity(quitStudy)
+        }
+
+        aware_participant_esm.aware_item_title.text = AwareParticipantItems.awareParticipantItems[4].title
+        aware_participant_esm.aware_item_description.text = AwareParticipantItems.awareParticipantItems[4].description
+        aware_participant_esm.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
+        aware_participant_esm.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[4].image)
+        aware_participant_esm.aware_item.setOnClickListener {
+
         }
     }
 
@@ -253,6 +262,13 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 "Quit Study",
                 "Quit a study you're currently enrolled in",
                 R.drawable.ic_quit,
+                R.id.aware_item_card,
+                R.drawable.item_background
+            ),
+            AwareParticipantItem(
+                "ESM",
+                "Trigger ESM",
+                R.drawable.ic_esm,
                 R.id.aware_item_card,
                 R.drawable.item_background
             )
