@@ -20,6 +20,7 @@ import com.aware.phone.R
 import com.aware.phone.ui.AwareParticipant.AwareParticipantItems.revokedPermissions
 import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
+import com.aware.utils.Scheduler
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.android.synthetic.main.aware_ui_participant.*
 
@@ -115,7 +116,9 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         aware_participant_esm.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
         aware_participant_esm.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[4].image)
         aware_participant_esm.aware_item.setOnClickListener {
-
+            sendBroadcast(
+                Intent(Scheduler.ACTION_AWARE_SCHEDULER_USER_INIT)
+            )
         }
     }
 
@@ -174,6 +177,12 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
         if(!Applications.isAccessibilityEnabled(this@AwareParticipant)) {
             grantAccessibility()
+        }
+
+        if(Scheduler.hasUserInit){
+            aware_participant_esm.aware_item.visibility = View.VISIBLE
+        } else {
+            aware_participant_esm.aware_item.visibility = View.GONE
         }
     }
 

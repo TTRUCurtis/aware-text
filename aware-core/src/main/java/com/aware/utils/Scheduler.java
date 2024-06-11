@@ -37,12 +37,14 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Random;
 
 public class Scheduler extends Aware_Sensor {
 
     public static final String ACTION_AWARE_SCHEDULER_CHECK = "ACTION_AWARE_SCHEDULER_CHECK";
     public static final String ACTION_AWARE_SCHEDULER_TRIGGERED = "ACTION_AWARE_SCHEDULER_TRIGGERED";
+    public static final String ACTION_AWARE_SCHEDULER_USER_INIT = "ACTION_AWARE_SCHEDULER_USER_INIT";
     public static final String EXTRA_SCHEDULER_ID = "extra_scheduler_id";
     public static final String SCHEDULE_TRIGGER = "trigger";
     public static final String SCHEDULE_ACTION = "action";
@@ -102,6 +104,7 @@ public class Scheduler extends Aware_Sensor {
     private static String TAG = "AWARE::Scheduler";
 
     private static final DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
+    public static boolean hasUserInit;
 
     /**
      * Save the defined scheduled task
@@ -668,6 +671,8 @@ public class Scheduler extends Aware_Sensor {
                                 for (int i = 0; i < contexts.length(); i++) {
                                     String context = contexts.getString(i);
                                     filter.addAction(context);
+                                    if(Objects.equals(context, ACTION_AWARE_SCHEDULER_USER_INIT))
+                                        hasUserInit = true;
                                 }
 
                                 BroadcastReceiver listener = new BroadcastReceiver() {
