@@ -1,8 +1,6 @@
 package com.aware.phone.ui
 
-import android.content.ComponentName
-import android.content.DialogInterface
-import android.content.Intent
+import android.content.*
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.Log
@@ -28,6 +26,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
     private lateinit var permissionsHandler: PermissionsHandler
 
+
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
         (supportActionBar as ActionBar).setDisplayHomeAsUpEnabled(false)
@@ -36,9 +35,36 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.aware_ui_participant)
         permissionsHandler = PermissionsHandler(this)
         checkForRevokedPermissions()
+        registerEsmReceiver()
+    }
+
+    private fun registerEsmReceiver() {
+
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                intent?.let {
+                    when (it.action) {
+                        Scheduler.ACTION_AWARE_ENABLE_USER_INIT -> {
+                            aware_participant_esm.aware_item.visibility = View.VISIBLE
+                        }
+                        Scheduler.ACTION_AWARE_DISABLE_USER_INIT -> {
+                            aware_participant_esm.aware_item.visibility = View.GONE
+                        }
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter().apply {
+            addAction(Scheduler.ACTION_AWARE_ENABLE_USER_INIT)
+            addAction(Scheduler.ACTION_AWARE_DISABLE_USER_INIT)
+        }
+
+        registerReceiver(receiver, filter)
     }
 
     private fun checkForRevokedPermissions() {
@@ -179,7 +205,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             grantAccessibility()
         }
 
-        if(Scheduler.hasUserInit){
+        if(Scheduler.hasUserInit) {
             aware_participant_esm.aware_item.visibility = View.VISIBLE
         } else {
             aware_participant_esm.aware_item.visibility = View.GONE
@@ -283,4 +309,5 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             )
         )
     }
+
 }
