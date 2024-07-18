@@ -3,7 +3,6 @@ package com.aware.phone.ui
 import android.content.*
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
@@ -25,6 +24,8 @@ import kotlinx.android.synthetic.main.aware_ui_participant.*
 class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallback {
 
     private lateinit var permissionsHandler: PermissionsHandler
+    private val esmButtons = mutableMapOf<String, View>()
+    private val esms = ArrayList<String>()
 
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
@@ -48,23 +49,51 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             override fun onReceive(context: Context?, intent: Intent?) {
                 intent?.let {
                     when (it.action) {
-                        Scheduler.ACTION_AWARE_ENABLE_USER_INIT -> {
-                            aware_participant_esm.aware_item.visibility = View.VISIBLE
+                        Scheduler.ACTION_AWARE_PARTICIPANT_ESM_UPDATE -> {
+                            val esmExtras = intent.getSerializableExtra(Scheduler.EXTRA_ESM_DATA ) as java.util.ArrayList<String>
+                            esmExtras.map { esm ->
+                                if(!esms.contains(esm)) {
+                                    esms.add(esm)
+                                    val esmView = layoutInflater.inflate(R.layout.aware_item_layout, esm_container, false).apply {
+                                        aware_item_title.text = AwareParticipantItems.awareParticipantItems[4].title
+                                        aware_item_description.text = AwareParticipantItems.awareParticipantItems[4].description
+                                        aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this@AwareParticipant, R.color.primary))
+                                        aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[4].image)
+                                        aware_item.setOnClickListener {
+                                            sendBroadcast(
+                                                Intent(esm)
+                                            )
+                                        }
+                                    }
+                                    esmButtons[esm] = esmView
+                                    esm_container.addView(esmView)
+                                }
+                            }
+                            val previousSet = HashSet<String>(esms)
+                            val newSet = HashSet<String>(esmExtras)
+                            previousSet.removeAll(newSet)
+                            previousSet.map { context ->
+                                esmButtons[context]?.let { view ->
+                                    esm_container.removeView(view)
+                                    esmButtons.remove(context)
+                                    esms.remove(context)
+                                }
+                            }
                         }
-                        Scheduler.ACTION_AWARE_DISABLE_USER_INIT -> {
-                            aware_participant_esm.aware_item.visibility = View.GONE
-                        }
+                        else -> {}
                     }
                 }
             }
         }
 
         val filter = IntentFilter().apply {
-            addAction(Scheduler.ACTION_AWARE_ENABLE_USER_INIT)
-            addAction(Scheduler.ACTION_AWARE_DISABLE_USER_INIT)
+            addAction(Scheduler.ACTION_AWARE_PARTICIPANT_ESM_UPDATE)
         }
 
         registerReceiver(receiver, filter)
+        startService(
+            Intent(this@AwareParticipant, Scheduler::class.java)
+        )
     }
 
     private fun checkForRevokedPermissions() {
@@ -136,16 +165,6 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             quitStudy.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
             startActivity(quitStudy)
         }
-
-        aware_participant_esm.aware_item_title.text = AwareParticipantItems.awareParticipantItems[4].title
-        aware_participant_esm.aware_item_description.text = AwareParticipantItems.awareParticipantItems[4].description
-        aware_participant_esm.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
-        aware_participant_esm.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[4].image)
-        aware_participant_esm.aware_item.setOnClickListener {
-            sendBroadcast(
-                Intent(Scheduler.ACTION_AWARE_SCHEDULER_USER_INIT)
-            )
-        }
     }
 
     private fun populateRevokedPermissionLayout() {
@@ -205,11 +224,6 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             grantAccessibility()
         }
 
-        if(Scheduler.hasUserInit) {
-            aware_participant_esm.aware_item.visibility = View.VISIBLE
-        } else {
-            aware_participant_esm.aware_item.visibility = View.GONE
-        }
     }
 
     private fun updatePermissionList() {

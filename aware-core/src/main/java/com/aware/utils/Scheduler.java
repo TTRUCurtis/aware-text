@@ -45,8 +45,8 @@ public class Scheduler extends Aware_Sensor {
     public static final String ACTION_AWARE_SCHEDULER_CHECK = "ACTION_AWARE_SCHEDULER_CHECK";
     public static final String ACTION_AWARE_SCHEDULER_TRIGGERED = "ACTION_AWARE_SCHEDULER_TRIGGERED";
     public static final String ACTION_AWARE_SCHEDULER_USER_INIT = "ACTION_AWARE_SCHEDULER_USER_INIT";
-    public static final String ACTION_AWARE_ENABLE_USER_INIT = "ACTION_AWARE_ENABLE_USER_INIT";
-    public static final String ACTION_AWARE_DISABLE_USER_INIT = "ACTION_AWARE_DISABLE_USER_INIT";
+    public static final String ACTION_AWARE_PARTICIPANT_ESM_UPDATE = "ACTION_AWARE_PARTICIPANT_ESM_UPDATE";
+    public static final String EXTRA_ESM_DATA = "EXTRA_ESM_DATA";
     public static final String EXTRA_SCHEDULER_ID = "extra_scheduler_id";
     public static final String SCHEDULE_TRIGGER = "trigger";
     public static final String SCHEDULE_ACTION = "action";
@@ -106,7 +106,7 @@ public class Scheduler extends Aware_Sensor {
     private static final String TAG = "AWARE::Scheduler";
 
     private static final DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
-    public static boolean hasUserInit;
+
 
     /**
      * Save the defined scheduled task
@@ -643,7 +643,7 @@ public class Scheduler extends Aware_Sensor {
             if (getApplicationContext().getResources().getBoolean(R.bool.standalone)) {
                 standalone = " OR " + Scheduler_Provider.Scheduler_Data.PACKAGE_NAME + " LIKE 'com.aware.phone'";
             }
-
+            ArrayList<String> esmData = new ArrayList<>();
             Cursor scheduled_tasks = getContentResolver().query(Scheduler_Provider.Scheduler_Data.CONTENT_URI, null, Scheduler_Provider.Scheduler_Data.PACKAGE_NAME + " LIKE '" + getPackageName() + "'" + standalone, null, Scheduler_Provider.Scheduler_Data.TIMESTAMP + " ASC");
             if (scheduled_tasks != null && scheduled_tasks.moveToFirst()) {
 
@@ -661,19 +661,19 @@ public class Scheduler extends Aware_Sensor {
                             continue;
                         }
 
-                        hasUserInit = schedule.getContexts().toString().contains(ACTION_AWARE_SCHEDULER_USER_INIT) && is_trigger(schedule);
-
                         //Schedulers triggered by broadcasts
                         if (schedule.getContexts().length() > 0) {
-
+                            final JSONArray contexts = schedule.getContexts();
                             //Check if we already registered the broadcastreceiver for this schedule
                             if (!schedulerListeners.containsKey(schedule.getScheduleID())) {
 
-                                final JSONArray contexts = schedule.getContexts();
                                 IntentFilter filter = new IntentFilter();
                                 for (int i = 0; i < contexts.length(); i++) {
                                     String context = contexts.getString(i);
                                     filter.addAction(context);
+                                    if (context.contains(ACTION_AWARE_SCHEDULER_USER_INIT) && is_trigger(schedule)) {
+                                        esmData.add(context);
+                                    }
                                 }
 
                                 BroadcastReceiver listener = new BroadcastReceiver() {
@@ -700,6 +700,12 @@ public class Scheduler extends Aware_Sensor {
 
                             } else {
 
+                                for (int i = 0; i < contexts.length(); i++) {
+                                    String context = contexts.getString(i);
+                                    if (context.contains(ACTION_AWARE_SCHEDULER_USER_INIT) && is_trigger(schedule)) {
+                                        esmData.add(context);
+                                    }
+                                }
                                 if (DEBUG)
                                     Log.d(TAG, "Contextual triggers are active: " + schedule.getContexts().toString());
 
@@ -760,12 +766,12 @@ public class Scheduler extends Aware_Sensor {
             } else {
                 if (DEBUG) Log.d(TAG, "No scheduled tasks for " + getPackageName());
             }
-            if (hasUserInit) {
-                sendBroadcast( new Intent(ACTION_AWARE_ENABLE_USER_INIT));
-            } else {
-                sendBroadcast( new Intent(ACTION_AWARE_DISABLE_USER_INIT));
-            }
+
             if (scheduled_tasks != null && !scheduled_tasks.isClosed()) scheduled_tasks.close();
+
+            Intent esm = new Intent(ACTION_AWARE_PARTICIPANT_ESM_UPDATE);
+            esm.putStringArrayListExtra(EXTRA_ESM_DATA, esmData);
+            sendBroadcast(esm);
         }
         return START_STICKY;
     }
