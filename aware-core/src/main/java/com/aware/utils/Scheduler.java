@@ -63,6 +63,7 @@ public class Scheduler extends Aware_Sensor {
     public static final String TRIGGER_CONTEXT = "context";
     public static final String TRIGGER_CONDITION = "condition";
     public static final String TRIGGER_RANDOM = "random";
+    public static final String TRIGGER_USER_INIT = "is_user_init";
     public static final String CONDITION_URI = "condition_uri";
     public static final String CONDITION_WHERE = "condition_where";
     /**
@@ -671,7 +672,7 @@ public class Scheduler extends Aware_Sensor {
                                 for (int i = 0; i < contexts.length(); i++) {
                                     String context = contexts.getString(i);
                                     filter.addAction(context);
-                                    if (context.contains(ACTION_AWARE_SCHEDULER_USER_INIT) && is_trigger(schedule)) {
+                                    if (schedule.getIsUserInit() && is_trigger(schedule)) {
                                         String title = getEsmTitleFromSchedule(schedule);
                                         if(title != null) {
                                             esmData.add(new JSONObject().put("context", context).put("esmTitle", title).toString());
@@ -691,7 +692,7 @@ public class Scheduler extends Aware_Sensor {
                                             performAction(schedule);
                                         }
                                     }
-                                };
+                                };                                                                                                                                     
 
                                 Hashtable<IntentFilter, BroadcastReceiver> scheduler_listener = new Hashtable<>();
                                 scheduler_listener.put(filter, listener);
@@ -707,7 +708,7 @@ public class Scheduler extends Aware_Sensor {
 
                                 for (int i = 0; i < contexts.length(); i++) {
                                     String context = contexts.getString(i);
-                                    if (context.contains(ACTION_AWARE_SCHEDULER_USER_INIT) && is_trigger(schedule)) {
+                                    if (schedule.getIsUserInit() && is_trigger(schedule)) {
 
                                         String title = getEsmTitleFromSchedule(schedule);
                                         if(title != null) {
@@ -1546,6 +1547,18 @@ public class Scheduler extends Aware_Sensor {
 
         public Schedule setMinDate(String minDate) throws JSONException {
             this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_MIN_DATE, minDate);
+            return this;
+        }
+
+        public boolean getIsUserInit() throws JSONException {
+            if(!this.schedule.getJSONObject(SCHEDULE_TRIGGER).has(TRIGGER_USER_INIT)) {
+                this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_USER_INIT, null);
+            }
+            return this.schedule.getJSONObject(SCHEDULE_TRIGGER).getBoolean(TRIGGER_USER_INIT);
+        }
+
+        public Schedule setIsUserInit(boolean isUserInit) throws JSONException{
+            this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_USER_INIT, isUserInit);
             return this;
         }
 

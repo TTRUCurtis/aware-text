@@ -168,6 +168,11 @@ public class Plugin extends Aware_Plugin {
                 }
             }
 
+            if(entry.has("is_user_init")) {
+                boolean isUserInit = entry.getBoolean("is_user_init");
+                schedule.setIsUserInit(isUserInit);
+            }
+
             // TODO support expiration
             // Each ESM question supports esm_expiration_threshold and esm_notification_timeout,
             // but ESMs in Android don't have overall timeouts.
