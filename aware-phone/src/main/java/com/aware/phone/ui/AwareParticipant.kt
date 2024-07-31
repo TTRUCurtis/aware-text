@@ -1,6 +1,7 @@
 package com.aware.phone.ui
 
 import android.content.*
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
@@ -20,6 +21,7 @@ import com.aware.ui.PermissionsHandler
 import com.aware.utils.Scheduler
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.android.synthetic.main.aware_ui_participant.*
+import org.json.JSONObject
 
 class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallback {
 
@@ -50,31 +52,39 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 intent?.let {
                     when (it.action) {
                         Scheduler.ACTION_AWARE_PARTICIPANT_ESM_UPDATE -> {
-                            val esmExtras = intent.getSerializableExtra(Scheduler.EXTRA_ESM_DATA ) as java.util.ArrayList<String>
-                            esmExtras.map { esm ->
-                                if(!esms.contains(esm)) {
-                                    esms.add(esm)
-                                    val esmView = layoutInflater.inflate(R.layout.aware_item_layout, esm_container, false).apply {
-                                        aware_item_title.text = AwareParticipantItems.awareParticipantItems[4].title
-                                        aware_item_description.text = AwareParticipantItems.awareParticipantItems[4].description
+                            val esmExtras = intent.getStringArrayListExtra(Scheduler.EXTRA_ESM_DATA)
+                            val esmContexts = arrayListOf<String>()
+                            esmExtras?.map { esmJson ->
+                                val esmObject = JSONObject(esmJson)
+                                val esmContext = esmObject.getString("context")
+                                esmContexts.add(esmContext)
+
+                                val esmTitle = esmObject.getString("esmTitle")
+
+                                if (!esms.contains(esmContext)) {
+                                    esms.add(esmContext)
+                                    val esmView = layoutInflater.inflate(R.layout.aware_item_layout, esms_container, false).apply {
+                                        aware_item_title.text = esmTitle
+                                        aware_item_description.text = "Answer ESM question"
                                         aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this@AwareParticipant, R.color.primary))
-                                        aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[4].image)
+                                        aware_item_image.setImageResource(R.drawable.ic_esm)
                                         aware_item.setOnClickListener {
                                             sendBroadcast(
-                                                Intent(esm)
+                                                Intent(esmContext)
                                             )
                                         }
                                     }
-                                    esmButtons[esm] = esmView
-                                    esm_container.addView(esmView)
+                                    esmButtons[esmContext] = esmView
+                                    esms_container.addView(esmView)
                                 }
                             }
+
                             val previousSet = HashSet<String>(esms)
-                            val newSet = HashSet<String>(esmExtras)
+                            val newSet = HashSet<String>(esmContexts)
                             previousSet.removeAll(newSet)
                             previousSet.map { context ->
                                 esmButtons[context]?.let { view ->
-                                    esm_container.removeView(view)
+                                    esms_container.removeView(view)
                                     esmButtons.remove(context)
                                     esms.remove(context)
                                 }
@@ -132,35 +142,40 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     private fun populateLayout() {
-        aware_participant_study_info.aware_item_title.text = AwareParticipantItems.awareParticipantItems[0].title
-        aware_participant_study_info.aware_item_description.text =
+        study_info_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[0].title
+        study_info_item.aware_item_description.text =
             "Device Id: ${Aware.getSetting(this@AwareParticipant, Aware_Preferences.DEVICE_ID)}"
-        aware_participant_study_info.aware_item_extra.visibility = View.VISIBLE
+        study_info_item.aware_item_extra.visibility = View.VISIBLE
         applicationContext.contentResolver.query(Aware_Provider.Aware_Studies.CONTENT_URI, null, null, null, null)?.use {
             if(it.moveToFirst()){
-                aware_participant_study_info.aware_item_extra.text =
+                study_info_item.aware_item_extra.text =
                     "Study Name: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))}"
             }
         }
 
-        aware_participant_study_info.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
-        aware_participant_study_info.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[0].image)
+        study_info_item.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
+        study_info_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[0].image)
+        study_info_item.aware_item.setBackgroundColor(Color.TRANSPARENT)
 
-        aware_participant_sync.aware_item_title.text = AwareParticipantItems.awareParticipantItems[2].title
-        aware_participant_sync.aware_item_description.text = AwareParticipantItems.awareParticipantItems[2].description
-        aware_participant_sync.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
-        aware_participant_sync.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[2].image)
-        aware_participant_sync.aware_item.setOnClickListener {
+        sync_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[1].title
+        sync_item.aware_item_description.text = AwareParticipantItems.awareParticipantItems[1].description
+        sync_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[1].image)
+        val syncBackgroundDrawable = ContextCompat.getDrawable(sync_item.aware_item_card.context, R.drawable.item_background_3) as GradientDrawable
+        sync_item.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.green))
+        sync_item.aware_item.background = syncBackgroundDrawable
+        sync_item.aware_item.setOnClickListener {
             Toast.makeText(applicationContext, "Syncing data...", Toast.LENGTH_SHORT).show()
             val sync = Intent(Aware.ACTION_AWARE_SYNC_DATA)
             sendBroadcast(sync)
         }
 
-        aware_participant_quit_study.aware_item_title.text = AwareParticipantItems.awareParticipantItems[3].title
-        aware_participant_quit_study.aware_item_description.text = AwareParticipantItems.awareParticipantItems[3].description
-        aware_participant_quit_study.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
-        aware_participant_quit_study.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[3].image)
-        aware_participant_quit_study.aware_item.setOnClickListener {
+        quit_study_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[2].title
+        quit_study_item.aware_item_description.text = AwareParticipantItems.awareParticipantItems[2].description
+        quit_study_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[2].image)
+        val backgroundDrawable = ContextCompat.getDrawable(quit_study_item.aware_item_card.context, R.drawable.item_background_2) as GradientDrawable
+        quit_study_item.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
+        quit_study_item.aware_item.background = backgroundDrawable
+        quit_study_item.aware_item.setOnClickListener {
             val quitStudy = Intent(this@AwareParticipant, AwareJoinStudy::class.java)
             quitStudy.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
             startActivity(quitStudy)
@@ -168,15 +183,15 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     private fun populateRevokedPermissionLayout() {
-        aware_participant_revoked_permission.aware_item_title.text = AwareParticipantItems.awareParticipantItems[1].title
-        aware_participant_revoked_permission.aware_item_description.text = AwareParticipantItems.awareParticipantItems[1].description
-        aware_participant_revoked_permission.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[1].image)
+        revoked_permission_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[3].title
+        revoked_permission_item.aware_item_description.text = AwareParticipantItems.awareParticipantItems[3].description
+        revoked_permission_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[3].image)
 
-        val backgroundDrawable = ContextCompat.getDrawable(aware_participant_revoked_permission.aware_item_card.context, R.drawable.item_background_2) as GradientDrawable
-        aware_participant_revoked_permission.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
-        aware_participant_revoked_permission.aware_item.background = backgroundDrawable
+        val backgroundDrawable = ContextCompat.getDrawable(revoked_permission_item.aware_item_card.context, R.drawable.item_background_2) as GradientDrawable
+        revoked_permission_item.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
+        revoked_permission_item.aware_item.background = backgroundDrawable
 
-        aware_participant_revoked_permission.aware_item.visibility = View.VISIBLE
+        revoked_permission_item.aware_item.visibility = View.VISIBLE
 
         val mobileVersionPermission = permissionsHandler.getDistinctPermissionsList(revokedPermissions)
         val permissionString = mobileVersionPermission!!.joinToString(separator = ", ")
@@ -184,7 +199,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 "\"Go to settings\", click on \"Permissions\" and Please select " +
                 "\"Allow\" or \"Allow only while using the app\" or \"Ask every time\" for " +
                 "the following permissions: $permissionString"
-        aware_participant_revoked_permission.aware_item.setOnClickListener {
+        revoked_permission_item.aware_item.setOnClickListener {
             AlertDialog.Builder(this@AwareParticipant)
                 .setTitle("Grant Permissions Manually")
                 .setMessage(message)
@@ -199,7 +214,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     private fun removeRevokedPermissionLayout() {
-        aware_participant_revoked_permission.aware_item.visibility = View.GONE
+        revoked_permission_item.aware_item.visibility = View.GONE
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -294,32 +309,25 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 R.drawable.item_background
             ),
             AwareParticipantItem(
-                "Revoked Permission",
-                "Granting permissions from app settings",
-                R.drawable.ic_error,
-                R.id.aware_item_card,
-                R.drawable.item_background_2
-            ),
-            AwareParticipantItem(
                 "Sync Data",
                 "Send any pending data to the AWARE server",
                 R.drawable.ic_sync,
                 R.id.aware_item_card,
-                R.drawable.item_background
+                R.drawable.item_background_3
             ),
             AwareParticipantItem(
                 "Quit Study",
                 "Quit a study you're currently enrolled in",
                 R.drawable.ic_quit,
                 R.id.aware_item_card,
-                R.drawable.item_background
+                R.drawable.item_background_2
             ),
             AwareParticipantItem(
-                "ESM",
-                "Trigger ESM",
-                R.drawable.ic_esm,
+                "Revoked Permission",
+                "Granting permissions from app settings",
+                R.drawable.ic_error,
                 R.id.aware_item_card,
-                R.drawable.item_background
+                R.drawable.item_background_2
             )
         )
     }

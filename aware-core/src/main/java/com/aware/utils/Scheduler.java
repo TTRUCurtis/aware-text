@@ -672,7 +672,12 @@ public class Scheduler extends Aware_Sensor {
                                     String context = contexts.getString(i);
                                     filter.addAction(context);
                                     if (context.contains(ACTION_AWARE_SCHEDULER_USER_INIT) && is_trigger(schedule)) {
-                                        esmData.add(context);
+                                        String title = getEsmTitleFromSchedule(schedule);
+                                        if(title != null) {
+                                            esmData.add(new JSONObject().put("context", context).put("esmTitle", title).toString());
+                                        } else {
+                                            esmData.add(new JSONObject().put("context", context).put("esmTitle", "ESM Question").toString());
+                                        }
                                     }
                                 }
 
@@ -703,7 +708,14 @@ public class Scheduler extends Aware_Sensor {
                                 for (int i = 0; i < contexts.length(); i++) {
                                     String context = contexts.getString(i);
                                     if (context.contains(ACTION_AWARE_SCHEDULER_USER_INIT) && is_trigger(schedule)) {
-                                        esmData.add(context);
+
+                                        String title = getEsmTitleFromSchedule(schedule);
+                                        if(title != null) {
+                                            esmData.add(new JSONObject().put("context", context).put("esmTitle", title).toString());
+                                        } else {
+                                            esmData.add(new JSONObject().put("context", context).put("esmTitle", "ESM Question").toString());
+                                        }
+
                                     }
                                 }
                                 if (DEBUG)
@@ -774,6 +786,26 @@ public class Scheduler extends Aware_Sensor {
             sendBroadcast(esm);
         }
         return START_STICKY;
+    }
+
+    private String getEsmTitleFromSchedule(Schedule schedule) {
+        try {
+            JSONArray extras = schedule.getActionExtras();
+            for (int i = 0; i < extras.length(); i++) {
+                JSONObject extra = extras.getJSONObject(i);
+                if (extra.getString("extra_key").equals("esm")) {
+                    JSONArray esmArray = new JSONArray(extra.getString("extra_value"));
+                    for (int j = 0; j < esmArray.length(); j++) {
+                        JSONObject esmObject = esmArray.getJSONObject(j);
+                        JSONObject esm = esmObject.getJSONObject("esm");
+                        return esm.getString("esm_title");
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
