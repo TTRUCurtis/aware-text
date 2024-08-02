@@ -409,7 +409,6 @@ public class Aware extends Service {
                     last_time = ts;
                     Intent scheduler = new Intent(context, Scheduler.class);
                     scheduler.setAction(Scheduler.ACTION_AWARE_SCHEDULER_CHECK);
-                    scheduler.setAction(Scheduler.ACTION_AWARE_SCHEDULER_USER_INIT);
                     context.startService(scheduler);
                 }
             }

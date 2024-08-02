@@ -44,9 +44,8 @@ public class Scheduler extends Aware_Sensor {
 
     public static final String ACTION_AWARE_SCHEDULER_CHECK = "ACTION_AWARE_SCHEDULER_CHECK";
     public static final String ACTION_AWARE_SCHEDULER_TRIGGERED = "ACTION_AWARE_SCHEDULER_TRIGGERED";
-    public static final String ACTION_AWARE_SCHEDULER_USER_INIT = "ACTION_AWARE_SCHEDULER_USER_INIT";
-    public static final String ACTION_AWARE_PARTICIPANT_ESM_UPDATE = "ACTION_AWARE_PARTICIPANT_ESM_UPDATE";
-    public static final String EXTRA_ESM_DATA = "EXTRA_ESM_DATA";
+    public static final String ACTION_AWARE_PARTICIPANT_ESM_ENABLE = "ACTION_AWARE_PARTICIPANT_ESM_ENABLE";
+    public static final String ACTION_AWARE_PARTICIPANT_ESM_DISABLE = "ACTION_AWARE_PARTICIPANT_ESM_DISABLE";
     public static final String EXTRA_SCHEDULER_ID = "extra_scheduler_id";
     public static final String SCHEDULE_TRIGGER = "trigger";
     public static final String SCHEDULE_ACTION = "action";
@@ -66,6 +65,7 @@ public class Scheduler extends Aware_Sensor {
     public static final String TRIGGER_USER_INIT = "is_user_init";
     public static final String CONDITION_URI = "condition_uri";
     public static final String CONDITION_WHERE = "condition_where";
+    public static final String ESM_BUTTON_TITLE = "esm_button_title";
     /**
      * How many times per day
      */
@@ -644,7 +644,7 @@ public class Scheduler extends Aware_Sensor {
             if (getApplicationContext().getResources().getBoolean(R.bool.standalone)) {
                 standalone = " OR " + Scheduler_Provider.Scheduler_Data.PACKAGE_NAME + " LIKE 'com.aware.phone'";
             }
-            ArrayList<String> esmData = new ArrayList<>();
+
             Cursor scheduled_tasks = getContentResolver().query(Scheduler_Provider.Scheduler_Data.CONTENT_URI, null, Scheduler_Provider.Scheduler_Data.PACKAGE_NAME + " LIKE '" + getPackageName() + "'" + standalone, null, Scheduler_Provider.Scheduler_Data.TIMESTAMP + " ASC");
             if (scheduled_tasks != null && scheduled_tasks.moveToFirst()) {
 
@@ -662,6 +662,18 @@ public class Scheduler extends Aware_Sensor {
                             continue;
                         }
 
+                        if(schedule.getIsUserInit() && is_trigger(schedule)) {
+                            Intent esm = new Intent(ACTION_AWARE_PARTICIPANT_ESM_ENABLE);
+                            esm.putExtra(SCHEDULE_ID, schedule.getScheduleID());
+                            esm.putExtra(ESM_BUTTON_TITLE, schedule.getEsmButtonTitle());
+                            sendBroadcast(esm);
+                            schedule.addContext("ACTION_AWARE_" + schedule.getScheduleID());
+                        } else if(schedule.getIsUserInit() && !is_trigger(schedule)) {
+                            Intent esm = new Intent(ACTION_AWARE_PARTICIPANT_ESM_DISABLE);
+                            esm.putExtra(SCHEDULE_ID, schedule.getScheduleID());
+                            sendBroadcast(esm);
+                        }
+
                         //Schedulers triggered by broadcasts
                         if (schedule.getContexts().length() > 0) {
                             final JSONArray contexts = schedule.getContexts();
@@ -672,14 +684,6 @@ public class Scheduler extends Aware_Sensor {
                                 for (int i = 0; i < contexts.length(); i++) {
                                     String context = contexts.getString(i);
                                     filter.addAction(context);
-                                    if (schedule.getIsUserInit() && is_trigger(schedule)) {
-                                        String title = getEsmTitleFromSchedule(schedule);
-                                        if(title != null) {
-                                            esmData.add(new JSONObject().put("context", context).put("esmTitle", title).toString());
-                                        } else {
-                                            esmData.add(new JSONObject().put("context", context).put("esmTitle", "ESM Question").toString());
-                                        }
-                                    }
                                 }
 
                                 BroadcastReceiver listener = new BroadcastReceiver() {
@@ -705,25 +709,9 @@ public class Scheduler extends Aware_Sensor {
                                     Log.d(TAG, "Registered a contextual trigger for " + contexts.toString());
 
                             } else {
-
-                                for (int i = 0; i < contexts.length(); i++) {
-                                    String context = contexts.getString(i);
-                                    if (schedule.getIsUserInit() && is_trigger(schedule)) {
-
-                                        String title = getEsmTitleFromSchedule(schedule);
-                                        if(title != null) {
-                                            esmData.add(new JSONObject().put("context", context).put("esmTitle", title).toString());
-                                        } else {
-                                            esmData.add(new JSONObject().put("context", context).put("esmTitle", "ESM Question").toString());
-                                        }
-
-                                    }
-                                }
                                 if (DEBUG)
                                     Log.d(TAG, "Contextual triggers are active: " + schedule.getContexts().toString());
-
                             }
-
                             continue;
                         }
 
@@ -781,32 +769,8 @@ public class Scheduler extends Aware_Sensor {
             }
 
             if (scheduled_tasks != null && !scheduled_tasks.isClosed()) scheduled_tasks.close();
-
-            Intent esm = new Intent(ACTION_AWARE_PARTICIPANT_ESM_UPDATE);
-            esm.putStringArrayListExtra(EXTRA_ESM_DATA, esmData);
-            sendBroadcast(esm);
         }
         return START_STICKY;
-    }
-
-    private String getEsmTitleFromSchedule(Schedule schedule) {
-        try {
-            JSONArray extras = schedule.getActionExtras();
-            for (int i = 0; i < extras.length(); i++) {
-                JSONObject extra = extras.getJSONObject(i);
-                if (extra.getString("extra_key").equals("esm")) {
-                    JSONArray esmArray = new JSONArray(extra.getString("extra_value"));
-                    for (int j = 0; j < esmArray.length(); j++) {
-                        JSONObject esmObject = esmArray.getJSONObject(j);
-                        JSONObject esm = esmObject.getJSONObject("esm");
-                        return esm.getString("esm_title");
-                    }
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     @Override
@@ -941,7 +905,7 @@ public class Scheduler extends Aware_Sensor {
             // For example, if we have an hour condition, it shouldn't run twice in an hour, but it
             // should run multiple times in the same day.
             Boolean execute_not_same_interval = true;
-            boolean containsUserInitContext = schedule.getContexts().toString().contains(Scheduler.ACTION_AWARE_SCHEDULER_USER_INIT);
+            boolean containsUserInitContext = schedule.getIsUserInit();
 
             Boolean execute_month = null;
             if (schedule.getMonths().length() > 0) {
@@ -1561,6 +1525,16 @@ public class Scheduler extends Aware_Sensor {
             this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_USER_INIT, isUserInit);
             return this;
         }
+
+        public String getEsmButtonTitle() throws JSONException {
+            return this.schedule.getString(ESM_BUTTON_TITLE);
+        }
+
+        public Schedule setEsmButtonTitle(String title) throws JSONException{
+            this.schedule.put(ESM_BUTTON_TITLE, title);
+            return this;
+        }
+
 
         /**
          * Get scheduled max date (MM-dd-yyyy format).

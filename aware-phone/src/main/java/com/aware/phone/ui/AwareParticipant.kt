@@ -26,9 +26,7 @@ import org.json.JSONObject
 class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallback {
 
     private lateinit var permissionsHandler: PermissionsHandler
-    private val esmButtons = mutableMapOf<String, View>()
-    private val esms = ArrayList<String>()
-
+    private val esmButtons = mutableMapOf<String?, View?>()
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
@@ -51,43 +49,32 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             override fun onReceive(context: Context?, intent: Intent?) {
                 intent?.let {
                     when (it.action) {
-                        Scheduler.ACTION_AWARE_PARTICIPANT_ESM_UPDATE -> {
-                            val esmExtras = intent.getStringArrayListExtra(Scheduler.EXTRA_ESM_DATA)
-                            val esmContexts = arrayListOf<String>()
-                            esmExtras?.map { esmJson ->
-                                val esmObject = JSONObject(esmJson)
-                                val esmContext = esmObject.getString("context")
-                                esmContexts.add(esmContext)
-
-                                val esmTitle = esmObject.getString("esmTitle")
-
-                                if (!esms.contains(esmContext)) {
-                                    esms.add(esmContext)
-                                    val esmView = layoutInflater.inflate(R.layout.aware_item_layout, esms_container, false).apply {
-                                        aware_item_title.text = esmTitle
-                                        aware_item_description.text = "Answer ESM question"
-                                        aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this@AwareParticipant, R.color.primary))
-                                        aware_item_image.setImageResource(R.drawable.ic_esm)
-                                        aware_item.setOnClickListener {
-                                            sendBroadcast(
-                                                Intent(esmContext)
-                                            )
-                                        }
+                        Scheduler.ACTION_AWARE_PARTICIPANT_ESM_ENABLE -> {
+                            val esmId = it.getStringExtra(Scheduler.SCHEDULE_ID)
+                            if(!esmButtons.containsKey(esmId)) {
+                                val esmTitle = it.getStringExtra(Scheduler.ESM_BUTTON_TITLE);
+                                val esmView = layoutInflater.inflate(R.layout.aware_item_layout, esms_container, false).apply {
+                                    aware_item_title.text = esmTitle
+                                    aware_item_description.text = "Respond to questionnaire"
+                                    aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this@AwareParticipant, R.color.primary))
+                                    aware_item_image.setImageResource(R.drawable.ic_esm)
+                                    aware_item.setOnClickListener {
+                                        sendBroadcast(
+                                            Intent("ACTION_AWARE_${esmId}")
+                                        )
                                     }
-                                    esmButtons[esmContext] = esmView
-                                    esms_container.addView(esmView)
                                 }
+                                esmButtons[esmId] = esmView
+                                esms_container.addView(esmView)
+                            } else {
                             }
-
-                            val previousSet = HashSet<String>(esms)
-                            val newSet = HashSet<String>(esmContexts)
-                            previousSet.removeAll(newSet)
-                            previousSet.map { context ->
-                                esmButtons[context]?.let { view ->
-                                    esms_container.removeView(view)
-                                    esmButtons.remove(context)
-                                    esms.remove(context)
-                                }
+                        }
+                        Scheduler.ACTION_AWARE_PARTICIPANT_ESM_DISABLE -> {
+                            val esmId = it.getStringExtra(Scheduler.SCHEDULE_ID)
+                            if(esmButtons.containsKey(esmId)) {
+                                val view = esmButtons[esmId]
+                                esms_container.removeView(view)
+                                esmButtons.remove(esmId)
                             }
                         }
                         else -> {}
@@ -97,10 +84,12 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         }
 
         val filter = IntentFilter().apply {
-            addAction(Scheduler.ACTION_AWARE_PARTICIPANT_ESM_UPDATE)
+            addAction(Scheduler.ACTION_AWARE_PARTICIPANT_ESM_ENABLE)
+            addAction(Scheduler.ACTION_AWARE_PARTICIPANT_ESM_DISABLE)
         }
 
         registerReceiver(receiver, filter)
+
         startService(
             Intent(this@AwareParticipant, Scheduler::class.java)
         )

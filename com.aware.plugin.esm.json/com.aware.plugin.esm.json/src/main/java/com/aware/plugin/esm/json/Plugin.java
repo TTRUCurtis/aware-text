@@ -173,6 +173,11 @@ public class Plugin extends Aware_Plugin {
                 schedule.setIsUserInit(isUserInit);
             }
 
+            if(entry.has("notification_title")) {
+                String title = entry.getString("notification_title");
+                schedule.setEsmButtonTitle(title);
+            }
+
             // TODO support expiration
             // Each ESM question supports esm_expiration_threshold and esm_notification_timeout,
             // but ESMs in Android don't have overall timeouts.
