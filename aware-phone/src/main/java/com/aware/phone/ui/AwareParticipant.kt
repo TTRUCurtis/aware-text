@@ -1,9 +1,11 @@
 package com.aware.phone.ui
 
+import android.annotation.SuppressLint
 import android.content.*
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
@@ -43,6 +45,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         registerEsmReceiver()
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun registerEsmReceiver() {
 
         val receiver = object : BroadcastReceiver() {
@@ -62,6 +65,17 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                                         sendBroadcast(
                                             Intent("ACTION_AWARE_${esmId}")
                                         )
+                                    }
+                                    aware_item.setOnTouchListener { v, event ->
+                                        when(event.action) {
+                                            MotionEvent.ACTION_DOWN -> {
+                                                v.alpha = 0.5f
+                                            }
+                                            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                                                v.alpha = 1.0f
+                                            }
+                                        }
+                                        false
                                     }
                                 }
                                 esmButtons[esmId] = esmView
@@ -130,6 +144,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun populateLayout() {
         study_info_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[0].title
         study_info_item.aware_item_description.text =
@@ -157,7 +172,17 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             val sync = Intent(Aware.ACTION_AWARE_SYNC_DATA)
             sendBroadcast(sync)
         }
-
+        sync_item.aware_item.setOnTouchListener { v, event ->
+            when(event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    v.alpha = 0.5f
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.alpha = 1.0f
+                }
+            }
+            false
+        }
         quit_study_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[2].title
         quit_study_item.aware_item_description.text = AwareParticipantItems.awareParticipantItems[2].description
         quit_study_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[2].image)
@@ -169,8 +194,19 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             quitStudy.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
             startActivity(quitStudy)
         }
+        quit_study_item.aware_item.setOnTouchListener { v, event ->
+            when(event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    v.alpha = 0.5f
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.alpha = 1.0f
+                }
+            }
+            false
+        }
     }
-
+    @SuppressLint("ClickableViewAccessibility")
     private fun populateRevokedPermissionLayout() {
         revoked_permission_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[3].title
         revoked_permission_item.aware_item_description.text = AwareParticipantItems.awareParticipantItems[3].description
@@ -199,6 +235,18 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                     permissionsHandler.openAppSettings()
                 })
                 .show()
+        }
+
+        revoked_permission_item.aware_item.setOnTouchListener { v, event ->
+            when(event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    v.alpha = 0.5f
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.alpha = 0.1f
+                }
+            }
+            false
         }
     }
 

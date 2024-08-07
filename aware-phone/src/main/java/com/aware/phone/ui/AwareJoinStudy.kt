@@ -154,6 +154,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                     aware_join_study_info.aware_item_extra.visibility = View.VISIBLE
                     aware_join_study_info.aware_item_extra.text =
                         "Researcher: ${study.getStringValue(Key.STUDY_PI)}"
+                    aware_join_study_info.aware_item.setBackgroundColor(Color.TRANSPARENT)
                 } catch(e: JSONException) { e.printStackTrace() }
                 studyConfigs?.let {
                     populateStudyInfo(it)
