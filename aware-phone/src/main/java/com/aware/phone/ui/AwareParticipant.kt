@@ -2,11 +2,10 @@ package com.aware.phone.ui
 
 import android.annotation.SuppressLint
 import android.content.*
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AlertDialog
@@ -23,7 +22,6 @@ import com.aware.ui.PermissionsHandler
 import com.aware.utils.Scheduler
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.android.synthetic.main.aware_ui_participant.*
-import org.json.JSONObject
 
 class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallback {
 
@@ -54,9 +52,10 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                     when (it.action) {
                         Scheduler.ACTION_AWARE_PARTICIPANT_ESM_ENABLE -> {
                             val esmId = it.getStringExtra(Scheduler.SCHEDULE_ID)
+                            ap_esm_container_title.text = "FOR YOU TO COMPLETE"
                             if(!esmButtons.containsKey(esmId)) {
                                 val esmTitle = it.getStringExtra(Scheduler.ESM_BUTTON_TITLE);
-                                val esmView = layoutInflater.inflate(R.layout.aware_item_layout, esms_container, false).apply {
+                                val esmView = layoutInflater.inflate(R.layout.aware_item_layout, ap_esm_container, false).apply {
                                     aware_item_title.text = esmTitle
                                     aware_item_description.text = "Respond to questionnaire"
                                     aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this@AwareParticipant, R.color.primary))
@@ -79,15 +78,28 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                                     }
                                 }
                                 esmButtons[esmId] = esmView
-                                esms_container.addView(esmView)
-                            } else {
+                                if (ap_esm_container.childCount > 0) {
+                                    val divider = View(this@AwareParticipant).apply {
+                                        layoutParams = LinearLayout.LayoutParams(
+                                            LinearLayout.LayoutParams.MATCH_PARENT,
+                                            3
+                                        ).apply {
+                                            setMargins(0, 0, 0, 0)
+                                        }
+                                        setBackgroundColor(
+                                            ContextCompat.getColor(this@AwareParticipant, R.color.grey)
+                                        )
+                                    }
+                                    ap_esm_container.addView(divider)
+                                }
+                                ap_esm_container.addView(esmView)
                             }
                         }
                         Scheduler.ACTION_AWARE_PARTICIPANT_ESM_DISABLE -> {
                             val esmId = it.getStringExtra(Scheduler.SCHEDULE_ID)
                             if(esmButtons.containsKey(esmId)) {
                                 val view = esmButtons[esmId]
-                                esms_container.removeView(view)
+                                ap_esm_container.removeView(view)
                                 esmButtons.remove(esmId)
                             }
                         }
@@ -146,27 +158,23 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
     @SuppressLint("ClickableViewAccessibility")
     private fun populateLayout() {
-        study_info_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[0].title
-        study_info_item.aware_item_description.text =
+
+        ap_icon_image.setImageResource(R.drawable.ic_launcher_aware)
+
+        ap_study.text = AwareParticipantItems.awareParticipantItems[0].title
+        ap_device_id.text =
             "Device Id: ${Aware.getSetting(this@AwareParticipant, Aware_Preferences.DEVICE_ID)}"
-        study_info_item.aware_item_extra.visibility = View.VISIBLE
         applicationContext.contentResolver.query(Aware_Provider.Aware_Studies.CONTENT_URI, null, null, null, null)?.use {
             if(it.moveToFirst()){
-                study_info_item.aware_item_extra.text =
+                ap_study_title.text =
                     "Study Name: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))}"
             }
         }
 
-        study_info_item.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.primary))
-        study_info_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[0].image)
-        study_info_item.aware_item.setBackgroundColor(Color.TRANSPARENT)
-
         sync_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[1].title
         sync_item.aware_item_description.text = AwareParticipantItems.awareParticipantItems[1].description
         sync_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[1].image)
-        val syncBackgroundDrawable = ContextCompat.getDrawable(sync_item.aware_item_card.context, R.drawable.item_background_3) as GradientDrawable
         sync_item.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.green))
-        sync_item.aware_item.background = syncBackgroundDrawable
         sync_item.aware_item.setOnClickListener {
             Toast.makeText(applicationContext, "Syncing data...", Toast.LENGTH_SHORT).show()
             val sync = Intent(Aware.ACTION_AWARE_SYNC_DATA)
@@ -186,9 +194,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         quit_study_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[2].title
         quit_study_item.aware_item_description.text = AwareParticipantItems.awareParticipantItems[2].description
         quit_study_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[2].image)
-        val backgroundDrawable = ContextCompat.getDrawable(quit_study_item.aware_item_card.context, R.drawable.item_background_2) as GradientDrawable
         quit_study_item.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
-        quit_study_item.aware_item.background = backgroundDrawable
         quit_study_item.aware_item.setOnClickListener {
             val quitStudy = Intent(this@AwareParticipant, AwareJoinStudy::class.java)
             quitStudy.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
@@ -205,18 +211,18 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             }
             false
         }
+        ap_study_options_title.text = "AWARE STUDY OPTIONS"
     }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun populateRevokedPermissionLayout() {
         revoked_permission_item.aware_item_title.text = AwareParticipantItems.awareParticipantItems[3].title
         revoked_permission_item.aware_item_description.text = AwareParticipantItems.awareParticipantItems[3].description
         revoked_permission_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[3].image)
 
-        val backgroundDrawable = ContextCompat.getDrawable(revoked_permission_item.aware_item_card.context, R.drawable.item_background_2) as GradientDrawable
         revoked_permission_item.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
-        revoked_permission_item.aware_item.background = backgroundDrawable
-
         revoked_permission_item.aware_item.visibility = View.VISIBLE
+
 
         val mobileVersionPermission = permissionsHandler.getDistinctPermissionsList(revokedPermissions)
         val permissionString = mobileVersionPermission!!.joinToString(separator = ", ")
@@ -248,10 +254,13 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             }
             false
         }
+
+        study_options_separator.visibility = View.VISIBLE
     }
 
     private fun removeRevokedPermissionLayout() {
         revoked_permission_item.aware_item.visibility = View.GONE
+        study_options_separator.visibility = View.GONE
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -347,7 +356,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             ),
             AwareParticipantItem(
                 "Sync Data",
-                "Send any pending data to the AWARE server",
+                "Send data to the AWARE server",
                 R.drawable.ic_sync,
                 R.id.aware_item_card,
                 R.drawable.item_background_3
