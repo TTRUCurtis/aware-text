@@ -33,7 +33,6 @@
             android:maxLength="30"
             android:textColor="@color/black"
             android:textSize="36sp"
-            android:textStyle="italic"
             tools:text="Aware Study"/>
 
         <TextView
@@ -124,7 +123,7 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@color/grey" />
+                    android:background="@color/separator_grey" />
                 <include
                     android:id="@+id/quit_study_item"
                     layout="@layout/aware_item_layout"
@@ -134,7 +133,7 @@
                     android:id="@+id/study_options_separator"
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@color/grey" />
+                    android:background="@color/separator_grey" />
                 <include
                     android:id="@+id/revoked_permission_item"
                     layout="@layout/aware_item_layout"

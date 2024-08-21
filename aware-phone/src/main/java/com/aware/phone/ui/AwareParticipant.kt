@@ -87,7 +87,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                                             setMargins(0, 0, 0, 0)
                                         }
                                         setBackgroundColor(
-                                            ContextCompat.getColor(this@AwareParticipant, R.color.grey)
+                                            ContextCompat.getColor(this@AwareParticipant, R.color.separator_grey)
                                         )
                                     }
                                     ap_esm_container.addView(divider)
