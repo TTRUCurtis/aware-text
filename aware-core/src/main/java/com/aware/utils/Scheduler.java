@@ -37,12 +37,15 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Random;
 
 public class Scheduler extends Aware_Sensor {
 
     public static final String ACTION_AWARE_SCHEDULER_CHECK = "ACTION_AWARE_SCHEDULER_CHECK";
     public static final String ACTION_AWARE_SCHEDULER_TRIGGERED = "ACTION_AWARE_SCHEDULER_TRIGGERED";
+    public static final String ACTION_AWARE_PARTICIPANT_ESM_ENABLE = "ACTION_AWARE_PARTICIPANT_ESM_ENABLE";
+    public static final String ACTION_AWARE_PARTICIPANT_ESM_DISABLE = "ACTION_AWARE_PARTICIPANT_ESM_DISABLE";
     public static final String EXTRA_SCHEDULER_ID = "extra_scheduler_id";
     public static final String SCHEDULE_TRIGGER = "trigger";
     public static final String SCHEDULE_ACTION = "action";
@@ -59,8 +62,10 @@ public class Scheduler extends Aware_Sensor {
     public static final String TRIGGER_CONTEXT = "context";
     public static final String TRIGGER_CONDITION = "condition";
     public static final String TRIGGER_RANDOM = "random";
+    public static final String TRIGGER_USER_INIT = "is_user_init";
     public static final String CONDITION_URI = "condition_uri";
     public static final String CONDITION_WHERE = "condition_where";
+    public static final String ESM_BUTTON_TITLE = "esm_button_title";
     /**
      * How many times per day
      */
@@ -99,9 +104,10 @@ public class Scheduler extends Aware_Sensor {
     private static final Hashtable<String, Hashtable<IntentFilter, BroadcastReceiver>> schedulerListeners = new Hashtable<>();
     //String is the scheduler ID, and hashtable contains list of Uri and ContentObservers
     private static final Hashtable<String, Hashtable<Uri, ContentObserver>> schedulerDataObservers = new Hashtable<>();
-    private static String TAG = "AWARE::Scheduler";
+    private static final String TAG = "AWARE::Scheduler";
 
     private static final DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
+
 
     /**
      * Save the defined scheduled task
@@ -653,17 +659,27 @@ public class Scheduler extends Aware_Sensor {
                         if (schedule == null) {
                             if (DEBUG)
                                 Log.e(TAG, "Failed to load schedule... something is wrong with the database.");
-
                             continue;
+                        }
+
+                        if(schedule.getIsUserInit() && is_trigger(schedule)) {
+                            Intent esm = new Intent(ACTION_AWARE_PARTICIPANT_ESM_ENABLE);
+                            esm.putExtra(SCHEDULE_ID, schedule.getScheduleID());
+                            esm.putExtra(ESM_BUTTON_TITLE, schedule.getEsmButtonTitle());
+                            sendBroadcast(esm);
+                            schedule.addContext("ACTION_AWARE_" + schedule.getScheduleID());
+                        } else if(schedule.getIsUserInit() && !is_trigger(schedule)) {
+                            Intent esm = new Intent(ACTION_AWARE_PARTICIPANT_ESM_DISABLE);
+                            esm.putExtra(SCHEDULE_ID, schedule.getScheduleID());
+                            sendBroadcast(esm);
                         }
 
                         //Schedulers triggered by broadcasts
                         if (schedule.getContexts().length() > 0) {
-
+                            final JSONArray contexts = schedule.getContexts();
                             //Check if we already registered the broadcastreceiver for this schedule
                             if (!schedulerListeners.containsKey(schedule.getScheduleID())) {
 
-                                final JSONArray contexts = schedule.getContexts();
                                 IntentFilter filter = new IntentFilter();
                                 for (int i = 0; i < contexts.length(); i++) {
                                     String context = contexts.getString(i);
@@ -680,7 +696,7 @@ public class Scheduler extends Aware_Sensor {
                                             performAction(schedule);
                                         }
                                     }
-                                };
+                                };                                                                                                                                     
 
                                 Hashtable<IntentFilter, BroadcastReceiver> scheduler_listener = new Hashtable<>();
                                 scheduler_listener.put(filter, listener);
@@ -693,12 +709,9 @@ public class Scheduler extends Aware_Sensor {
                                     Log.d(TAG, "Registered a contextual trigger for " + contexts.toString());
 
                             } else {
-
                                 if (DEBUG)
                                     Log.d(TAG, "Contextual triggers are active: " + schedule.getContexts().toString());
-
                             }
-
                             continue;
                         }
 
@@ -754,9 +767,9 @@ public class Scheduler extends Aware_Sensor {
             } else {
                 if (DEBUG) Log.d(TAG, "No scheduled tasks for " + getPackageName());
             }
+
             if (scheduled_tasks != null && !scheduled_tasks.isClosed()) scheduled_tasks.close();
         }
-
         return START_STICKY;
     }
 
@@ -892,12 +905,13 @@ public class Scheduler extends Aware_Sensor {
             // For example, if we have an hour condition, it shouldn't run twice in an hour, but it
             // should run multiple times in the same day.
             Boolean execute_not_same_interval = true;
+            boolean containsUserInitContext = schedule.getIsUserInit();
 
             Boolean execute_month = null;
             if (schedule.getMonths().length() > 0) {
                 execute_month = is_trigger_month(schedule);
                 if (execute_month)
-                    execute_not_same_interval = (previous == null) || !is_same_month(previous, now);
+                    execute_not_same_interval = containsUserInitContext || ((previous == null) || !is_same_month(previous, now));
                 if (DEBUG) Log.d(Scheduler.TAG, "Trigger month: " + execute_month);
             }
 
@@ -905,7 +919,7 @@ public class Scheduler extends Aware_Sensor {
             if (schedule.getWeekdays().length() > 0) {
                 execute_weekdays = is_trigger_weekday(schedule);
                 if (execute_weekdays)
-                    execute_not_same_interval = (previous == null) || !is_same_weekday(previous, now);
+                    execute_not_same_interval = containsUserInitContext || ((previous == null) || !is_same_weekday(previous, now));
                 if (DEBUG) Log.d(Scheduler.TAG, "Trigger weekday: " + execute_weekdays);
             }
 
@@ -913,7 +927,7 @@ public class Scheduler extends Aware_Sensor {
             if (schedule.getHours().length() > 0) {
                 execute_hours = is_trigger_hour(schedule);
                 if (execute_hours)
-                    execute_not_same_interval = (previous == null) || !is_same_hour_day(previous, now);
+                    execute_not_same_interval = containsUserInitContext || ((previous == null) || !is_same_hour_day(previous, now));
                 if (DEBUG) Log.d(Scheduler.TAG, "Trigger hour: " + execute_hours);
             }
 
@@ -921,7 +935,7 @@ public class Scheduler extends Aware_Sensor {
             if (schedule.getMinutes().length() > 0) {
                 execute_minutes = is_trigger_minute(schedule);
                 if (execute_minutes)
-                    execute_not_same_interval = (previous == null) || !is_same_minute_hour(previous, now);
+                    execute_not_same_interval = containsUserInitContext || (previous == null || !is_same_minute_hour(previous, now));
                 if (DEBUG) Log.d(Scheduler.TAG, "Trigger minute: " + execute_minutes);
             }
 
@@ -1500,6 +1514,28 @@ public class Scheduler extends Aware_Sensor {
             return this;
         }
 
+        public boolean getIsUserInit() throws JSONException {
+            if(!this.schedule.getJSONObject(SCHEDULE_TRIGGER).has(TRIGGER_USER_INIT)) {
+                this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_USER_INIT, null);
+            }
+            return this.schedule.getJSONObject(SCHEDULE_TRIGGER).getBoolean(TRIGGER_USER_INIT);
+        }
+
+        public Schedule setIsUserInit(boolean isUserInit) throws JSONException{
+            this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_USER_INIT, isUserInit);
+            return this;
+        }
+
+        public String getEsmButtonTitle() throws JSONException {
+            return this.schedule.getString(ESM_BUTTON_TITLE);
+        }
+
+        public Schedule setEsmButtonTitle(String title) throws JSONException{
+            this.schedule.put(ESM_BUTTON_TITLE, title);
+            return this;
+        }
+
+
         /**
          * Get scheduled max date (MM-dd-yyyy format).
          *
@@ -1770,4 +1806,5 @@ public class Scheduler extends Aware_Sensor {
             }
         }
     }
+
 }

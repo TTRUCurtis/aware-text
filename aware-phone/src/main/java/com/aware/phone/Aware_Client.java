@@ -3,13 +3,12 @@ package com.aware.phone;
 
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.*;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteException;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -18,11 +17,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.*;
 import android.provider.Settings;
-import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -156,6 +154,7 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
         Aware.get_device_info(getApplicationContext());
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setUpQRButton(View awareQRButton) {
 
         ConstraintLayout item = awareQRButton.findViewById(R.id.aware_item);
@@ -185,6 +184,19 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                     qrcode.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(qrcode);
                 }
+            }
+        });
+
+        item.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                int action = event.getAction();
+                if(action == MotionEvent.ACTION_DOWN) {
+                    v.setAlpha(0.5f);
+                } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    v.setAlpha(1.0f);
+                }
+                return false;
             }
         });
     }

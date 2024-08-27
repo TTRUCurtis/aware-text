@@ -6,4 +6,9 @@
     <color name="white">#FFFFFF</color>
     <color name="red">#DF1C1C</color>
     <color name="black">#0B0B0B</color>
+    <color name="green">#1DDC36</color>
+    <color name="grey">#8A8A8F</color>
+    <color name="off_white">#EAEAEF</color>
+    <color name="separator_grey">#C6C6C8</color>
+
 </resources>
