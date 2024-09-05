@@ -1,7 +1,7 @@
 package com.aware.phone.ui.onboarding;
 
-
-
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -45,12 +45,15 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
 
     private ProgressDialog loader;
     private AlertDialog alertDialog;
+    private AlertDialog accessibilityDialog;
     private LinearLayout joinStudyFromTextLayout;
 
     private LinearLayout studyMetadataLayout;
     private TextView titleTextView;
     private TextView descriptionTextView;
     private TextView researcherTextView;
+    private TextView messageTitleTextView;
+    private TextView messageDescriptionTextView;
 
     private Button actionButton;
 
@@ -81,6 +84,8 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
 
         //uri = https://survey.wwbp.org/test/download-app?pid=123
         joinStudyFromTextLayout = findViewById(R.id.layout_join_study_thru_text);
+        messageTitleTextView = findViewById(R.id.msg_title);
+        messageDescriptionTextView = findViewById(R.id.message);
         actionButton = findViewById(R.id.btn_action);
         actionButton.setOnClickListener(v -> {
             Telephony.Sms.getDefaultSmsPackage(this);
@@ -146,6 +151,8 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             researcherTextView.setText(studyMetadata.getResearcher());
 
             actionButton.setText("Join Study");
+            messageTitleTextView.setText("Join Study");
+            messageDescriptionTextView.setText("Click on button below to complete registration.");
             actionButton.setOnClickListener(v -> {
                 viewModel.joinStudy();
             });
@@ -153,12 +160,9 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             if (studyMetadata.showPermissionsNoticeDialog()) {
                 actionButton.setEnabled(false);
                 if (!Aware.is_watch(this)) {
-                    Applications.isAccessibilityServiceActive(this);
+                    Applications.isAccessibilityEnabled(this);
                 }
 
-                Intent whitelisting = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                whitelisting.setData(Uri.parse("package:" + getPackageName()));
-                startActivity(whitelisting);
                 permissionsHandler.requestPermissions(studyMetadata.getPermissions(), this);
 
             } else {
@@ -166,6 +170,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             }
 
         });
+
         viewModel.getJoinedStudySuccessMsg().observe(this, joinedStudyMessage -> {
             if (joinedStudyMessage.showSuccessDialog()) {
                 final SpannableString spannableMsg =
@@ -210,6 +215,73 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         }
     }
 
+    private void requestIgnoreBatteryOptimization() {
+        Intent whitelisting = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        whitelisting.setData(Uri.parse("package:" + getPackageName()));
+        whitelistingResult.launch(whitelisting);
+    }
+
+    private ActivityResultLauncher<Intent> whitelistingResult = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (!Aware.isBatteryOptimizationIgnored(this, getPackageName())) {
+                    new AlertDialog.Builder(this)
+                            .setMessage("To proceed, please allow AWARE to run in the background.")
+                            .setPositiveButton("ok", (dialog, which) -> requestIgnoreBatteryOptimization())
+                            .show();
+                }else if(Aware.isBatteryOptimizationIgnored(this, getPackageName())) {
+                    grantAccessibility();
+                }
+            }
+    );
+
+    private void grantAccessibility() {
+        if (!Aware.is_watch(JoinStudyActivity.this)) {
+            if (accessibilityDialog == null) {
+                accessibilityDialog = new AlertDialog.Builder(JoinStudyActivity.this)
+                        .setMessage("AWARE requires Accessibility access to participate in studies. " +
+                                "Please click \"SETTINGS\" and turn on Accessibility access to continue.")
+                        .setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                permissionsHandler.openAccessibilitySettings();
+                            }
+                        })
+                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                if (!isFinishing() && !isDestroyed()) {
+                                    permissionsHandler.openAccessibilitySettings();
+                                }
+                                accessibilityDialog = null;
+                            }
+                        })
+                        .create();
+            }
+
+            if (!accessibilityDialog.isShowing() && !isFinishing() && !isDestroyed()) {
+                accessibilityDialog.show();
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (Aware.isBatteryOptimizationIgnored(this, getPackageName())) {
+            if (!Applications.isAccessibilityEnabled(this)) {
+                grantAccessibility();
+            } else {
+                if (accessibilityDialog != null && accessibilityDialog.isShowing()) {
+                    accessibilityDialog.dismiss();
+                    accessibilityDialog = null;
+                }
+                actionButton.setEnabled(true);
+            }
+        }
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -218,6 +290,9 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         }
         if (alertDialog != null && alertDialog.isShowing()) {
             alertDialog.cancel();
+        }
+        if (accessibilityDialog != null && accessibilityDialog.isShowing()) {
+            accessibilityDialog.dismiss();
         }
     }
 
@@ -231,10 +306,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
     @Override
     public void onPermissionGranted() {
 
-        Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
-        mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(mainUI);
-        finish();
+        requestIgnoreBatteryOptimization();
     }
 
     @Override
@@ -275,4 +347,6 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 .show();
 
     }
+
+
 }
