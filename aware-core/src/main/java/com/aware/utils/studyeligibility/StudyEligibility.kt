@@ -53,7 +53,7 @@ class StudyEligibility(private val activity: Activity) {
     }
 
 
-    fun checkForSmsPluginStatus(studyConfig: JSONArray?){
+    fun checkForSmsPluginStatus(studyConfig: JSONArray?) {
 
         studyConfig?.let {
             for(i in 0 until studyConfig.length()) {

@@ -11,6 +11,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.text.Html;
@@ -27,8 +29,13 @@ import com.aware.Aware;
 import com.aware.phone.R;
 import com.aware.phone.ui.AwareParticipant;
 import com.aware.ui.PermissionsHandler;
+import com.aware.utils.studyeligibility.StudyEligibility;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 //TODO splash comes here or aware_client depending if a study is already joined.
@@ -58,6 +65,8 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
     private Button actionButton;
 
     private PermissionsHandler permissionsHandler;
+    private ArrayList<String> permissions;
+    private StudyEligibility studyEligibility;
     private Button requestPermissionBtn;
     private TextView permissionRationale;
 
@@ -67,6 +76,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         setContentView(R.layout.activity_join_study);
 
         permissionsHandler = new PermissionsHandler(this);
+        studyEligibility = new StudyEligibility(this);
 
         requestPermissionBtn = findViewById(R.id.request_permission);
         permissionRationale = findViewById(R.id.permission_rationale);
@@ -157,18 +167,29 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 viewModel.joinStudy();
             });
 
+            if(!studyEligibility.hasEligibilityBeenChecked() && studyMetadata.getConfiguration() != null) {
+                try {
+                    studyEligibility.checkForSmsPluginStatus(new JSONArray(studyMetadata.getConfiguration()));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if(studyEligibility.isSmsPluginEnabled()) {
+                permissions = studyMetadata.getPermissions();
+                studyEligibility.showSMSPermissionDialog(permissionsHandler, this);
+            } else {
+                permissionsHandler.requestPermissions(studyMetadata.getPermissions(), this);
+            }
+
             if (studyMetadata.showPermissionsNoticeDialog()) {
                 actionButton.setEnabled(false);
                 if (!Aware.is_watch(this)) {
                     Applications.isAccessibilityEnabled(this);
                 }
-
-                permissionsHandler.requestPermissions(studyMetadata.getPermissions(), this);
-
             } else {
                 actionButton.setEnabled(true);
             }
-
         });
 
         viewModel.getJoinedStudySuccessMsg().observe(this, joinedStudyMessage -> {
@@ -306,7 +327,45 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
     @Override
     public void onPermissionGranted() {
 
-        requestIgnoreBatteryOptimization();
+        if (studyEligibility.isSmsPluginEnabled() && !studyEligibility.hasEligibilityBeenChecked()) {
+            studyEligibility.performStudyEligibilityCheck(this::handleStudyEligibilityResult);
+        } else {
+            requestIgnoreBatteryOptimization();
+        }
+    }
+
+    private void handleStudyEligibilityResult(boolean isEligible) {
+
+        String message = isEligible ? "You passed!" : "You did not pass!";
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setMessage(message)
+                .create();
+
+        dialog.show();
+
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                dialog.dismiss();
+
+                if (isEligible) {
+                    permissionsHandler.requestPermissions(permissions, JoinStudyActivity.this);
+                } else {
+                    studyEligibility.markEligibilityAsUnchecked();
+                    actionButton.setEnabled(true);
+                    actionButton.setText("Retry");
+                    messageTitleTextView.setText("Unable to register for this study");
+                    messageDescriptionTextView.setText("You did not meet the minimum requirements for this study." +
+                            "If you feel this is an error hit retry or contact the study administrator at someemail@nih.gov.");
+                    actionButton.setOnClickListener(v -> {
+                        startActivity(
+                                new Intent(JoinStudyActivity.this, JoinStudyActivity.class)
+                        );
+                        finish();
+                    });
+                }
+            }
+        }, 2000);
     }
 
     @Override
