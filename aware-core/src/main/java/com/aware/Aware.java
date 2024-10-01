@@ -47,6 +47,7 @@ import com.aware.providers.Aware_Provider.Aware_Settings;
 import com.aware.providers.Battery_Provider;
 import com.aware.providers.Scheduler_Provider;
 import com.aware.utils.*;
+import com.aware.utils.serverping.AwareServerPing;
 
 import dalvik.system.DexFile;
 
@@ -633,6 +634,10 @@ public class Aware extends Service {
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 
             if (Aware.DEBUG) Log.d(TAG, "AWARE framework is active...");
+
+            if(Aware.isStudy(this)) {
+                AwareServerPing.INSTANCE.sendStudyStatusPing(Aware.this);
+            }
 
             DEBUG = Aware.getSetting(this, Aware_Preferences.DEBUG_FLAG).equals("true");
             TAG = Aware.getSetting(this, Aware_Preferences.DEBUG_TAG).length() > 0 ? Aware.getSetting(this, Aware_Preferences.DEBUG_TAG) : TAG;

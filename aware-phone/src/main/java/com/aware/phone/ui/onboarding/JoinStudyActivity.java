@@ -149,6 +149,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
 
         viewModel.getStudyMetadataLiveData().observe(this, studyMetadata -> {
             joinStudyFromTextLayout.setVisibility(View.GONE);
+            Aware.get_device_info(JoinStudyActivity.this);
             if (studyMetadataLayout == null) {
                 studyMetadataLayout = findViewById(R.id.layout_study_info);
                 titleTextView = findViewById(R.id.txt_title);

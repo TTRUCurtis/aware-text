@@ -1516,7 +1516,7 @@ public class Scheduler extends Aware_Sensor {
 
         public boolean getIsUserInit() throws JSONException {
             if(!this.schedule.getJSONObject(SCHEDULE_TRIGGER).has(TRIGGER_USER_INIT)) {
-                this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_USER_INIT, null);
+                this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_USER_INIT, false);
             }
             return this.schedule.getJSONObject(SCHEDULE_TRIGGER).getBoolean(TRIGGER_USER_INIT);
         }
