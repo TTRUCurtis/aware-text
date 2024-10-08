@@ -526,10 +526,12 @@ public class Scheduler extends Aware_Sensor {
     private static void clearReceivers(Context c, String schedule_id) {
         if (schedulerListeners.size() == 0) return;
         Hashtable<IntentFilter, BroadcastReceiver> scheduled = schedulerListeners.get(schedule_id);
-        for (IntentFilter filter : scheduled.keySet()) {
-            try {
-                c.unregisterReceiver(scheduled.get(filter));
-            } catch (IllegalArgumentException | NullPointerException e) {
+        if(scheduled != null) {
+            for (IntentFilter filter : scheduled.keySet()) {
+                try {
+                    c.unregisterReceiver(scheduled.get(filter));
+                } catch (IllegalArgumentException | NullPointerException e) {
+                }
             }
         }
         schedulerListeners.remove(schedule_id);

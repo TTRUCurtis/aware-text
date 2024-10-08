@@ -66,6 +66,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
 
     private PermissionsHandler permissionsHandler;
     private ArrayList<String> permissions;
+    private ArrayList<String> deniedPermissions;
     private StudyEligibility studyEligibility;
     private Button requestPermissionBtn;
     private TextView permissionRationale;
@@ -77,7 +78,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
 
         permissionsHandler = new PermissionsHandler(this);
         studyEligibility = new StudyEligibility(this);
-
+        deniedPermissions = new ArrayList<>();
         requestPermissionBtn = findViewById(R.id.request_permission);
         permissionRationale = findViewById(R.id.permission_rationale);
         permissionRationale.setVisibility(View.GONE);
@@ -193,6 +194,38 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             }
         });
 
+        viewModel.getDeniedPermissions().observe(this, deniedPermissions -> {
+
+            JoinStudyActivity.this.deniedPermissions = deniedPermissions;
+            if(deniedPermissions != null && !deniedPermissions.isEmpty()) {
+                List<String> mobileVersionPermissions = permissionsHandler.getDistinctPermissionsList(deniedPermissions);
+                String permissionsString = String.join(", ", mobileVersionPermissions);
+                String message = "Permissions are required to continue in a study. Tap on " +
+                "\"Go to settings\", click on \"Permissions\" and Please select " +
+                        "\"Allow\" or \"Allow only while using the app\" or \"Ask every time\" for " +
+                        "the following permissions: " + permissionsString;
+                messageTitleTextView.setText("Aware: Permanently Denied Permissions");
+                messageDescriptionTextView.setText(message);
+                actionButton.setEnabled(true);
+                actionButton.setText("Go to settings");
+                actionButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        permissionsHandler.openAppSettings();
+                    }
+                });
+            } else {
+                messageTitleTextView.setText("Join Study");
+                messageDescriptionTextView.setText("Click on button below to complete registration.");
+                actionButton.setText("Join Study");
+                actionButton.setEnabled(true);
+                actionButton.setOnClickListener(v -> {
+                    viewModel.joinStudy();
+                });
+                requestIgnoreBatteryOptimization();
+            }
+        });
+
         viewModel.getJoinedStudySuccessMsg().observe(this, joinedStudyMessage -> {
             if (joinedStudyMessage.showSuccessDialog()) {
                 final SpannableString spannableMsg =
@@ -302,6 +335,11 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 actionButton.setEnabled(true);
             }
         }
+
+        if(!deniedPermissions.isEmpty()) {
+            deniedPermissions.removeIf(permission -> permissionsHandler.isPermissionGranted(permission));
+            viewModel.updateDeniedPermissions(deniedPermissions);
+        }
     }
 
     @Override
@@ -323,7 +361,6 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         permissionsHandler.handlePermissionsResult(requestCode, permissions, grantResults);
     }
-
 
     @Override
     public void onPermissionGranted() {
@@ -372,20 +409,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
     @Override
     public void onPermissionDenied(List<String> deniedPermissions) {
 
-        requestPermissionBtn.isEnabled();
-        actionButton.setVisibility(View.GONE);
-        permissionRationale.setVisibility(View.VISIBLE);
-        requestPermissionBtn.setVisibility(View.VISIBLE);
-
-        requestPermissionBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(
-                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                        Uri.fromParts("package", getPackageName(), null)
-                ));
-            }
-        });
+        viewModel.updateDeniedPermissions(new ArrayList<>(deniedPermissions));
 
     }
 
@@ -407,6 +431,5 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 .show();
 
     }
-
 
 }
