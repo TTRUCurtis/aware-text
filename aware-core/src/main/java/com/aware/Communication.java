@@ -104,7 +104,7 @@ public class Communication extends Aware_Sensor {
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
 
-            Cursor lastCall = getContentResolver().query(Calls.CONTENT_URI, null, null, null, Calls.DATE + " DESC LIMIT 1");
+            Cursor lastCall = getContentResolver().query(Calls.CONTENT_URI, null, null, null, Calls.DATE + " DESC");
             if (lastCall != null && lastCall.moveToFirst()) {
 
                 Cursor exists = getContentResolver().query(Calls_Data.CONTENT_URI, null, Calls_Data.TIMESTAMP + "=" + lastCall.getLong(lastCall.getColumnIndex(Calls.DATE)), null, null);
