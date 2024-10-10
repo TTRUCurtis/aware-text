@@ -5,7 +5,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
-
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,25 +15,18 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.text.Html;
-import android.text.SpannableString;
-import android.text.method.LinkMovementMethod;
-import android.text.util.Linkify;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import com.aware.Applications;
 import com.aware.Aware;
 import com.aware.phone.R;
 import com.aware.phone.ui.AwareParticipant;
 import com.aware.ui.PermissionsHandler;
 import com.aware.utils.studyeligibility.StudyEligibility;
-
 import org.json.JSONArray;
 import org.json.JSONException;
-
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,12 +41,9 @@ import java.util.List;
 public class JoinStudyActivity extends AppCompatActivity implements PermissionsHandler.PermissionCallback{
 
     private JoinStudyViewModel viewModel;
-
     private ProgressDialog loader;
-    private AlertDialog alertDialog;
     private AlertDialog accessibilityDialog;
     private LinearLayout joinStudyFromTextLayout;
-
     private LinearLayout studyMetadataLayout;
     private TextView titleTextView;
     private TextView descriptionTextView;
@@ -68,8 +57,6 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
     private ArrayList<String> permissions;
     private ArrayList<String> deniedPermissions;
     private StudyEligibility studyEligibility;
-    private Button requestPermissionBtn;
-    private TextView permissionRationale;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,11 +66,6 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         permissionsHandler = new PermissionsHandler(this);
         studyEligibility = new StudyEligibility(this);
         deniedPermissions = new ArrayList<>();
-        requestPermissionBtn = findViewById(R.id.request_permission);
-        permissionRationale = findViewById(R.id.permission_rationale);
-        permissionRationale.setVisibility(View.GONE);
-        requestPermissionBtn.setVisibility(View.GONE);
-
 
         if (Aware.isStudy(this)) {
             //Redirect the user to the main UI
@@ -315,9 +297,6 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         super.onDestroy();
         if (loader != null && loader.isShowing()) {
             loader.cancel(); //was leaking a window, so need to dismiss here
-        }
-        if (alertDialog != null && alertDialog.isShowing()) {
-            alertDialog.cancel();
         }
         if (accessibilityDialog != null && accessibilityDialog.isShowing()) {
             accessibilityDialog.dismiss();
