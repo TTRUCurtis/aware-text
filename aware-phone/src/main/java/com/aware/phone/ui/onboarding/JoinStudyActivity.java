@@ -167,6 +167,10 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             messageDescriptionTextView.setText("Click on button below to complete registration.");
             actionButton.setOnClickListener(v -> {
                 viewModel.joinStudy();
+                Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
+                mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(mainUI);
+                finish();
             });
 
             if(!studyEligibility.hasEligibilityBeenChecked() && studyMetadata.getConfiguration() != null) {
@@ -224,42 +228,6 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 });
                 requestIgnoreBatteryOptimization();
             }
-        });
-
-        viewModel.getJoinedStudySuccessMsg().observe(this, joinedStudyMessage -> {
-            if (joinedStudyMessage.showSuccessDialog()) {
-                final SpannableString spannableMsg =
-                        new SpannableString(joinedStudyMessage.getDescription() + joinedStudyMessage
-                                .getSurveyUrl());
-                Linkify.addLinks(spannableMsg, Linkify.ALL);
-                alertDialog = new AlertDialog.Builder(this)
-                        .setTitle(joinedStudyMessage.getTitle())
-                        .setMessage(spannableMsg)
-                        .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                            dialog.dismiss();
-                            joinedStudyMessage
-                                    .setShowSuccessDialog(false); //no need to show the dialog again after dismissal
-                        }).show();
-                ((TextView) alertDialog.findViewById(android.R.id.message))
-                        .setMovementMethod(LinkMovementMethod.getInstance());
-            }
-
-            findViewById(R.id.txt_do_not_close_aware).setVisibility(View.VISIBLE);
-            TextView joinedSuccessfully = findViewById(R.id.txt_study_successfully_joined);
-            joinedSuccessfully.setVisibility(View.VISIBLE);
-            joinedSuccessfully.setText(MessageFormat
-                    .format("{0}.\n{1}{2}", joinedStudyMessage.getTitle(), joinedStudyMessage
-                            .getDescription(), joinedStudyMessage.getSurveyUrl()));
-            joinedSuccessfully.setMovementMethod(LinkMovementMethod.getInstance());
-
-            actionButton.setText("Done");
-            actionButton.setOnClickListener(v -> {
-                //Redirect the user to the main UI
-                Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
-                mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(mainUI);
-                finish();
-            });
         });
     }
 
