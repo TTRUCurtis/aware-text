@@ -1,6 +1,7 @@
 package com.aware.phone.ui
 
 import android.annotation.SuppressLint
+import android.app.ProgressDialog
 import android.content.*
 import android.os.Bundle
 import android.view.MotionEvent
@@ -11,17 +12,22 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.aware.Applications
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
 import com.aware.phone.R
 import com.aware.phone.ui.AwareParticipant.AwareParticipantItems.revokedPermissions
+import com.aware.phone.ui.onboarding.JoinStudyActivity
 import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.Scheduler
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.android.synthetic.main.aware_ui_participant.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallback {
 
@@ -196,9 +202,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         quit_study_item.aware_item_image.setImageResource(AwareParticipantItems.awareParticipantItems[2].image)
         quit_study_item.aware_item_card.setCardBackgroundColor(ContextCompat.getColor(this, R.color.red))
         quit_study_item.aware_item.setOnClickListener {
-            val quitStudy = Intent(this@AwareParticipant, AwareJoinStudy::class.java)
-            quitStudy.putExtra(AwareJoinStudy.EXTRA_STUDY_URL, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
-            startActivity(quitStudy)
+            triggerQuitStudyButton()
         }
         quit_study_item.aware_item.setOnTouchListener { v, event ->
             when(event.action) {
@@ -212,6 +216,242 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             false
         }
         ap_study_options_title.text = "AWARE STUDY OPTIONS"
+    }
+
+    private fun triggerQuitStudyButton() {
+        val dbStudy = Aware.getStudy(applicationContext, Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER))
+        if (dbStudy != null && dbStudy.moveToFirst()) {
+            val complianceEntry = ContentValues()
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_TIMESTAMP,
+                System.currentTimeMillis()
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_DEVICE_ID, Aware.getSetting(
+                    applicationContext, Aware_Preferences.DEVICE_ID
+                )
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_KEY,
+                dbStudy.getInt(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_KEY))
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_API,
+                dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_API))
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_URL,
+                dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_URL))
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_PI,
+                dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_PI))
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_CONFIG,
+                dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_CONFIG))
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_JOINED,
+                dbStudy.getLong(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_JOINED))
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_EXIT,
+                dbStudy.getLong(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_EXIT))
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_TITLE,
+                dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_DESCRIPTION,
+                dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_DESCRIPTION))
+            )
+            complianceEntry.put(
+                Aware_Provider.Aware_Studies.STUDY_COMPLIANCE,
+                "attempt to quit study"
+            )
+            contentResolver.insert(
+                Aware_Provider.Aware_Studies.CONTENT_URI,
+                complianceEntry
+            )
+        }
+        if (dbStudy != null && !dbStudy.isClosed) dbStudy.close()
+        AlertDialog.Builder(this@AwareParticipant)
+            .setMessage("Are you sure you want to quit the study?")
+            .setCancelable(false)
+            .setPositiveButton("Yes") { dialogInterface, i ->
+//                btnQuit!!.isEnabled = false
+//                btnQuit!!.alpha = 1f
+//                btnAction!!.isEnabled = false
+//                btnAction!!.alpha = 1f
+                val dbStudy = Aware.getStudy(
+                    applicationContext,
+                    Aware.getSetting(
+                        applicationContext,
+                        Aware_Preferences.WEBSERVICE_SERVER
+                    )
+                )
+                if (dbStudy != null && dbStudy.moveToFirst()) {
+                    val complianceEntry = ContentValues()
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_TIMESTAMP,
+                        System.currentTimeMillis()
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_DEVICE_ID, Aware.getSetting(
+                            applicationContext, Aware_Preferences.DEVICE_ID
+                        )
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_KEY,
+                        dbStudy.getInt(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_KEY))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_API,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_API))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_URL,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_URL))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_PI,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_PI))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_CONFIG,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_CONFIG))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_JOINED,
+                        dbStudy.getLong(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_JOINED))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_EXIT,
+                        System.currentTimeMillis()
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_TITLE,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_DESCRIPTION,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_DESCRIPTION))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_COMPLIANCE,
+                        "quit study"
+                    )
+                    contentResolver.insert(
+                        Aware_Provider.Aware_Studies.CONTENT_URI,
+                        complianceEntry
+                    )
+                }
+                if (dbStudy != null && !dbStudy.isClosed) dbStudy.close()
+                dialogInterface.dismiss()
+                quitStudy()
+            }
+            .setNegativeButton("No") { dialogInterface, i ->
+                val dbStudy = Aware.getStudy(
+                    applicationContext,
+                    Aware.getSetting(
+                        applicationContext,
+                        Aware_Preferences.WEBSERVICE_SERVER
+                    )
+                )
+                if (dbStudy != null && dbStudy.moveToFirst()) {
+                    val complianceEntry = ContentValues()
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_TIMESTAMP,
+                        System.currentTimeMillis()
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_DEVICE_ID, Aware.getSetting(
+                            applicationContext, Aware_Preferences.DEVICE_ID
+                        )
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_KEY,
+                        dbStudy.getInt(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_KEY))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_API,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_API))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_URL,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_URL))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_PI,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_PI))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_CONFIG,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_CONFIG))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_JOINED,
+                        dbStudy.getLong(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_JOINED))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_EXIT,
+                        dbStudy.getLong(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_EXIT))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_TITLE,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_DESCRIPTION,
+                        dbStudy.getString(dbStudy.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_DESCRIPTION))
+                    )
+                    complianceEntry.put(
+                        Aware_Provider.Aware_Studies.STUDY_COMPLIANCE,
+                        "canceled quit"
+                    )
+                    contentResolver.insert(
+                        Aware_Provider.Aware_Studies.CONTENT_URI,
+                        complianceEntry
+                    )
+                }
+                if (dbStudy != null && !dbStudy.isClosed) dbStudy.close()
+                dialogInterface.dismiss()
+            }
+            .setOnDismissListener { //Sync to server the studies statuses
+                val sync = Bundle()
+                sync.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
+                sync.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
+                ContentResolver.requestSync(
+                    Aware.getAWAREAccount(applicationContext), Aware_Provider.getAuthority(
+                        applicationContext
+                    ), sync
+                )
+            }
+            .show()
+    }
+
+    private fun quitStudy() {
+
+        lifecycleScope.launch(Dispatchers.Main) {
+            val progressDialog = ProgressDialog(this@AwareParticipant).apply {
+                setMessage("Quitting study, please wait.")
+                setCancelable(false)
+                setInverseBackgroundForced(false)
+                setOnDismissListener {
+                    startActivity(Intent(this@AwareParticipant, JoinStudyActivity::class.java))
+                }
+                show()
+            }
+            try {
+                withContext(Dispatchers.IO) {
+                    Aware.reset(applicationContext)
+                }
+            } finally {
+                progressDialog.dismiss()
+            }
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
