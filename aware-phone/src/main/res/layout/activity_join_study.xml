@@ -8,20 +8,22 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_margin="16dp">
+
 
         <TextView
             android:id="@+id/msg_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="64dp"
             android:text="Join Study from Text Message"
-            android:textSize="26sp"
             android:textColor="@color/black"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            android:textSize="26sp"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="64dp" />
-
+            app:layout_constraintHorizontal_bias="0.25"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/message"
@@ -30,7 +32,8 @@
             android:layout_marginTop="12dp"
             android:text="@string/you_have_not_signed_up_for_a_study"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@id/msg_title"
             app:layout_constraintTop_toBottomOf="@id/msg_title" />
 
         <Button
@@ -168,30 +171,5 @@
             android:padding="0dp"
             android:text="@string/go_to_text_messages"
             android:textColor="@android:color/white"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="bottom">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/permission_rationale"
-            android:text="Grant permissions to join the study"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Title" />
-
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/request_permission"
-            android:text="Grant Permission"
-            android:padding="16dp"
-            android:background="@color/primaryDark"
-            android:textColor="@android:color/white"
-            />
-
     </LinearLayout>
 </LinearLayout>

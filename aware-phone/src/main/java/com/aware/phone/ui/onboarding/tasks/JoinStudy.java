@@ -13,6 +13,8 @@ import com.aware.phone.ui.onboarding.data.StudyMetadata;
 import com.aware.providers.Aware_Provider;
 import com.aware.utils.Https;
 import com.aware.utils.StudyUtils;
+import com.aware.utils.serverping.AwareServerPing;
+import com.aware.utils.studyeligibility.StudyEligibility;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,6 +29,7 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
 
     private final Application application;
     private final Listener listener;
+    private String socialMediaUrl;
 
     public JoinStudy(Application application, Listener listener) {
         this.application = application;
@@ -56,21 +59,16 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
         }
         if (!study.isClosed()) study.close();
 
+        AwareServerPing.INSTANCE.setDeviceInfo(application);
+        AwareServerPing.INSTANCE.setPermissionsStatus(application, params[0].getPermissions());
+        AwareServerPing.INSTANCE.setStudyInfo(true, application.getSharedPreferences(StudyEligibility.Values.PREFS_NAME,0).getBoolean(StudyEligibility.Values.PREF_ELIGIBILITY_CHECKED_KEY,false));
+
         StudyUtils.applySettings(application, study_configs);
 
         //Last step in joining study
-        String socialMediaUrl = params[0].getSocialMediaUrl();
+        socialMediaUrl = params[0].getSocialMediaUrl();
         if (socialMediaUrl != null) {
-            JSONObject pid = new JSONObject();
-            try {
-                pid.put("pid", Aware.getSetting(application,
-                        Aware_Preferences.DEVICE_ID));
-            } catch (JSONException e) {
-                throw new RuntimeException(e);
-            }
-
-            String response = new Https().dataPOSTJson(socialMediaUrl, pid, true);
-            Log.i("JoinStudy", response);
+            new Https().dataPOSTJson(socialMediaUrl, AwareServerPing.INSTANCE.getRegistrationData(), true);
         }
 
         return null;
@@ -80,6 +78,7 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
         listener.onPostExecute(null);
+        AwareServerPing.INSTANCE.setServerURL(socialMediaUrl+"update/");
     }
 
     public interface Listener {

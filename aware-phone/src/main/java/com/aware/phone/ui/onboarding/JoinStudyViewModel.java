@@ -7,8 +7,6 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
-import com.aware.phone.ui.onboarding.data.JoinedStudyMessage;
 import com.aware.phone.ui.onboarding.data.LoadingIndicator;
 import com.aware.phone.ui.onboarding.data.StudyMetadata;
 import com.aware.phone.ui.onboarding.tasks.GetStudyMetadata;
@@ -22,7 +20,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
     private final MutableLiveData<ArrayList<String>> requiredPermissions = new MutableLiveData<>();
     private final MutableLiveData<StudyMetadata> studyMetadataLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> errorMsgLiveData = new MutableLiveData<>();
-    private final MutableLiveData<JoinedStudyMessage> joinStudySuccessMsg = new MutableLiveData<>();
+    private final MutableLiveData<ArrayList<String>> deniedPermissions = new MutableLiveData<>();
 
     public JoinStudyViewModel(@NonNull Application application) {
         super(application);
@@ -48,10 +46,6 @@ public class JoinStudyViewModel extends AndroidViewModel {
         }
     }
 
-    public LiveData<JoinedStudyMessage> getJoinedStudySuccessMsg() {
-        return joinStudySuccessMsg;
-    }
-
     public LiveData<LoadingIndicator> getLoadingIndicator() {
         return loadingIndicator;
     }
@@ -62,14 +56,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
 
     public void joinStudy() {
         loadingIndicator.setValue(new LoadingIndicator("Joining study", "Please wait..."));
-        new JoinStudy(getApplication(), result -> {
-            loadingIndicator.setValue(null);
-            joinStudySuccessMsg.setValue(new JoinedStudyMessage(
-                    studyMetadataLiveData.getValue().getSurveyUrl(),
-                    "Congratulations! You've successfully registered for this study",
-                    "Please complete this follow-up survey: "
-                    ));
-        }).execute(studyMetadataLiveData.getValue());
+        new JoinStudy(getApplication(), result -> loadingIndicator.setValue(null)).execute(studyMetadataLiveData.getValue());
     }
 
     public MutableLiveData<StudyMetadata> getStudyMetadataLiveData() {
@@ -83,4 +70,13 @@ public class JoinStudyViewModel extends AndroidViewModel {
     public void dismissErrorDialog() {
         errorMsgLiveData.setValue(null);
     }
+
+    public MutableLiveData<ArrayList<String>> getDeniedPermissions() {
+        return deniedPermissions;
+    }
+
+    public void updateDeniedPermissions(ArrayList<String> deniedPermissions) {
+        this.deniedPermissions.setValue(deniedPermissions);
+    }
+
 }

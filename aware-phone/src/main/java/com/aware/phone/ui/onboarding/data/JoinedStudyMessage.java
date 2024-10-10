@@ -1,5 +1,5 @@
 package com.aware.phone.ui.onboarding.data;
-
+//TODO: DELETE CLASS
 public class JoinedStudyMessage {
     private final String surveyUrl;
     private final String title;

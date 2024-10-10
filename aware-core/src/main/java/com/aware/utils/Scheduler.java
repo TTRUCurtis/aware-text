@@ -526,10 +526,12 @@ public class Scheduler extends Aware_Sensor {
     private static void clearReceivers(Context c, String schedule_id) {
         if (schedulerListeners.size() == 0) return;
         Hashtable<IntentFilter, BroadcastReceiver> scheduled = schedulerListeners.get(schedule_id);
-        for (IntentFilter filter : scheduled.keySet()) {
-            try {
-                c.unregisterReceiver(scheduled.get(filter));
-            } catch (IllegalArgumentException | NullPointerException e) {
+        if(scheduled != null) {
+            for (IntentFilter filter : scheduled.keySet()) {
+                try {
+                    c.unregisterReceiver(scheduled.get(filter));
+                } catch (IllegalArgumentException | NullPointerException e) {
+                }
             }
         }
         schedulerListeners.remove(schedule_id);
@@ -1516,7 +1518,7 @@ public class Scheduler extends Aware_Sensor {
 
         public boolean getIsUserInit() throws JSONException {
             if(!this.schedule.getJSONObject(SCHEDULE_TRIGGER).has(TRIGGER_USER_INIT)) {
-                this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_USER_INIT, null);
+                this.schedule.getJSONObject(SCHEDULE_TRIGGER).put(TRIGGER_USER_INIT, false);
             }
             return this.schedule.getJSONObject(SCHEDULE_TRIGGER).getBoolean(TRIGGER_USER_INIT);
         }
