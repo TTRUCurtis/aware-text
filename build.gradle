@@ -45,6 +45,12 @@ allprojects {
         mavenCentral()
         maven { url "https://jitpack.io" } //MPAndroidChart, AWARE
     }
+
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+        }
+    }
 }
 
 task installGitHooks(type: Copy) {

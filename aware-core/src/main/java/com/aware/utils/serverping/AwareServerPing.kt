@@ -24,7 +24,11 @@ object AwareServerPing {
         SERVER_URL?.let {
             val pid = Aware.getSetting(context, Aware_Preferences.DEVICE_ID)
             CoroutineScope(Dispatchers.IO).launch {
-                Https().dataPOSTJson(SERVER_URL, JSONObject().put(PID, pid), true)
+                Https().dataPOSTJson(
+                    SERVER_URL,
+                    JSONObject()
+                        .put(PID, pid)
+                        .put("permissions status", PERMISSIONS_STATUS), true)
             }
         }
     }
