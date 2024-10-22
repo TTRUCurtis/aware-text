@@ -168,10 +168,11 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         ap_icon_image.setImageResource(R.drawable.ic_launcher_aware)
 
         ap_study.text = AwareParticipantItems.awareParticipantItems[0].title
-        ap_device_id.text =
-            "Device Id: ${Aware.getSetting(this@AwareParticipant, Aware_Preferences.DEVICE_ID)}"
+
         applicationContext.contentResolver.query(Aware_Provider.Aware_Studies.CONTENT_URI, null, null, null, null)?.use {
             if(it.moveToFirst()){
+                ap_device_id.text =
+                    "Device Id: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_DEVICE_ID))}"
                 ap_study_title.text =
                     "Study Name: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))}"
             }
