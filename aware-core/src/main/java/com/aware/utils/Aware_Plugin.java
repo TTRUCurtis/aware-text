@@ -1,6 +1,7 @@
 
 package com.aware.utils;
 
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -20,6 +21,7 @@ import com.aware.ui.PermissionHandler;
 import com.aware.ui.PermissionsHandler;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
@@ -114,48 +116,8 @@ public class Aware_Plugin extends Service {
         if (!PERMISSIONS_OK && SHOULD_NOTIFY) {
 
             SHOULD_NOTIFY = false;
+            scheduleDailyNotification();
 
-            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-            Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(getApplicationContext());
-            requestPermissions.putExtra(
-                    PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS,
-                    REQUIRED_PERMISSIONS
-            );
-            requestPermissions.putExtra(
-                    PermissionsHandler.EXTRA_REDIRECT_SERVICE,
-                    getApplicationContext().getPackageName() + "/" + getClass().getName()
-            );
-            requestPermissions.setFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
-            );
-
-            PendingIntent pi = PendingIntent.getActivity(
-                    getApplicationContext(),
-                    123,
-                    requestPermissions,
-                    PendingIntent.FLAG_UPDATE_CURRENT |
-                    PendingIntent.FLAG_IMMUTABLE
-            );
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
-                    .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
-                    .setContentTitle("AWARE: Permission Revoked")
-                    .setContentText("Permissions are required to remain in the study.\nTap to open app and accept permissions.")
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                    .setAutoCancel(true)
-                    .setContentIntent(pi);
-
-            Aware.setNotificationProperties(builder, Aware.AWARE_NOTIFICATION_IMPORTANCE_GENERAL);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                builder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
-
-            try {
-                notificationManager.notify(123, builder.build());
-            } catch (NullPointerException e) {
-                if (Aware.DEBUG) Log.d(Aware.TAG, "Notification exception: " + e);
-            }
         } else {
 
             SHOULD_NOTIFY = true;
@@ -176,6 +138,81 @@ public class Aware_Plugin extends Service {
         }
         return super.onStartCommand(intent, flags, startId);
     }
+
+    private void scheduleDailyNotification() {
+
+        Intent notificationIntent = new Intent(this, NotificationReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                123,
+                notificationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 14);
+        calendar.set(Calendar.MINUTE, 55);
+        calendar.set(Calendar.SECOND, 0);
+
+        if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+            calendar.add(Calendar.DATE, 1);
+        }
+
+        alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_DAY,
+                pendingIntent
+        );
+    }
+
+    public class NotificationReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(context);
+            requestPermissions.putExtra(
+                    PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS,
+                    REQUIRED_PERMISSIONS
+            );
+            requestPermissions.putExtra(
+                    PermissionsHandler.EXTRA_REDIRECT_SERVICE,
+                    context.getPackageName() + "/" + getClass().getName()
+            );
+            requestPermissions.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+            );
+
+            PendingIntent pi = PendingIntent.getActivity(
+                    context,
+                    123,
+                    requestPermissions,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
+                    .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
+                    .setContentTitle("AWARE: Permission Revoked")
+                    .setContentText("Permissions are required to remain in the study.\nTap to open app and accept permissions.")
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
+                    .setContentIntent(pi);
+
+            Aware.setNotificationProperties(builder, Aware.AWARE_NOTIFICATION_IMPORTANCE_GENERAL);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                builder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
+
+            try {
+                notificationManager.notify(123, builder.build());
+            } catch (NullPointerException e) {
+                if (Aware.DEBUG) Log.d(Aware.TAG, "Notification exception: " + e);
+            }
+        }
+    }
+
 
     @Override
     public void onDestroy() {
