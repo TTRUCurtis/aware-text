@@ -2,6 +2,7 @@
 package com.aware.utils;
 
 
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -22,6 +23,7 @@ import com.aware.ui.PermissionHandler;
 import com.aware.ui.PermissionsHandler;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
@@ -59,6 +61,8 @@ public class Aware_Sensor extends Service {
      * Indicates if permissions were accepted OK
      */
     public boolean PERMISSIONS_OK = true;
+
+    public boolean SHOULD_NOTIFY = true;
 
 
     /**
@@ -106,57 +110,49 @@ public class Aware_Sensor extends Service {
             PERMISSIONS_OK = true;
         }
 
-        if (!PERMISSIONS_OK) {
-            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (!PERMISSIONS_OK && SHOULD_NOTIFY) {
 
-            Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(getApplicationContext());
-            requestPermissions.putExtra(
-                    PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS,
-                    REQUIRED_PERMISSIONS
-            );
-            requestPermissions.putExtra(
-                    PermissionsHandler.EXTRA_REDIRECT_SERVICE,
-                    getApplicationContext().getPackageName() + "/" + getClass().getName()
-            );
-            requestPermissions.setFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK
-            );
+            SHOULD_NOTIFY = false;
+            scheduleDailyNotification();
 
-            PendingIntent pi = PendingIntent.getActivity(
-                    getApplicationContext(),
-                    123,
-                    requestPermissions,
-                    PendingIntent.FLAG_UPDATE_CURRENT |
-                            PendingIntent.FLAG_IMMUTABLE
-            );
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
-                    .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
-                    .setContentTitle("AWARE: Permission Revoked")
-                    .setContentText("Permissions are required to remain in the study.\nTap to open app and accept permissions.")
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                    .setAutoCancel(true)
-                    .setContentIntent(pi);
-
-            Aware.setNotificationProperties(builder, Aware.AWARE_NOTIFICATION_IMPORTANCE_GENERAL);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                builder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
-
-            try {
-                notificationManager.notify(123, builder.build());
-            } catch (NullPointerException e) {
-                if (Aware.DEBUG) Log.d(Aware.TAG, "Notification exception: " + e);
-            }
         } else {
-            PERMISSIONS_OK = true;
+
+            SHOULD_NOTIFY = true;
+
             if (Aware.getSetting(this, Aware_Preferences.STATUS_WEBSERVICE).equals("true")) {
                 downloadCertificate(this);
             }
             //Aware.debug(this, "active: " + getClass().getName() + " package: " + getPackageName());
         }
-
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void scheduleDailyNotification() {
+
+        Intent notificationIntent = new Intent(this, Aware_Plugin.NotificationReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                123,
+                notificationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY,9);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+
+        if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+            calendar.add(Calendar.DATE, 1);
+        }
+
+        alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_DAY,
+                pendingIntent
+        );
     }
 
     @Override
