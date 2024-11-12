@@ -1,6 +1,7 @@
 package com.aware.data.settings
 
 import com.aware.Aware_Preferences
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,17 +24,19 @@ class SettingsRepository @Inject constructor(
         settingsDao.insert(key, value)
     }
 
-    val settings by lazy {
-        settingsDao.getSettingsFromStorage() ?: settingsInitializer.initializeSettings()
+    val settings: ConcurrentHashMap<String, String> by lazy {
+        settingsDao.getSettingsFromStorage()?.let { ConcurrentHashMap(it) } ?: ConcurrentHashMap(settingsInitializer.initializeSettings())
             .also { settingsDao.insertAll(it) }
     }
 
+    @Synchronized
     fun reset() {
         val deviceId = settings[Aware_Preferences.DEVICE_ID]
         val deviceLabel = settings[Aware_Preferences.DEVICE_LABEL]
         clearAndReinitialize(deviceId!!, deviceLabel)
     }
 
+    @Synchronized
     private fun clearAndReinitialize(deviceId: String, deviceLabel: String?) {
         settings.clear()
         settingsDao.clear()
