@@ -27,6 +27,7 @@ class SettingsDao @Inject constructor(@ApplicationContext private val appContext
         }
     }
 
+    @Synchronized
     fun insertAll(settings: MutableMap<String, String>) {
         for ((key, value) in settings) {
             setSettingInStorage(key, value)
