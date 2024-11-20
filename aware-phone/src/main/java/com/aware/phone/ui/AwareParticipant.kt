@@ -18,7 +18,6 @@ import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.phone.Aware_Client
 import com.aware.phone.R
-import com.aware.phone.ui.AwareParticipant.AwareParticipantItems.revokedPermissions
 import com.aware.phone.ui.onboarding.JoinStudyActivity
 import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
@@ -33,6 +32,12 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
     private lateinit var permissionsHandler: PermissionsHandler
     private val esmButtons = mutableMapOf<String?, View?>()
+    private var permissions = listOf<String>()
+    private var revokedPermissions = mutableListOf<String>()
+    private val sharedPreferences  by lazy {
+        getSharedPreferences("AwareParticipantPrefs", MODE_PRIVATE)
+    }
+    private var isPermissionsCheck = true
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
@@ -45,8 +50,17 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
         setContentView(R.layout.aware_ui_participant)
         permissionsHandler = PermissionsHandler(this)
-        checkForRevokedPermissions()
+        permissions = intent.getStringArrayListExtra("permissions") ?: getPermissionsFromSharedPrefs()
+        savePermissionsInSharedPrefs()
         registerEsmReceiver()
+    }
+
+    private fun savePermissionsInSharedPrefs() {
+        sharedPreferences.edit().putStringSet("permissions", permissions.toSet()).apply()
+    }
+
+    private fun getPermissionsFromSharedPrefs(): List<String> {
+        return sharedPreferences.getStringSet("permissions", setOf())?.toList() ?: emptyList()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -128,20 +142,12 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     }
 
     private fun checkForRevokedPermissions() {
-        if (intent != null && intent.extras != null) {
-            if(intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) != null) {
-                val permissions =
-                    intent.getSerializableExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS) as java.util.ArrayList<String>?
-
-                for(p in permissions!!) {
-                    if(!permissionsHandler.isPermissionGranted(p)) {
-                        revokedPermissions.add(p)
-                    }
-                }
-                permissionsHandler.requestPermissions(permissions, this)
+        if (isPermissionsCheck) {
+            isPermissionsCheck = false
+            revokedPermissions = permissions.filterNot { permissionsHandler.isPermissionGranted(it) }.toMutableList()
+            if (revokedPermissions.isNotEmpty()) {
+                permissionsHandler.requestPermissions(revokedPermissions, this)
             }
-            if(intent.getStringExtra("Method") == "redirectToAccessibility") grantAccessibility()
-
         }
     }
 
@@ -281,11 +287,8 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         AlertDialog.Builder(this@AwareParticipant)
             .setMessage("Are you sure you want to quit the study?")
             .setCancelable(false)
-            .setPositiveButton("Yes") { dialogInterface, i ->
-//                btnQuit!!.isEnabled = false
-//                btnQuit!!.alpha = 1f
-//                btnAction!!.isEnabled = false
-//                btnAction!!.alpha = 1f
+            .setPositiveButton("Yes") { dialogInterface, _ ->
+
                 val dbStudy = Aware.getStudy(
                     applicationContext,
                     Aware.getSetting(
@@ -490,7 +493,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                     v.alpha = 0.5f
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    v.alpha = 0.1f
+                    v.alpha = 1.0f
                 }
             }
             false
@@ -516,15 +519,20 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
         updatePermissionList()
 
+        checkForRevokedPermissions()
+
         if(revokedPermissions.isNotEmpty()) {
             populateRevokedPermissionLayout()
         }else {
+            isPermissionsCheck = true
             removeRevokedPermissionLayout()
         }
 
         if(!Applications.isAccessibilityEnabled(this@AwareParticipant)) {
             grantAccessibility()
         }
+
+        if(intent.getStringExtra("Method") == "redirectToAccessibility") grantAccessibility()
 
     }
 
@@ -547,12 +555,15 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         if(revokedPermissions.isEmpty()) {
             removeRevokedPermissionLayout()
         }
-        val redirectService = Intent()
-        redirectService.action = Aware_Client.ACTION_AWARE_PERMISSIONS_CHECK
-        val component = intent.getStringExtra(Aware_Client.EXTRA_REDIRECT_SERVICE)!!
-            .split("/").toTypedArray()
-        redirectService.component = ComponentName(component[0], component[1])
-        startService(redirectService)
+
+        if (intent != null && intent.extras != null && intent.hasExtra(PermissionsHandler.EXTRA_REDIRECT_SERVICE)) {
+            val redirectService = Intent()
+            redirectService.action = Aware_Client.ACTION_AWARE_PERMISSIONS_CHECK
+            val component = intent.getStringExtra(Aware_Client.EXTRA_REDIRECT_SERVICE)!!
+                .split("/").toTypedArray()
+            redirectService.component = ComponentName(component[0], component[1])
+            startService(redirectService)
+        }
     }
 
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
@@ -584,8 +595,6 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     )
 
     object AwareParticipantItems {
-
-        var revokedPermissions = mutableListOf<String>()
 
         val awareParticipantItems = mutableListOf(
             AwareParticipantItem(
