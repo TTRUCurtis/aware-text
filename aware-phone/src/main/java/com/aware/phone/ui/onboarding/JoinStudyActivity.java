@@ -150,6 +150,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             actionButton.setOnClickListener(v -> {
                 viewModel.joinStudy();
                 Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
+                mainUI.putStringArrayListExtra("permissions", permissions);
                 mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(mainUI);
                 finish();

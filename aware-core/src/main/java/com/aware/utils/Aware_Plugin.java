@@ -36,7 +36,6 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class Aware_Plugin extends Service {
 
-
     @Inject
     public PermissionHandler permissionHandler;
 
@@ -58,7 +57,7 @@ public class Aware_Plugin extends Service {
     /**
      * Permissions needed for this plugin to run
      */
-    public static ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
+    public ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
 
     /**
      * Plugin is inactive
@@ -113,10 +112,49 @@ public class Aware_Plugin extends Service {
             PERMISSIONS_OK = true;
         }
 
-        if (!PERMISSIONS_OK && SHOULD_NOTIFY) {
+        if (!PERMISSIONS_OK) {
 
+            if(SHOULD_NOTIFY) {
+                NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+
+                Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(this);
+
+                requestPermissions.putExtra(
+                        PermissionsHandler.EXTRA_REDIRECT_SERVICE,
+                        this.getPackageName() + "/" + getClass().getName()
+                );
+                requestPermissions.setFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                );
+
+                PendingIntent pi = PendingIntent.getActivity(
+                        this,
+                        123,
+                        requestPermissions,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                );
+
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
+                        .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
+                        .setContentTitle("AWARE: Permission Revoked")
+                        .setContentText("Permissions are required to remain in the study.\nTap to open app and accept permissions.")
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setAutoCancel(true)
+                        .setContentIntent(pi);
+
+                Aware.setNotificationProperties(builder, Aware.AWARE_NOTIFICATION_IMPORTANCE_GENERAL);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    builder.setChannelId(Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL);
+
+                try {
+                    notificationManager.notify(123, builder.build());
+                } catch (NullPointerException e) {
+                    if (Aware.DEBUG) Log.d(Aware.TAG, "Notification exception: " + e);
+                }
+                scheduleDailyNotification();
+            }
             SHOULD_NOTIFY = false;
-            scheduleDailyNotification();
 
         } else {
 
