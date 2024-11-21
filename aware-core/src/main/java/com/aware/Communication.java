@@ -81,7 +81,7 @@ public class Communication extends Aware_Sensor {
      * Un-official and un-supported SMS provider
      * BEWARE: Might have to change in the future API's as Android evolves...
      */
-    private static final Uri MESSAGES_CONTENT_URI = Uri.parse("content://sms");
+    private static final Uri MESSAGES_CONTENT_URI = Uri.parse("content://mms-sms/");
     private static final int MESSAGE_INBOX = 1;
     private static final int MESSAGE_SENT = 2;
 
@@ -208,73 +208,113 @@ public class Communication extends Aware_Sensor {
         @Override
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
+            handleSmsMessages();
+            handleMmsMessages();
+        }
 
-            Cursor lastMessage = getContentResolver().query(MESSAGES_CONTENT_URI, null, null, null, "date DESC LIMIT 1");
-            if (lastMessage != null && lastMessage.moveToFirst()) {
+        private void handleSmsMessages() {
+            Cursor smsCursor = getContentResolver().query(
+                    Uri.parse("content://sms/"), null, null, null, "date DESC LIMIT 1"
+            );
 
-                Cursor exists = getContentResolver().query(Messages_Data.CONTENT_URI, null, Messages_Data.TIMESTAMP + "=" + lastMessage.getLong(lastMessage.getColumnIndex("date")), null, null);
+            if (smsCursor != null && smsCursor.moveToFirst()) {
+                long timestamp = smsCursor.getLong(smsCursor.getColumnIndex("date"));
+                Cursor exists = getContentResolver().query(
+                        Messages_Data.CONTENT_URI, null,
+                        Messages_Data.TIMESTAMP + "=" + timestamp, null, null
+                );
+
                 if (exists == null || !exists.moveToFirst()) {
+                    ContentValues smsData = new ContentValues();
+                    smsData.put(Messages_Data.TIMESTAMP, timestamp);
+                    smsData.put(Messages_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
 
-                    switch (lastMessage.getInt(lastMessage.getColumnIndex("type"))) {
-                        case MESSAGE_INBOX:
-                            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.STATUS_MESSAGES).equals("true")) {
-                                ContentValues inbox = new ContentValues();
-                                inbox.put(Messages_Data.TIMESTAMP, lastMessage.getLong(lastMessage.getColumnIndex("date")));
-                                inbox.put(Messages_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-                                inbox.put(Messages_Data.TYPE, MESSAGE_INBOX);
-                                inbox.put(Messages_Data.TRACE, Encrypter.formatAndHashAddress(getApplicationContext(), lastMessage.getString(lastMessage.getColumnIndex("address"))));
+                    int smsType = smsCursor.getInt(smsCursor.getColumnIndex("type"));
+                    smsData.put(Messages_Data.TYPE, smsType);
 
-                                try {
-                                    getContentResolver().insert(Messages_Data.CONTENT_URI, inbox);
+                    String smsAddress = smsCursor.getString(smsCursor.getColumnIndex("address"));
+                    smsData.put(Messages_Data.TRACE, Encrypter.formatAndHashAddress(getApplicationContext(), smsAddress));
 
-                                    if (awareSensor != null) awareSensor.onMessage(inbox);
+                    try {
+                        getContentResolver().insert(Messages_Data.CONTENT_URI, smsData);
+                        if (Aware.DEBUG) Log.d(TAG, "Inserted SMS data: " + smsData.toString());
 
-                                } catch (SQLiteException e) {
-                                    if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-                                } catch (SQLException e) {
-                                    if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-                                }
-                            }
+                        if (awareSensor != null) awareSensor.onMessage(smsData);
 
-                            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.STATUS_COMMUNICATION_EVENTS).equals("true")) {
-                                if (Aware.DEBUG) Log.d(TAG, ACTION_AWARE_MESSAGE_RECEIVED);
-                                Intent messageReceived = new Intent(ACTION_AWARE_MESSAGE_RECEIVED);
-                                sendBroadcast(messageReceived);
-                            }
-                            break;
-                        case MESSAGE_SENT:
-                            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.STATUS_MESSAGES).equals("true")) {
-                                ContentValues sent = new ContentValues();
-                                sent.put(Messages_Data.TIMESTAMP, lastMessage.getLong(lastMessage.getColumnIndex("date")));
-                                sent.put(Messages_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-                                sent.put(Messages_Data.TYPE, MESSAGE_SENT);
-                                sent.put(Messages_Data.TRACE, Encrypter.formatAndHashAddress(getApplicationContext(), lastMessage.getString(lastMessage.getColumnIndex("address"))));
-
-                                try {
-                                    getContentResolver().insert(Messages_Data.CONTENT_URI, sent);
-
-                                    if (awareSensor != null) awareSensor.onMessage(sent);
-
-                                } catch (SQLiteException e) {
-                                    if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-                                } catch (SQLException e) {
-                                    if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-                                }
-                            }
-
-                            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.STATUS_COMMUNICATION_EVENTS).equals("true")) {
-                                if (Aware.DEBUG) Log.d(TAG, ACTION_AWARE_MESSAGE_SENT);
-                                Intent messageSent = new Intent(ACTION_AWARE_MESSAGE_SENT);
-                                sendBroadcast(messageSent);
-                            }
-                            break;
+                        String broadcastAction = (smsType == MESSAGE_INBOX) ? ACTION_AWARE_MESSAGE_RECEIVED : ACTION_AWARE_MESSAGE_SENT;
+                        sendBroadcast(new Intent(broadcastAction));
+                    } catch (SQLiteException e) {
+                        if (Aware.DEBUG) Log.d(TAG, e.getMessage());
                     }
                 }
                 if (exists != null && !exists.isClosed()) exists.close();
             }
-            if (lastMessage != null && !lastMessage.isClosed()) lastMessage.close();
+            if (smsCursor != null && !smsCursor.isClosed()) smsCursor.close();
         }
+
+        private void handleMmsMessages() {
+            Cursor mmsCursor = getContentResolver().query(
+                    Uri.parse("content://mms/"), new String[]{"_id", "date", "msg_box"}, null, null, "date DESC LIMIT 1"
+            );
+            if (mmsCursor == null) Log.d(TAG, "MMS query returned null");
+            else if (!mmsCursor.moveToFirst()) Log.d(TAG, "No MMS messages found");
+
+            if (mmsCursor != null && mmsCursor.moveToFirst()) {
+                long timestamp = mmsCursor.getLong(mmsCursor.getColumnIndex("date"));
+                Cursor exists = getContentResolver().query(
+                        Messages_Data.CONTENT_URI, null,
+                        Messages_Data.TIMESTAMP + "=" + timestamp, null, null
+                );
+
+                if (exists == null || !exists.moveToFirst()) {
+                    ContentValues mmsData = new ContentValues();
+                    mmsData.put(Messages_Data.TIMESTAMP, timestamp);
+                    mmsData.put(Messages_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+
+                    int mmsBoxType = mmsCursor.getInt(mmsCursor.getColumnIndex("msg_box"));
+                    mmsData.put(Messages_Data.TYPE, mmsBoxType);
+
+                    String mmsAddress = getMmsAddress(mmsCursor.getLong(mmsCursor.getColumnIndex("_id")));
+                    mmsData.put(Messages_Data.TRACE, Encrypter.formatAndHashAddress(getApplicationContext(), mmsAddress));
+
+                    try {
+                        getContentResolver().insert(Messages_Data.CONTENT_URI, mmsData);
+                        if (Aware.DEBUG) Log.d(TAG, "Inserted MMS data: " + mmsData.toString());
+
+                        if (awareSensor != null) awareSensor.onMessage(mmsData);
+
+                        String broadcastAction = (mmsBoxType == MESSAGE_INBOX) ? ACTION_AWARE_MESSAGE_RECEIVED : ACTION_AWARE_MESSAGE_SENT;
+                        sendBroadcast(new Intent(broadcastAction));
+                    } catch (SQLiteException e) {
+                        if (Aware.DEBUG) Log.d(TAG, e.getMessage());
+                    }
+                }
+                if (exists != null && !exists.isClosed()) exists.close();
+            }
+            if (mmsCursor != null && !mmsCursor.isClosed()) mmsCursor.close();
+        }
+
+        private String getMmsAddress(long messageId) {
+            Uri uri = Uri.parse("content://mms/" + messageId + "/addr");
+            Cursor cursor = getContentResolver().query(uri, null, "type=137", null, null);
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        return cursor.getString(cursor.getColumnIndex("address"));
+                    } else {
+                        if (Aware.DEBUG) Log.d(TAG, "No address found for MMS ID: " + messageId);
+                    }
+                } finally {
+                    cursor.close();
+                }
+            } else {
+                if (Aware.DEBUG) Log.d(TAG, "Failed to query MMS address for ID: " + messageId);
+            }
+            return null;
+        }
+
     }
+
 
     private PhoneState phoneState = new PhoneState();
 
