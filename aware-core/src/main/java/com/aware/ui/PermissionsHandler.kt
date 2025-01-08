@@ -179,13 +179,21 @@ class PermissionsHandler(private val activity: Activity) {
                 Plugins.STUDENT_LIFE_AUDIO -> return listOf(
                     Manifest.permission.RECORD_AUDIO
                 )
-                Plugins.SENSOR_BLUETOOTH -> return listOf(
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.BLUETOOTH,
-                    Manifest.permission.BLUETOOTH_ADMIN,
-                    Manifest.permission.BLUETOOTH_CONNECT,
-                    Manifest.permission.BLUETOOTH_SCAN
-                )
+                Plugins.SENSOR_BLUETOOTH -> return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    listOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.BLUETOOTH,
+                        Manifest.permission.BLUETOOTH_ADMIN,
+                        Manifest.permission.BLUETOOTH_CONNECT,
+                        Manifest.permission.BLUETOOTH_SCAN
+                    )
+                } else {
+                    listOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.BLUETOOTH,
+                        Manifest.permission.BLUETOOTH_ADMIN
+                    )
+                }
                 Plugins.SENSOR_COMMUNICATION -> return listOf(
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.READ_SMS,
