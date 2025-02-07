@@ -151,6 +151,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 viewModel.joinStudy();
                 Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
                 mainUI.putStringArrayListExtra("permissions", permissions);
+                mainUI.putExtra("show_welcome_message", true);
                 mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(mainUI);
                 finish();
@@ -342,7 +343,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                     actionButton.setText("Retry");
                     messageTitleTextView.setText("Unable to register for this study");
                     messageDescriptionTextView.setText("You did not meet the minimum requirements for this study." +
-                            "If you feel this is an error hit retry or contact the study administrator at someemail@nih.gov.");
+                            "If you feel this is an error hit retry or contact the study administrator.");
                     actionButton.setOnClickListener(v -> {
                         startActivity(
                                 new Intent(JoinStudyActivity.this, JoinStudyActivity.class)
