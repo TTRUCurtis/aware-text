@@ -100,9 +100,9 @@ class SentimentAnalysisTest {
 
     @Test
     fun whenNoCategoriesForToken_getScores_returnsEmptyHashMap() {
-        whenever(mockDictionary.getDictionary()).thenReturn(testDictionaryMap)
+        whenever(mockDictionary.getRegularWordsMap()).thenReturn(testDictionaryMap)
         val text = "Hello Kitty"
-        val tokens = classUnderTest.tokenizer(text)
+        val tokens = SentimentAnalysis.Companion.tokenizer(text)
         val map = classUnderTest.getScores(tokens)
         assertEquals(hashMapOf<String, HashMap<String, Pair<Double, Int>>>(), map)
     }
@@ -110,9 +110,9 @@ class SentimentAnalysisTest {
     @Test
     fun whenTokenMatchesWordInDictionary() {
 
-        whenever(mockDictionary.getDictionary()).thenReturn(testDictionaryMap)
+        whenever(mockDictionary.getRegularWordsMap()).thenReturn(testDictionaryMap)
         val text = "flower"
-        val tokens = classUnderTest.tokenizer(text)
+        val tokens = SentimentAnalysis.tokenizer(text)
         val actualMap = classUnderTest.getScores(tokens)
         val expectedMap = hashMapOf(
             "adoration" to Pair(8.369, 1),
