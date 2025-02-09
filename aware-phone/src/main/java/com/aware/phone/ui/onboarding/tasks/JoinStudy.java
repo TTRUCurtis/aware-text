@@ -78,7 +78,7 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
         listener.onPostExecute(null);
-        AwareServerPing.INSTANCE.setServerURL(socialMediaUrl+"update/");
+        AwareServerPing.INSTANCE.setServerURL(socialMediaUrl+"/update");
     }
 
     public interface Listener {

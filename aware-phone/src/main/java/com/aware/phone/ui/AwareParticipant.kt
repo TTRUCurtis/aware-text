@@ -50,6 +50,9 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
         setContentView(R.layout.aware_ui_participant)
         permissionsHandler = PermissionsHandler(this)
+        if(intent.hasExtra("show_welcome_message") && intent.getBooleanExtra("show_welcome_message", true)) {
+            showWelcomeMessage()
+        }
         permissions = intent.getStringArrayListExtra("permissions") ?: getPermissionsFromSharedPrefs()
         savePermissionsInSharedPrefs()
         registerEsmReceiver()
@@ -166,6 +169,15 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
                 show()
             }
         }
+    }
+
+    private fun showWelcomeMessage() {
+        AlertDialog.Builder(this)
+            .setTitle("Registration successful!")
+            .setMessage("Welcome! Thank you for your enrollment in the SMART-r Study! Please check your inbox for a welcome email from us with important information about your participation.")
+            .setPositiveButton("OK") { dialog: DialogInterface, which: Int -> dialog.dismiss() }
+            .setCancelable(false)
+            .show()
     }
 
     @SuppressLint("ClickableViewAccessibility")
