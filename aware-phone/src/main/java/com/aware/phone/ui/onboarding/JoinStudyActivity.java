@@ -150,7 +150,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             actionButton.setOnClickListener(v -> {
                 viewModel.joinStudy();
                 Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
-                mainUI.putStringArrayListExtra("permissions", permissions);
+                mainUI.putStringArrayListExtra("permissions", studyMetadata.getPermissions());
                 mainUI.putExtra("show_welcome_message", true);
                 mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(mainUI);
@@ -165,7 +165,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 }
             }
 
-            if(studyEligibility.isSmsPluginEnabled()) {
+            if(studyEligibility.isSmsPluginEnabled() && (studyEligibility.getMessageCount() > 0 || studyEligibility.getWordCount() >0)) {
                 permissions = studyMetadata.getPermissions();
                 studyEligibility.showSMSPermissionDialog(permissionsHandler, this);
             } else {
@@ -314,7 +314,9 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
     @Override
     public void onPermissionGranted() {
 
-        if (studyEligibility.isSmsPluginEnabled() && !studyEligibility.hasEligibilityBeenChecked()) {
+        if (studyEligibility.isSmsPluginEnabled()
+                && (studyEligibility.getMessageCount() > 0 || studyEligibility.getWordCount() >0)
+                && !studyEligibility.hasEligibilityBeenChecked()) {
             studyEligibility.performStudyEligibilityCheck(this::handleStudyEligibilityResult);
         } else {
             requestIgnoreBatteryOptimization();

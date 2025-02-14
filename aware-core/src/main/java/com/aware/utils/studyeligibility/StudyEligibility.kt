@@ -72,6 +72,17 @@ class StudyEligibility(private val activity: Activity) {
                     }
             }
         }
+
+        smsPluginObject?.getJSONArray("settings")?.let { settings ->
+            (0 until settings.length()).mapNotNull { index ->
+                settings.getJSONObject(index)?.let { setting ->
+                    when (setting.getString("setting")) {
+                        "plugin_sms_study_eligibility_message_count" -> messageCount = setting.getInt("value")
+                        "plugin_sms_study_eligibility_word_count" -> wordCount = setting.getInt("value")
+                    }
+                }
+            }
+        }
     }
 
     fun isSmsPluginEnabled() = isSmsPluginEnabled
@@ -102,16 +113,6 @@ class StudyEligibility(private val activity: Activity) {
         }
         CoroutineScope(Dispatchers.IO).launch {
             withContext(Dispatchers.Main) {
-                smsPluginObject?.getJSONArray("settings")?.let { settings ->
-                    (0 until settings.length()).mapNotNull { index ->
-                        settings.getJSONObject(index)?.let { setting ->
-                            when (setting.getString("setting")) {
-                                "plugin_sms_study_eligibility_message_count" -> messageCount = setting.getInt("value")
-                                "plugin_sms_study_eligibility_word_count" -> wordCount = setting.getInt("value")
-                            }
-                        }
-                    }
-                }
                 val isEligible = activity.applicationContext.contentResolver.query(
                     Uri.parse("content://sms/"), null, null, null, null
                 )?.use { cursor ->

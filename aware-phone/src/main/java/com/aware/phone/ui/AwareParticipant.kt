@@ -190,7 +190,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
         applicationContext.contentResolver.query(Aware_Provider.Aware_Studies.CONTENT_URI, null, null, null, null)?.use {
             if(it.moveToFirst()){
                 ap_device_id.text =
-                    "Device Id: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_DEVICE_ID))}"
+                    "Device Id: ${Aware.getSetting(this@AwareParticipant, Aware_Preferences.DEVICE_ID)}"
                 ap_study_title.text =
                     "Study Name: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))}"
             }
