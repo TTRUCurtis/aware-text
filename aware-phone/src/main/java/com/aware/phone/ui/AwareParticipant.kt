@@ -22,6 +22,7 @@ import com.aware.phone.ui.onboarding.JoinStudyActivity
 import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.Scheduler
+import com.aware.utils.serverping.AwareServerPing
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.android.synthetic.main.aware_ui_participant.*
 import kotlinx.coroutines.Dispatchers
@@ -300,7 +301,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             .setMessage("Are you sure you want to quit the study?")
             .setCancelable(false)
             .setPositiveButton("Yes") { dialogInterface, _ ->
-
+                AwareServerPing.sendQuitStudyPing(this@AwareParticipant)
                 val dbStudy = Aware.getStudy(
                     applicationContext,
                     Aware.getSetting(

@@ -2,6 +2,7 @@ package com.aware.utils.serverping
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.provider.Settings
 import com.aware.Aware
 import com.aware.Aware_Preferences
 import com.aware.providers.Aware_Provider.Aware_Device
@@ -33,6 +34,20 @@ object AwareServerPing {
         }
     }
 
+    fun sendQuitStudyPing(context: Context) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val pid = Aware.getSetting(context, Aware_Preferences.DEVICE_ID)
+            Https().dataPOSTJson(
+                "",
+                JSONObject().put(
+                    PID,
+                    pid,
+                ),
+                true
+            )
+        }
+    }
+
     fun setServerURL(url: String?) {
         url?.let {
             SERVER_URL = it
@@ -40,7 +55,8 @@ object AwareServerPing {
     }
 
     fun setDeviceInfo(context: Context) {
-
+        val androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID)
+        val identifier = "device_identifier"
          DEVICE_INFO = JSONObject().apply {
              context.contentResolver.query(Aware_Device.CONTENT_URI, null, null, null, null, null).use { cursor ->
                  if(cursor != null && cursor.moveToFirst()) {
@@ -52,13 +68,13 @@ object AwareServerPing {
                      put(Aware_Device.PRODUCT, cursor.getString(cursor.getColumnIndexOrThrow(Aware_Device.PRODUCT)))
                      put(Aware_Device.RELEASE, cursor.getString(cursor.getColumnIndexOrThrow(Aware_Device.RELEASE)))
                      put(Aware_Device.SDK, cursor.getString(cursor.getColumnIndexOrThrow(Aware_Device.SDK)))
+                     put(identifier, androidId)
                  }
              }
          }
     }
 
     fun setPermissionsStatus(context: Context, permissions: List<String>) {
-
         PERMISSIONS_STATUS = JSONObject().apply {
             permissions.forEach { permission ->
                 put(permission, context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED)
@@ -67,7 +83,6 @@ object AwareServerPing {
     }
 
     fun setStudyInfo(enrolled: Boolean, result: Boolean) {
-
         STUDY_INFO = JSONObject().apply {
             put("enrolled", enrolled)
             put("result", result)
@@ -75,7 +90,6 @@ object AwareServerPing {
     }
 
     fun getRegistrationData(): JSONObject {
-
          return JSONObject().apply {
              put("Device Info", DEVICE_INFO)
              put("Permissions Status", PERMISSIONS_STATUS)
