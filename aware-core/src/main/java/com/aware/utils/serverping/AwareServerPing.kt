@@ -16,6 +16,7 @@ object AwareServerPing {
 
     private const val PID = "pid"
     private var SERVER_URL: String? = null
+    private var QUIT_URL: String? = null
     private var DEVICE_INFO: JSONObject? = null
     private var PERMISSIONS_STATUS: JSONObject? = null
     private var STUDY_INFO: JSONObject? = null
@@ -38,7 +39,7 @@ object AwareServerPing {
         CoroutineScope(Dispatchers.IO).launch {
             val pid = Aware.getSetting(context, Aware_Preferences.DEVICE_ID)
             Https().dataPOSTJson(
-                "",
+                QUIT_URL,
                 JSONObject().put(
                     PID,
                     pid,
@@ -51,6 +52,12 @@ object AwareServerPing {
     fun setServerURL(url: String?) {
         url?.let {
             SERVER_URL = it
+        }
+    }
+
+    fun setQuitUrl(url: String?) {
+        url?.let {
+            QUIT_URL = url
         }
     }
 

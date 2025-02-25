@@ -30,6 +30,7 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
     private final Application application;
     private final Listener listener;
     private String socialMediaUrl;
+    private String quitUrl;
 
     public JoinStudy(Application application, Listener listener) {
         this.application = application;
@@ -67,6 +68,7 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
 
         //Last step in joining study
         socialMediaUrl = params[0].getSocialMediaUrl();
+        quitUrl = params[0].getQuitUrl();
         if (socialMediaUrl != null) {
             new Https().dataPOSTJson(socialMediaUrl, AwareServerPing.INSTANCE.getRegistrationData(), true);
         }
@@ -79,6 +81,7 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
         super.onPostExecute(aVoid);
         listener.onPostExecute(null);
         AwareServerPing.INSTANCE.setServerURL(socialMediaUrl+"/update");
+        AwareServerPing.INSTANCE.setQuitUrl(quitUrl);
     }
 
     public interface Listener {
