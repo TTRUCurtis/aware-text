@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="you_have_not_signed_up_for_a_study">You have not yet signed up for a study. Please click the download link in your text messages again to register for this study.</string>
+    <string name="you_have_not_signed_up_for_a_study">You have downloaded the app, but you still need to “Register” for the study. Please go back to your text message and click the same link you tapped on to download the app. This link will now “Register” you into the study.</string>
+    <string name="accessibility_permissions_dialogue">TTRU-AWARE requires Accessibility permissions. Please tap “SETTINGS” and allow Accessibility permissions under “Installed Apps.” Warning! You will not be registered until permissions are set. Use the instructions link if you need assistance.</string>
+    <string name="study_eligibility_fail">You did not meet the minimum requirement for this study. If you feel this is an error hit retry or contact the study administrator at smartrstudy@nih.gov.</string>
 <!-- TODO remove this once we have fixed the background data issue  -->
-    <string name="do_not_close_aware">Please do not close AWARE for the duration of the study.</string>
+    <string name="do_not_close_aware">Please do not close TTRU-AWARE for the duration of the study.</string>
 </resources>

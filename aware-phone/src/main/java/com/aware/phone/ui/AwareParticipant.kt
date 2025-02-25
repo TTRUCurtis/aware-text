@@ -158,7 +158,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     private fun grantAccessibility() {
         if (!Aware.is_watch(this)) {
             AlertDialog.Builder(this@AwareParticipant).apply {
-                setMessage("AWARE requires Accessibility access to participate in studies. " +
+                setMessage("TTRU-AWARE requires Accessibility access to participate in studies. " +
                         "Please click \"SETTINGS\" and turn on Accessibility access to continue.")
                 setPositiveButton("settings"){ dialog, _ ->
                     dialog.dismiss()
@@ -235,7 +235,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             }
             false
         }
-        ap_study_options_title.text = "AWARE STUDY OPTIONS"
+        ap_study_options_title.text = "TTRU-AWARE STUDY OPTIONS"
     }
 
     private fun triggerQuitStudyButton() {
@@ -582,7 +582,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
 
         AlertDialog.Builder(this)
-            .setTitle("Aware: Permanently Denied Permissions")
+            .setTitle("TTRU-AWARE: Permanently Denied Permissions")
             .setMessage("You have permanently denied necessary permissions. Please follow the " +
                     "instructions in the \"Revoked Permissions\" section to grant permissions")
             .setNegativeButton("ok", DialogInterface.OnClickListener { dialog, _ ->
@@ -611,7 +611,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
         val awareParticipantItems = mutableListOf(
             AwareParticipantItem(
-                "AWARE Study",
+                "TTRU-AWARE Study",
                 "",
                 R.drawable.ic_launcher_aware,
                 R.id.aware_item_card,
@@ -619,7 +619,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             ),
             AwareParticipantItem(
                 "Sync Data",
-                "Send data to the AWARE server",
+                "Send data to server",
                 R.drawable.ic_sync,
                 R.id.aware_item_card,
                 R.drawable.item_background_3

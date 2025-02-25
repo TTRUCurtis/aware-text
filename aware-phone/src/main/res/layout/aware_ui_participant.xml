@@ -33,7 +33,7 @@
             android:maxLength="30"
             android:textColor="@color/black"
             android:textSize="36sp"
-            tools:text="Aware Study"/>
+            tools:text="TTRU_AWARE Study"/>
 
         <TextView
             android:id="@+id/ap_device_id"

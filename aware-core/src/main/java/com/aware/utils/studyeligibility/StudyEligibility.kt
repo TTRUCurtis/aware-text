@@ -93,8 +93,8 @@ class StudyEligibility(private val activity: Activity) {
 
     fun showSMSPermissionDialog(permissionsHandler: PermissionsHandler, permissionCallback:PermissionsHandler.PermissionCallback) {
         AlertDialog.Builder(activity).apply {
-            setTitle("AWARE: Study Eligibility Check")
-            setMessage("To join study, AWARE must perform an eligibility check on your device. \n" +
+            setTitle("TTRU-AWARE: Study Eligibility Check")
+            setMessage("To join study, TTRU-AWARE must perform an eligibility check on your device. \n" +
                     "Please grant the following SMS permission to run check")
             setPositiveButton("OK") { _, _ ->
                 permissionsHandler.requestPermissions(listOf(Manifest.permission.READ_SMS), permissionCallback)

@@ -192,7 +192,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 "\"Go to settings\", click on \"Permissions\" and Please select " +
                         "\"Allow\" or \"Allow only while using the app\" or \"Ask every time\" for " +
                         "the following permissions: " + permissionsString;
-                messageTitleTextView.setText("Aware: Permanently Denied Permissions");
+                messageTitleTextView.setText("TTRU-Aware: Permanently Denied Permissions");
                 messageDescriptionTextView.setText(message);
                 actionButton.setEnabled(true);
                 actionButton.setText("Go to settings");
@@ -233,7 +233,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             result -> {
                 if (!Aware.isBatteryOptimizationIgnored(this, getPackageName())) {
                     new AlertDialog.Builder(this)
-                            .setMessage("To proceed, please allow AWARE to run in the background.")
+                            .setMessage("To proceed, please allow TTRU-AWARE to run in the background.")
                             .setPositiveButton("ok", (dialog, which) -> requestIgnoreBatteryOptimization())
                             .show();
                 }else if(Aware.isBatteryOptimizationIgnored(this, getPackageName())) {
@@ -246,8 +246,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         if (!Aware.is_watch(JoinStudyActivity.this)) {
             if (accessibilityDialog == null) {
                 accessibilityDialog = new AlertDialog.Builder(JoinStudyActivity.this)
-                        .setMessage("AWARE requires Accessibility access to participate in studies. " +
-                                "Please click \"SETTINGS\" and turn on Accessibility access to continue.")
+                        .setMessage(R.string.accessibility_permissions_dialogue)
                         .setPositiveButton("Settings", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -344,8 +343,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                     actionButton.setEnabled(true);
                     actionButton.setText("Retry");
                     messageTitleTextView.setText("Unable to register for this study");
-                    messageDescriptionTextView.setText("You did not meet the minimum requirements for this study." +
-                            "If you feel this is an error hit retry or contact the study administrator.");
+                    messageDescriptionTextView.setText(R.string.study_eligibility_fail);
                     actionButton.setOnClickListener(v -> {
                         startActivity(
                                 new Intent(JoinStudyActivity.this, JoinStudyActivity.class)
