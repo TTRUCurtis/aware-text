@@ -236,7 +236,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                             .setMessage("To proceed, please allow TTRU-AWARE to run in the background.")
                             .setPositiveButton("ok", (dialog, which) -> requestIgnoreBatteryOptimization())
                             .show();
-                }else if(Aware.isBatteryOptimizationIgnored(this, getPackageName())) {
+                }else if(Aware.isBatteryOptimizationIgnored(this, getPackageName()) && !Applications.isAccessibilityEnabled(this)) {
                     grantAccessibility();
                 }
             }

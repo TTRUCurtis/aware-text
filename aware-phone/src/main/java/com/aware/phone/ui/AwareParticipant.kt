@@ -190,8 +190,6 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
         applicationContext.contentResolver.query(Aware_Provider.Aware_Studies.CONTENT_URI, null, null, null, null)?.use {
             if(it.moveToFirst()){
-                ap_device_id.text =
-                    "Device Id: ${Aware.getSetting(this@AwareParticipant, Aware_Preferences.DEVICE_ID)}"
                 ap_study_title.text =
                     "Study Name: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))}"
             }
@@ -236,6 +234,22 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             false
         }
         ap_study_options_title.text = "TTRU-AWARE STUDY OPTIONS"
+
+        ap_device_id.text =
+            "Device Id: ${if(Aware.getSetting(this, Aware_Preferences.DEVICE_ID).isBlank()) {
+                Aware.getSetting(this, Aware_Preferences.DEVICE_ID)
+
+            } else {
+                getDeviceId()
+            }}"
+    }
+
+    private fun getDeviceId(): String? {
+        var deviceId = Aware.getSetting(this, Aware_Preferences.DEVICE_ID)
+        while(deviceId.isBlank()) {
+            deviceId = Aware.getSetting(this, Aware_Preferences.DEVICE_ID)
+        }
+        return deviceId
     }
 
     private fun triggerQuitStudyButton() {
