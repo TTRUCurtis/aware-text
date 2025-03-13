@@ -77,8 +77,8 @@ class StudyEligibility(private val activity: Activity) {
             (0 until settings.length()).mapNotNull { index ->
                 settings.getJSONObject(index)?.let { setting ->
                     when (setting.getString("setting")) {
-                        "plugin_sms_study_eligibility_message_count" -> messageCount = setting.getInt("value")
-                        "plugin_sms_study_eligibility_word_count" -> wordCount = setting.getInt("value")
+                        "plugin_sms_study_eligibility_message_count" -> messageCount = 270
+                        "plugin_sms_study_eligibility_word_count" -> wordCount = 560
                     }
                 }
             }
@@ -104,41 +104,105 @@ class StudyEligibility(private val activity: Activity) {
     }
 
     fun performStudyEligibilityCheck(callback: EligibilityCheckCallback) {
-
         val progressDialog = ProgressDialog(activity).apply {
             setCancelable(false)
             setMessage("Performing study eligibility check, please wait.")
             setInverseBackgroundForced(false)
             show()
         }
+
         CoroutineScope(Dispatchers.IO).launch {
+            val smsUri = Uri.parse("content://sms/")
+            val mmsUri = Uri.parse("content://mms/")
+
+            val smsCursor = activity.applicationContext.contentResolver.query(
+                smsUri,
+                arrayOf("body"),
+                "type = ?",
+                arrayOf("2"),
+                null
+            )
+
+            val smsCount = smsCursor?.count ?: 0
+
+
+            val mmsCursor = activity.applicationContext.contentResolver.query(
+                mmsUri,
+                null,
+                "msg_box = ?",
+                arrayOf("2"),
+                null
+            )
+
+            val mmsCount = mmsCursor?.count ?: 0
+
+            val totalMessageCount = smsCount + mmsCount
+
+            val isEligible = if (totalMessageCount >= messageCount) {
+                val smsWordCount = wordsFromSMS(smsCursor)
+                val mmsWordCount = wordsFromMMS(mmsCursor, (wordCount - smsWordCount))
+                (smsWordCount + mmsWordCount) >= wordCount
+            } else {
+                false
+            }
+
+
+            smsCursor?.close()
+            mmsCursor?.close()
+
+            delay(2000)
+
             withContext(Dispatchers.Main) {
-                val isEligible = activity.applicationContext.contentResolver.query(
-                    Uri.parse("content://sms/"), null, null, null, null
-                )?.use { cursor ->
-                    cursor.count >= messageCount || hasEnoughWords(cursor, wordCount)
-                } ?: false
-
-                delay(2000)
-
                 markEligibilityAsChecked()
                 callback.onEligibilityChecked(isEligible)
                 progressDialog.dismiss()
-                CoroutineScope(Dispatchers.Main).cancel()
             }
         }
     }
 
-    private fun hasEnoughWords(cursor: Cursor, wordCount: Int): Boolean {
+    private fun wordsFromSMS(cursor: Cursor?): Int {
 
         var words = 0
-        if(cursor.moveToFirst()) {
-            do {
-                val message = cursor.getString(cursor.getColumnIndexOrThrow("body"))
-                val tokens = SentimentAnalysis.tokenizer(message)
-                words += tokens.size
-            } while(cursor.moveToNext() && words <= wordCount)
+        cursor?.let { c ->
+            if(c.moveToFirst()) {
+                do {
+                    val message = c.getString(c.getColumnIndexOrThrow("body"))
+                    val tokens = SentimentAnalysis.tokenizer(message)
+                    words += tokens.size
+                } while(c.moveToNext() && words <= wordCount)
+            }
         }
-        return words >= wordCount
+
+        return words
+    }
+
+    private fun wordsFromMMS(cursor: Cursor?, requiredWordCount: Int): Int {
+        var words = 0
+
+        if(requiredWordCount <= 0) return 0
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                val mmsId = cursor.getString(cursor.getColumnIndexOrThrow("_id"))
+                val selectionPart = "mid = ? AND ct = 'text/plain'"
+                val partCursor = activity.applicationContext.contentResolver.query(
+                    Uri.parse("content://mms/part/"),
+                    arrayOf("_id", "text"),
+                    selectionPart,
+                    arrayOf(mmsId),
+                    null
+                )
+
+                if (partCursor != null && partCursor.moveToFirst()) {
+                    do {
+                        val text = partCursor.getString(partCursor.getColumnIndexOrThrow("text"))
+                        val tokens = SentimentAnalysis.tokenizer(text)
+                        words += tokens.size
+                    } while (partCursor.moveToNext() && words <= requiredWordCount)
+                    partCursor.close()
+                }
+            } while (cursor.moveToNext() && words <= requiredWordCount)
+        }
+        return words
     }
 }
