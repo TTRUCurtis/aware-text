@@ -4,25 +4,32 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.ProgressDialog
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import com.aware.R
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.sentiment.SentimentAnalysis
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
 
-class StudyEligibility(private val activity: Activity) {
+class StudyEligibility(private val activity: Activity,
+                       private val studyConfig: JSONArray?,
+                       private val permissionsHandler: PermissionsHandler,
+                       private val permissionCallback: PermissionsHandler.PermissionCallback,
+                       private val permissions: ArrayList<String>) {
 
     private var smsPluginObject: JSONObject? = null
-    private var isSmsPluginEnabled: Boolean
-    private var messageCount: Int
-    private var wordCount: Int
+    private var isSmsPluginEnabled = false
+    private var isBluetoothSensorEnabled = false
+    private var checkWordsMessagesCount = false
+    private var messageCount = Values.SMS_MESSAGE_COUNT_DEFAULT
+    private var wordCount = Values.SMS_WORD_COUNT_DEFAULT
 
     init {
-        isSmsPluginEnabled = false
-        messageCount = Values.SMS_MESSAGE_COUNT_DEFAULT
-        wordCount = Values.SMS_WORD_COUNT_DEFAULT
+        parseStudyConfig()
     }
 
     object Values {
@@ -34,10 +41,6 @@ class StudyEligibility(private val activity: Activity) {
 
     private val sharedPreferences by lazy {
         activity.getSharedPreferences(Values.PREFS_NAME, Activity.MODE_PRIVATE)
-    }
-
-    interface EligibilityCheckCallback {
-        fun onEligibilityChecked(isEligible: Boolean)
     }
 
     fun hasEligibilityBeenChecked(): Boolean {
@@ -52,21 +55,30 @@ class StudyEligibility(private val activity: Activity) {
         sharedPreferences.edit().putBoolean(Values.PREF_ELIGIBILITY_CHECKED_KEY, false).apply()
     }
 
-
-    fun checkForSmsPluginStatus(studyConfig: JSONArray?) {
+    private fun parseStudyConfig() {
 
         studyConfig?.let {
             for(i in 0 until studyConfig.length()) {
                 val studyConfigObject = studyConfig.getJSONObject(i)
-                if(studyConfigObject.has("plugins"))
+                if (studyConfigObject.has("plugins"))
                     studyConfigObject.getJSONArray("plugins").run {
                         (0 until length()).mapNotNull { index ->
                             getJSONObject(index).let { pluginConfig ->
-                                if(pluginConfig.getString("plugin") == "com.aware.plugin.sms"){
+                                if (pluginConfig.getString("plugin") == "com.aware.plugin.sms") {
                                     smsPluginObject = pluginConfig
                                     isSmsPluginEnabled = true
                                 }
 
+                            }
+                        }
+                    }
+                if(studyConfigObject.has("sensors"))
+                    studyConfigObject.getJSONArray("sensors")?.run {
+                        (0 until length()).mapNotNull { index ->
+                            getJSONObject(index).let { sensorConfig ->
+                                if(sensorConfig.getString("setting") == "status_bluetooth") {
+                                    isBluetoothSensorEnabled = true
+                                }
                             }
                         }
                     }
@@ -77,33 +89,49 @@ class StudyEligibility(private val activity: Activity) {
             (0 until settings.length()).mapNotNull { index ->
                 settings.getJSONObject(index)?.let { setting ->
                     when (setting.getString("setting")) {
-                        "plugin_sms_study_eligibility_message_count" -> messageCount = 270
-                        "plugin_sms_study_eligibility_word_count" -> wordCount = 560
+                        "plugin_sms_study_eligibility_message_count" -> messageCount = setting.getInt("value")
+                        "plugin_sms_study_eligibility_word_count" -> wordCount = setting.getInt("value")
                     }
                 }
             }
         }
     }
 
-    fun isSmsPluginEnabled() = isSmsPluginEnabled
+    fun shouldPerformStudyEligibility() = (isSmsPluginEnabled && checkWordsMessagesCount) || isBluetoothSensorEnabled
 
     fun getWordCount() = wordCount
 
     fun getMessageCount() = messageCount
 
-    fun showSMSPermissionDialog(permissionsHandler: PermissionsHandler, permissionCallback:PermissionsHandler.PermissionCallback) {
+    fun showStudyEligibilityDialog() {
+
+        val message = if((isSmsPluginEnabled && checkWordsMessagesCount) && isBluetoothSensorEnabled) {
+            "Please grant the SMS permission and enable bluetooth and keep it on for the duration of the study."
+        } else if(isSmsPluginEnabled && checkWordsMessagesCount) {
+            "Please grant the SMS permission."
+        } else if(isBluetoothSensorEnabled) {
+            "Please enable bluetooth and keep it on for the duration of the study."
+        } else {
+            ""
+        }
         AlertDialog.Builder(activity).apply {
             setTitle("TTRU-AWARE: Study Eligibility Check")
-            setMessage("To join study, TTRU-AWARE must perform an eligibility check on your device. \n" +
-                    "Please grant the following SMS permission to run check")
-            setPositiveButton("OK") { _, _ ->
-                permissionsHandler.requestPermissions(listOf(Manifest.permission.READ_SMS), permissionCallback)
+            setMessage("To join the study, TTRU-AWARE must perform an eligibility check on your device. $message")
+            setPositiveButton("OK") {_, _ ->
+                if(isSmsPluginEnabled && checkWordsMessagesCount) {
+                    permissionsHandler.requestPermissions(
+                        listOf(Manifest.permission.READ_SMS),
+                        permissionCallback
+                    )
+                } else {
+                    performStudyEligibilityCheck()
+                }
             }
             show()
         }
     }
 
-    fun performStudyEligibilityCheck(callback: EligibilityCheckCallback) {
+    fun performStudyEligibilityCheck() {
         val progressDialog = ProgressDialog(activity).apply {
             setCancelable(false)
             setMessage("Performing study eligibility check, please wait.")
@@ -112,52 +140,93 @@ class StudyEligibility(private val activity: Activity) {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            val smsUri = Uri.parse("content://sms/")
-            val mmsUri = Uri.parse("content://mms/")
+            var isEligible = false
+            var smsCheck = false
+            var bluetoothCheck = false
 
-            val smsCursor = activity.applicationContext.contentResolver.query(
-                smsUri,
-                arrayOf("body"),
-                "type = ?",
-                arrayOf("2"),
-                null
-            )
+            if(isSmsPluginEnabled && checkWordsMessagesCount) {
+                val smsUri = Uri.parse("content://sms/")
+                val mmsUri = Uri.parse("content://mms/")
 
-            val smsCount = smsCursor?.count ?: 0
+                val smsCursor = activity.applicationContext.contentResolver.query(
+                    smsUri,
+                    arrayOf("body"),
+                    "type = ?",
+                    arrayOf("2"),
+                    null
+                )
+
+                val smsCount = smsCursor?.count ?: 0
 
 
-            val mmsCursor = activity.applicationContext.contentResolver.query(
-                mmsUri,
-                null,
-                "msg_box = ?",
-                arrayOf("2"),
-                null
-            )
+                val mmsCursor = activity.applicationContext.contentResolver.query(
+                    mmsUri,
+                    null,
+                    "msg_box = ?",
+                    arrayOf("2"),
+                    null
+                )
 
-            val mmsCount = mmsCursor?.count ?: 0
+                val mmsCount = mmsCursor?.count ?: 0
 
-            val totalMessageCount = smsCount + mmsCount
+                val totalMessageCount = smsCount + mmsCount
 
-            val isEligible = if (totalMessageCount >= messageCount) {
-                val smsWordCount = wordsFromSMS(smsCursor)
-                val mmsWordCount = wordsFromMMS(mmsCursor, (wordCount - smsWordCount))
-                (smsWordCount + mmsWordCount) >= wordCount
-            } else {
-                false
+                smsCheck = if (totalMessageCount >= messageCount) {
+                    val smsWordCount = wordsFromSMS(smsCursor)
+                    val mmsWordCount = wordsFromMMS(mmsCursor, (wordCount - smsWordCount))
+                    (smsWordCount + mmsWordCount) >= wordCount
+                } else {
+                    false
+                }
+
+                if(isBluetoothSensorEnabled) {
+                    bluetoothCheck = BluetoothAdapter.getDefaultAdapter().isEnabled
+                    isEligible = smsCheck && bluetoothCheck
+                } else {
+                    isEligible = smsCheck
+                }
+
+
+                smsCursor?.close()
+                mmsCursor?.close()
+            } else if(isBluetoothSensorEnabled) {
+                bluetoothCheck = BluetoothAdapter.getDefaultAdapter().isEnabled
+                isEligible = bluetoothCheck
             }
 
-
-            smsCursor?.close()
-            mmsCursor?.close()
-
             delay(2000)
-
             withContext(Dispatchers.Main) {
                 markEligibilityAsChecked()
-                callback.onEligibilityChecked(isEligible)
+                handleStudyEligibilityResult(isEligible, smsCheck, bluetoothCheck)
                 progressDialog.dismiss()
             }
         }
+    }
+
+    private fun handleStudyEligibilityResult(isEligible: Boolean, smsCheck: Boolean, bluetoothCheck: Boolean) {
+
+        val resultDialog = AlertDialog.Builder(activity)
+        if(isEligible) {
+            resultDialog.setTitle("TTRU-AWARE: Study Eligibility Passed")
+            resultDialog.setMessage(R.string.study_eligibility_success)
+            resultDialog.setPositiveButton("continue") { _, _ ->
+                permissionsHandler.requestPermissions(permissions, permissionCallback)
+            }
+        } else {
+            resultDialog.setTitle("TTRU-AWARE: Study Eligibility Failed")
+            if(isBluetoothSensorEnabled && !bluetoothCheck) {
+                resultDialog.setMessage(R.string.study_eligibility_fail_bluetooth)
+            } else {
+                resultDialog.setMessage(R.string.study_eligibility_fail)
+            }
+            resultDialog.setPositiveButton("continue") {_, _ ->
+                val intent = Intent(activity, activity::class.java)
+                activity.finish()
+                activity.startActivity(intent)
+            }
+        }
+
+        resultDialog.show()
     }
 
     private fun wordsFromSMS(cursor: Cursor?): Int {
@@ -172,7 +241,6 @@ class StudyEligibility(private val activity: Activity) {
                 } while(c.moveToNext() && words <= wordCount)
             }
         }
-
         return words
     }
 

@@ -63,4 +63,8 @@
     <string name="sensor_keyboard">Keyboard</string>
     <string name="sensor_significant">Significant motion</string>
 
+    <string name="study_eligibility_success">Congratulations! You are eligible for participation in the TTRU-AWARE study. Continue to complete enrollment.</string>
+    <string name="study_eligibility_fail_bluetooth">The study eligibility test failed. Please make sure bluetooth is enabled, and keep on for the duration of the study, and try again. If problem persists contact the study admin at smartrstudy@nih.gov.</string>
+    <string name="study_eligibility_fail">The study eligibility test failed. If this is a mistake try again or contact the study admin at smartrstudy@nih.gov.</string>
+
 </resources>

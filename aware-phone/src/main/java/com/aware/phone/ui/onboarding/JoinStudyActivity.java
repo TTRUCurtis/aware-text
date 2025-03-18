@@ -64,7 +64,6 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         setContentView(R.layout.activity_join_study);
 
         permissionsHandler = new PermissionsHandler(this);
-        studyEligibility = new StudyEligibility(this);
         deniedPermissions = new ArrayList<>();
 
         if (Aware.isStudy(this)) {
@@ -132,6 +131,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
 
         viewModel.getStudyMetadataLiveData().observe(this, studyMetadata -> {
             joinStudyFromTextLayout.setVisibility(View.GONE);
+            permissions = new ArrayList<>(studyMetadata.getPermissions());
             Aware.get_device_info(JoinStudyActivity.this);
             if (studyMetadataLayout == null) {
                 studyMetadataLayout = findViewById(R.id.layout_study_info);
@@ -150,24 +150,25 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             actionButton.setOnClickListener(v -> {
                 viewModel.joinStudy();
                 Intent mainUI = new Intent(getApplicationContext(), AwareParticipant.class);
-                mainUI.putStringArrayListExtra("permissions", studyMetadata.getPermissions());
+                mainUI.putStringArrayListExtra("permissions", permissions);
                 mainUI.putExtra("show_welcome_message", true);
                 mainUI.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(mainUI);
                 finish();
             });
 
-            if(!studyEligibility.hasEligibilityBeenChecked() && studyMetadata.getConfiguration() != null) {
-                try {
-                    studyEligibility.checkForSmsPluginStatus(new JSONArray(studyMetadata.getConfiguration()));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+            try {
+                JSONArray studyConfig = new JSONArray(studyMetadata.getConfiguration());
+                studyEligibility = new StudyEligibility(
+                        this, studyConfig, permissionsHandler, this, studyMetadata.getPermissions()
+                );
+
+            } catch(JSONException e) {
+                e.printStackTrace();
             }
 
-            if(studyEligibility.isSmsPluginEnabled() && (studyEligibility.getMessageCount() > 0 || studyEligibility.getWordCount() >0)) {
-                permissions = studyMetadata.getPermissions();
-                studyEligibility.showSMSPermissionDialog(permissionsHandler, this);
+            if(studyEligibility.shouldPerformStudyEligibility()) {
+                studyEligibility.showStudyEligibilityDialog();
             } else {
                 permissionsHandler.requestPermissions(studyMetadata.getPermissions(), this);
             }
@@ -313,46 +314,12 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
     @Override
     public void onPermissionGranted() {
 
-        if (studyEligibility.isSmsPluginEnabled()
-                && (studyEligibility.getMessageCount() > 0 || studyEligibility.getWordCount() >0)
-                && !studyEligibility.hasEligibilityBeenChecked()) {
-            studyEligibility.performStudyEligibilityCheck(this::handleStudyEligibilityResult);
+        if (studyEligibility.shouldPerformStudyEligibility() &&
+            !studyEligibility.hasEligibilityBeenChecked()) {
+            studyEligibility.performStudyEligibilityCheck();
         } else {
             requestIgnoreBatteryOptimization();
         }
-    }
-
-    private void handleStudyEligibilityResult(boolean isEligible) {
-
-        String message = isEligible ? "You passed!" : "You did not pass!";
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setMessage(message)
-                .create();
-
-        dialog.show();
-
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                dialog.dismiss();
-
-                if (isEligible) {
-                    permissionsHandler.requestPermissions(permissions, JoinStudyActivity.this);
-                } else {
-                    studyEligibility.markEligibilityAsUnchecked();
-                    actionButton.setEnabled(true);
-                    actionButton.setText("Retry");
-                    messageTitleTextView.setText("Unable to register for this study");
-                    messageDescriptionTextView.setText(R.string.study_eligibility_fail);
-                    actionButton.setOnClickListener(v -> {
-                        startActivity(
-                                new Intent(JoinStudyActivity.this, JoinStudyActivity.class)
-                        );
-                        finish();
-                    });
-                }
-            }
-        }, 2000);
     }
 
     @Override
