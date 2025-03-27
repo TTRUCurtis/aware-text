@@ -5,28 +5,39 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.app.ProgressDialog
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import android.telephony.TelephonyManager
 import com.aware.R
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.sentiment.SentimentAnalysis
+import com.aware.utils.serverping.AwareServerPing
+import com.google.android.gms.location.*
+import android.location.Location
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class StudyEligibility(private val activity: Activity,
                        private val studyConfig: JSONArray?,
                        private val permissionsHandler: PermissionsHandler,
                        private val permissionCallback: PermissionsHandler.PermissionCallback,
-                       private val permissions: ArrayList<String>) {
+                       private val studyRegistrationPermissions: ArrayList<String>) {
 
     private var smsPluginObject: JSONObject? = null
     private var isSmsPluginEnabled = false
     private var isBluetoothSensorEnabled = false
     private var checkWordsMessagesCount = false
-    private var messageCount = Values.SMS_MESSAGE_COUNT_DEFAULT
-    private var wordCount = Values.SMS_WORD_COUNT_DEFAULT
+    private var actualMessageCount = 0
+    private var actualWordCount = 0
+    private var requiredMessageCount = Values.SMS_MESSAGE_COUNT_DEFAULT
+    private var requiredWordCount = Values.SMS_WORD_COUNT_DEFAULT
+    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity)
+    private val studyEligibilityPermissions = arrayListOf(Manifest.permission.ACCESS_FINE_LOCATION)
 
     init {
         parseStudyConfig()
@@ -62,11 +73,12 @@ class StudyEligibility(private val activity: Activity,
                 val studyConfigObject = studyConfig.getJSONObject(i)
                 if (studyConfigObject.has("plugins"))
                     studyConfigObject.getJSONArray("plugins").run {
-                        (0 until length()).mapNotNull { index ->
+                        (0 until length()).forEach { index ->
                             getJSONObject(index).let { pluginConfig ->
                                 if (pluginConfig.getString("plugin") == "com.aware.plugin.sms") {
                                     smsPluginObject = pluginConfig
                                     isSmsPluginEnabled = true
+                                    studyEligibilityPermissions.add(Manifest.permission.READ_SMS)
                                 }
 
                             }
@@ -74,7 +86,7 @@ class StudyEligibility(private val activity: Activity,
                     }
                 if(studyConfigObject.has("sensors"))
                     studyConfigObject.getJSONArray("sensors")?.run {
-                        (0 until length()).mapNotNull { index ->
+                        (0 until length()).forEach { index ->
                             getJSONObject(index).let { sensorConfig ->
                                 if(sensorConfig.getString("setting") == "status_bluetooth") {
                                     isBluetoothSensorEnabled = true
@@ -86,46 +98,36 @@ class StudyEligibility(private val activity: Activity,
         }
 
         smsPluginObject?.getJSONArray("settings")?.let { settings ->
-            (0 until settings.length()).mapNotNull { index ->
+            (0 until settings.length()).forEach { index ->
                 settings.getJSONObject(index)?.let { setting ->
                     when (setting.getString("setting")) {
-                        "plugin_sms_study_eligibility_message_count" -> messageCount = setting.getInt("value")
-                        "plugin_sms_study_eligibility_word_count" -> wordCount = setting.getInt("value")
+                        "plugin_sms_study_eligibility_message_count" -> requiredMessageCount = setting.getInt("value")
+                        "plugin_sms_study_eligibility_word_count" -> requiredWordCount = setting.getInt("value")
                     }
                 }
             }
         }
+        if(requiredMessageCount > 0 || requiredWordCount >0) checkWordsMessagesCount = true
     }
 
     fun shouldPerformStudyEligibility() = (isSmsPluginEnabled && checkWordsMessagesCount) || isBluetoothSensorEnabled
 
-    fun getWordCount() = wordCount
+    fun getWordCount() = requiredWordCount
 
-    fun getMessageCount() = messageCount
+    fun getMessageCount() = requiredMessageCount
 
     fun showStudyEligibilityDialog() {
 
-        val message = if((isSmsPluginEnabled && checkWordsMessagesCount) && isBluetoothSensorEnabled) {
-            "Please grant the SMS permission and enable bluetooth and keep it on for the duration of the study."
-        } else if(isSmsPluginEnabled && checkWordsMessagesCount) {
-            "Please grant the SMS permission."
-        } else if(isBluetoothSensorEnabled) {
-            "Please enable bluetooth and keep it on for the duration of the study."
+        val message = if(isBluetoothSensorEnabled) {
+            ", and keep your bluetooth on for the duration of the study."
         } else {
-            ""
+            "."
         }
         AlertDialog.Builder(activity).apply {
             setTitle("TTRU-AWARE: Study Eligibility Check")
-            setMessage("To join the study, TTRU-AWARE must perform an eligibility check on your device. $message")
+            setMessage(activity.getString(R.string.study_eligibility_rationale) + message)
             setPositiveButton("OK") {_, _ ->
-                if(isSmsPluginEnabled && checkWordsMessagesCount) {
-                    permissionsHandler.requestPermissions(
-                        listOf(Manifest.permission.READ_SMS),
-                        permissionCallback
-                    )
-                } else {
-                    performStudyEligibilityCheck()
-                }
+                permissionsHandler.requestPermissions(studyEligibilityPermissions, permissionCallback)
             }
             show()
         }
@@ -141,7 +143,6 @@ class StudyEligibility(private val activity: Activity,
 
         CoroutineScope(Dispatchers.IO).launch {
             var isEligible = false
-            var smsCheck = false
             var bluetoothCheck = false
 
             if(isSmsPluginEnabled && checkWordsMessagesCount) {
@@ -169,12 +170,13 @@ class StudyEligibility(private val activity: Activity,
 
                 val mmsCount = mmsCursor?.count ?: 0
 
-                val totalMessageCount = smsCount + mmsCount
+                 actualMessageCount = smsCount + mmsCount
 
-                smsCheck = if (totalMessageCount >= messageCount) {
+                val smsCheck = if (actualMessageCount >= requiredMessageCount) {
                     val smsWordCount = wordsFromSMS(smsCursor)
-                    val mmsWordCount = wordsFromMMS(mmsCursor, (wordCount - smsWordCount))
-                    (smsWordCount + mmsWordCount) >= wordCount
+                    val mmsWordCount = wordsFromMMS(mmsCursor, (requiredWordCount - smsWordCount))
+                    actualWordCount = smsWordCount + mmsWordCount
+                    (smsWordCount + mmsWordCount) >= requiredWordCount
                 } else {
                     false
                 }
@@ -186,33 +188,66 @@ class StudyEligibility(private val activity: Activity,
                     isEligible = smsCheck
                 }
 
-
                 smsCursor?.close()
                 mmsCursor?.close()
             } else if(isBluetoothSensorEnabled) {
                 bluetoothCheck = BluetoothAdapter.getDefaultAdapter().isEnabled
                 isEligible = bluetoothCheck
             }
-
             delay(2000)
+
+            val deviceLocation = (activity.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager).let { it?.networkCountryIso }
+            val coordinates = getCoordinates()
+            val latitude = coordinates?.latitude
+            val longitude = coordinates?.longitude
+
+            val inUSA = if(latitude != null && longitude != null) {
+                areCoordinatesInTheUSA(latitude, longitude)
+            } else {
+                false
+            }
+
             withContext(Dispatchers.Main) {
                 markEligibilityAsChecked()
-                handleStudyEligibilityResult(isEligible, smsCheck, bluetoothCheck)
+                handleStudyEligibilityResult(isEligible, bluetoothCheck, deviceLocation, inUSA)
                 progressDialog.dismiss()
             }
         }
     }
 
-    private fun handleStudyEligibilityResult(isEligible: Boolean, smsCheck: Boolean, bluetoothCheck: Boolean) {
+    @SuppressWarnings("MissingPermission")
+    private suspend fun getCoordinates(): Location? = suspendCoroutine { cont ->
+        //can only get here if permissions are granted
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location ->
+                cont.resume(location)
+            }
+            .addOnFailureListener { _ ->
+                cont.resume(null)
+            }
+    }
+
+    private fun areCoordinatesInTheUSA(latitude: Double, longitude: Double): Boolean {
+            val minLat = 24.396308 // Southernmost point (Key West, Florida)
+            val maxLat = 49.384358 // Northernmost point (Lake of the Woods, Minnesota)
+            val minLon = -125.000000 // Westernmost point (California coast)
+            val maxLon = -66.934570 // Easternmost point (Maine)
+            return latitude in minLat..maxLat && longitude in minLon..maxLon
+    }
+
+    private fun handleStudyEligibilityResult(isEligible: Boolean, bluetoothCheck: Boolean, deviceLocation: String?, inUSA: Boolean) {
 
         val resultDialog = AlertDialog.Builder(activity)
+        AwareServerPing.setStudyEligibilityInfo(isEligible, requiredWordCount, actualWordCount, requiredMessageCount, actualMessageCount, deviceLocation, inUSA)
         if(isEligible) {
             resultDialog.setTitle("TTRU-AWARE: Study Eligibility Passed")
             resultDialog.setMessage(R.string.study_eligibility_success)
             resultDialog.setPositiveButton("continue") { _, _ ->
-                permissionsHandler.requestPermissions(permissions, permissionCallback)
+
+                permissionsHandler.requestPermissions(studyRegistrationPermissions, permissionCallback)
             }
         } else {
+            AwareServerPing.sendEligibilityFailPing(activity)
             resultDialog.setTitle("TTRU-AWARE: Study Eligibility Failed")
             if(isBluetoothSensorEnabled && !bluetoothCheck) {
                 resultDialog.setMessage(R.string.study_eligibility_fail_bluetooth)
@@ -220,14 +255,20 @@ class StudyEligibility(private val activity: Activity,
                 resultDialog.setMessage(R.string.study_eligibility_fail)
             }
             resultDialog.setPositiveButton("continue") {_, _ ->
+
+
                 val intent = Intent(activity, activity::class.java)
                 activity.finish()
                 activity.startActivity(intent)
             }
+
+            markEligibilityAsUnchecked()
+
         }
 
         resultDialog.show()
     }
+
 
     private fun wordsFromSMS(cursor: Cursor?): Int {
 
@@ -238,7 +279,7 @@ class StudyEligibility(private val activity: Activity,
                     val message = c.getString(c.getColumnIndexOrThrow("body"))
                     val tokens = SentimentAnalysis.tokenizer(message)
                     words += tokens.size
-                } while(c.moveToNext() && words <= wordCount)
+                } while(c.moveToNext() && words <= requiredWordCount)
             }
         }
         return words

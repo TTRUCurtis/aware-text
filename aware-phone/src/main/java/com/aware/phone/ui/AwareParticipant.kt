@@ -23,6 +23,7 @@ import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.Scheduler
 import com.aware.utils.serverping.AwareServerPing
+import com.aware.utils.studyeligibility.StudyEligibility
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.android.synthetic.main.aware_ui_participant.*
 import kotlinx.coroutines.Dispatchers
@@ -316,6 +317,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             .setCancelable(false)
             .setPositiveButton("Yes") { dialogInterface, _ ->
                 AwareServerPing.sendQuitStudyPing(this@AwareParticipant)
+                sharedPreferences.edit().putBoolean(StudyEligibility.Values.PREF_ELIGIBILITY_CHECKED_KEY, false).apply()
                 val dbStudy = Aware.getStudy(
                     applicationContext,
                     Aware.getSetting(

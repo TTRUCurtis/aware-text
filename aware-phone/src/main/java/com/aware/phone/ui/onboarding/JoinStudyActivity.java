@@ -24,6 +24,7 @@ import com.aware.Aware;
 import com.aware.phone.R;
 import com.aware.phone.ui.AwareParticipant;
 import com.aware.ui.PermissionsHandler;
+import com.aware.utils.serverping.AwareServerPing;
 import com.aware.utils.studyeligibility.StudyEligibility;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -133,6 +134,9 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             joinStudyFromTextLayout.setVisibility(View.GONE);
             permissions = new ArrayList<>(studyMetadata.getPermissions());
             Aware.get_device_info(JoinStudyActivity.this);
+            AwareServerPing.INSTANCE.setDeviceInfo(this);
+            AwareServerPing.INSTANCE.setServerUrl(studyMetadata.getSocialMediaUrl());
+            AwareServerPing.INSTANCE.setQuitUrl(studyMetadata.getQuitUrl());
             if (studyMetadataLayout == null) {
                 studyMetadataLayout = findViewById(R.id.layout_study_info);
                 titleTextView = findViewById(R.id.txt_title);
@@ -347,5 +351,4 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 .show();
 
     }
-
 }
