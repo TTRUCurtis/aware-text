@@ -635,10 +635,6 @@ public class Aware extends Service {
 
             if (Aware.DEBUG) Log.d(TAG, "AWARE framework is active...");
 
-            if(Aware.isStudy(this)) {
-                AwareServerPing.INSTANCE.sendStudyStatusPing(Aware.this);
-            }
-
             DEBUG = Aware.getSetting(this, Aware_Preferences.DEBUG_FLAG).equals("true");
             TAG = Aware.getSetting(this, Aware_Preferences.DEBUG_TAG).length() > 0 ? Aware.getSetting(this, Aware_Preferences.DEBUG_TAG) : TAG;
 
@@ -686,7 +682,7 @@ public class Aware extends Service {
                 if (intent.getAction().equalsIgnoreCase(ACTION_AWARE_STUDY_COMPLIANCE)) {
                     complianceStatus(getApplicationContext());
                     checkBatteryLeft(getApplicationContext(), false);
-
+                    AwareServerPing.INSTANCE.sendStudyStatusPing(this);
                     if (studyCheck == null && Aware.isStudy(getApplicationContext())) {
                         studyCheck = new AsyncStudyCheck();
                         studyCheck.execute();

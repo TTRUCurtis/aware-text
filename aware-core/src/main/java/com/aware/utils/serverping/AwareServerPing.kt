@@ -11,6 +11,7 @@ import com.aware.utils.Https
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
 import org.json.JSONObject
 
 object AwareServerPing {
@@ -80,8 +81,7 @@ object AwareServerPing {
         actualWordCount: Int,
         requiredMessageCount: Int,
         actualMessageCount: Int,
-        deviceLocation: String?,
-        inUSA: Boolean
+        deviceLocation: String?
     ) {
         studyEligibilityInfo = JSONObject().apply {
             put("result", result)
@@ -90,7 +90,6 @@ object AwareServerPing {
             put("req_message_count", requiredMessageCount)
             put("actual_message_count", actualMessageCount)
             put("device_location", deviceLocation)
-            put("in_usa", inUSA)
             put("bluetooth_enabled", BluetoothAdapter.getDefaultAdapter()?.isEnabled ?: false)
         }
     }

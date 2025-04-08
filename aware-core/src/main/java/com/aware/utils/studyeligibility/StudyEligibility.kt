@@ -197,48 +197,21 @@ class StudyEligibility(private val activity: Activity,
             delay(2000)
 
             val deviceLocation = (activity.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager).let { it?.networkCountryIso }
-            val coordinates = getCoordinates()
-            val latitude = coordinates?.latitude
-            val longitude = coordinates?.longitude
 
-            val inUSA = if(latitude != null && longitude != null) {
-                areCoordinatesInTheUSA(latitude, longitude)
-            } else {
-                false
-            }
 
             withContext(Dispatchers.Main) {
                 markEligibilityAsChecked()
-                handleStudyEligibilityResult(isEligible, bluetoothCheck, deviceLocation, inUSA)
+                handleStudyEligibilityResult(isEligible, bluetoothCheck, deviceLocation)
                 progressDialog.dismiss()
             }
         }
     }
 
-    @SuppressWarnings("MissingPermission")
-    private suspend fun getCoordinates(): Location? = suspendCoroutine { cont ->
-        //can only get here if permissions are granted
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location ->
-                cont.resume(location)
-            }
-            .addOnFailureListener { _ ->
-                cont.resume(null)
-            }
-    }
 
-    private fun areCoordinatesInTheUSA(latitude: Double, longitude: Double): Boolean {
-            val minLat = 24.396308 // Southernmost point (Key West, Florida)
-            val maxLat = 49.384358 // Northernmost point (Lake of the Woods, Minnesota)
-            val minLon = -125.000000 // Westernmost point (California coast)
-            val maxLon = -66.934570 // Easternmost point (Maine)
-            return latitude in minLat..maxLat && longitude in minLon..maxLon
-    }
-
-    private fun handleStudyEligibilityResult(isEligible: Boolean, bluetoothCheck: Boolean, deviceLocation: String?, inUSA: Boolean) {
+    private fun handleStudyEligibilityResult(isEligible: Boolean, bluetoothCheck: Boolean, deviceLocation: String?) {
 
         val resultDialog = AlertDialog.Builder(activity)
-        AwareServerPing.setStudyEligibilityInfo(isEligible, requiredWordCount, actualWordCount, requiredMessageCount, actualMessageCount, deviceLocation, inUSA)
+        AwareServerPing.setStudyEligibilityInfo(isEligible, requiredWordCount, actualWordCount, requiredMessageCount, actualMessageCount, deviceLocation)
         if(isEligible) {
             resultDialog.setTitle("TTRU-AWARE: Study Eligibility Passed")
             resultDialog.setMessage(R.string.study_eligibility_success)
