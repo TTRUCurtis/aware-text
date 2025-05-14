@@ -85,16 +85,24 @@
                 android:textColor="#546E7A"
                 android:textSize="14sp"
                 tools:text="FOR YOU TO COMPLETE"/>
-            <LinearLayout
-                android:id="@+id/ap_esm_container"
+
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:orientation="vertical"
-                android:background="@drawable/item_background"
-                >
+                android:fillViewport="true">
 
-            </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/ap_esm_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:orientation="vertical"
+                    android:background="@drawable/item_background"
+                    >
+
+                </LinearLayout>
+
+            </HorizontalScrollView>
 
             <TextView
                 android:id="@+id/ap_study_options_title"
@@ -106,40 +114,48 @@
                 android:textSize="14sp"
                 tools:text="AWARE STUDY OPTIONS" />
 
-            <LinearLayout
-                android:id="@+id/ap_study_options_container"
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/item_background"
-                >
+                android:fillViewport="true">
 
-                <include
-                    android:id="@+id/sync_item"
-                    layout="@layout/aware_item_layout"
+                <LinearLayout
+                    android:id="@+id/ap_study_options_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    />
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/separator_grey" />
-                <include
-                    android:id="@+id/quit_study_item"
-                    layout="@layout/aware_item_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <View
-                    android:id="@+id/study_options_separator"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/separator_grey" />
-                <include
-                    android:id="@+id/revoked_permission_item"
-                    layout="@layout/aware_item_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
+                    android:orientation="vertical"
+                    android:background="@drawable/item_background"
+                    >
+
+                    <include
+                        android:id="@+id/sync_item"
+                        layout="@layout/aware_item_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/separator_grey" />
+                    <include
+                        android:id="@+id/quit_study_item"
+                        layout="@layout/aware_item_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+                    <View
+                        android:id="@+id/study_options_separator"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/separator_grey" />
+                    <include
+                        android:id="@+id/revoked_permission_item"
+                        layout="@layout/aware_item_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

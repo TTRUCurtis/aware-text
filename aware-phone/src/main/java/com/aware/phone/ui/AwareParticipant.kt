@@ -642,14 +642,14 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             ),
             AwareParticipantItem(
                 "Quit Study",
-                "Quit a study you're currently enrolled in",
+                "Quit study you're currently enrolled in",
                 R.drawable.ic_quit,
                 R.id.aware_item_card,
                 R.drawable.item_background_2
             ),
             AwareParticipantItem(
                 "Revoked Permission",
-                "Granting permissions from app settings",
+                "Grant permissions from app settings",
                 R.drawable.ic_error,
                 R.id.aware_item_card,
                 R.drawable.item_background_2
