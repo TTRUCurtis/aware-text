@@ -288,6 +288,7 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
             String surveyUrl = responseJO.getString("survey_url");
             String socialMediaUrl = responseJO.getString("social_media_url");
             String quitUrl = responseJO.getString("quit_url");
+            String debugUrl = responseJO.getString("debug_url");
 
             return Result.data(
                     new StudyMetadata.Builder()
@@ -295,6 +296,7 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
                             .setSurveyUrl(surveyUrl)
                             .setSocialMediaUrl(socialMediaUrl)
                             .setQuitUrl(quitUrl)
+                            .setDebugUrl(debugUrl)
             );
 
         } catch (JSONException e) {

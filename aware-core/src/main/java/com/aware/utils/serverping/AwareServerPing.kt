@@ -13,6 +13,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
 
 object AwareServerPing {
 
@@ -20,6 +22,7 @@ object AwareServerPing {
 
     private var serverUrl: String? = null
     private var quitUrl: String? = null
+    private var debugUrl: String? = null
 
     private var deviceInfo : JSONObject? = null
     private var permissionsStatus: JSONObject? = null
@@ -34,6 +37,12 @@ object AwareServerPing {
     fun setQuitUrl(url: String?) {
         if(quitUrl == null && url != null) {
             quitUrl = url
+        }
+    }
+
+    fun setDebugUrl(url: String?) {
+        if(debugUrl == null && url != null) {
+            debugUrl = url
         }
     }
 
@@ -150,6 +159,23 @@ object AwareServerPing {
             put(PID, pid)
             put("device_info", deviceInfo)
             put("study_eligibility_info", info)
+        } ?: return
+
+        postToServer(url, json)
+    }
+
+    fun sendDebugPing(context: Context, source: String, message: String) {
+        val url = debugUrl ?: return
+        val pid = Aware.getSetting(context, Aware_Preferences.DEVICE_ID) ?: "test_pid"
+        val currentMillis = System.currentTimeMillis()
+        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val readableTime = formatter.format(Date(currentMillis))
+
+        val json = buildJson {
+            put(PID, pid)
+            put("timestamp", readableTime)
+            put("code_source", source)
+            put("message", message)
         } ?: return
 
         postToServer(url, json)
