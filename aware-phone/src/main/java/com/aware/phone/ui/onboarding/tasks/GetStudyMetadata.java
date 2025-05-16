@@ -38,6 +38,7 @@ import java.util.List;
 public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>> {
 
     private final static String TAG = GetStudyMetadata.class.getSimpleName();
+    private final static String ERROR_MESSAGE = "The app encountered an unexpected error. Please try again. If the problem persists, contact smartrstudy@nih.gov.";
 
     private final Application application;
     private final Listener listener;
@@ -97,10 +98,9 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
                                 .build());
             } catch (JSONException e) {
                 e.printStackTrace();
-                return Result.error("There was a problem retrieving the study information");
-
+                return Result.error(ERROR_MESSAGE);
             }
-        } else return Result.error("There was a problem retrieving the study information");
+        } else return Result.error(ERROR_MESSAGE);
     }
 
     @Nullable
@@ -117,8 +117,10 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
             //Note: Joining a study always downloads the certificate.
             SSLManager.handleUrl(application, studyBuilder.url, true);
 
-            while (!SSLManager.hasCertificate(application, studyUri.getHost())) {
-                //wait until we have the certificate downloaded
+            if(!SSLManager.hasCertificate(application, studyUri.getHost())) {
+                // Certificate was not retrieved successfully after various attempts in SSLManager.retrieveCertificate
+                // Return early to allow the UI to present an appropriate error message to the user
+                return null;
             }
 
             try {

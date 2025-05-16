@@ -39,7 +39,7 @@ import java.util.List;
 // it should be done before joining study, if not, can leave it in the main screen.
 // if should be done before loading/joining study, do it in get study metadata
 // or create new task, initialize db
-public class JoinStudyActivity extends AppCompatActivity implements PermissionsHandler.PermissionCallback{
+public class JoinStudyActivity extends AppCompatActivity implements PermissionsHandler.PermissionCallback {
 
     private JoinStudyViewModel viewModel;
     private ProgressDialog loader;
@@ -124,7 +124,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                     viewModel.dismissErrorDialog();
                     dialog.dismiss();
                 });
-                builder.setTitle("Error retrieving study metadata");
+                builder.setTitle("Error registering for study");
                 builder.setMessage(errorMsg);
                 builder.show();
             }

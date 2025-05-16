@@ -138,64 +138,76 @@ public class SSLManager {
      * @return
      */
     public static X509Certificate retrieveRemoteCertificate(URL url) {
-        try {
 
-            SSLContext ctx = SSLContext.getInstance("TLS");
-            ctx.init(null, new TrustManager[]{
-                    new X509TrustManager() {
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                        }
+        int retry = 3;
+        int connectTimeout = 5000;
+        int readTimeout = 10000;
+        int increment = 5000;
 
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                        }
+        while(retry-- > 0) {
 
-                        @Override
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return new X509Certificate[0];
+            try {
+                SSLContext ctx = SSLContext.getInstance("TLS");
+                ctx.init(null, new TrustManager[]{
+                        new X509TrustManager() {
+                            @Override
+                            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                            }
+
+                            @Override
+                            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                            }
+
+                            @Override
+                            public X509Certificate[] getAcceptedIssuers() {
+                                return new X509Certificate[0];
+                            }
                         }
+                }, null);
+
+                HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+                conn.setSSLSocketFactory(ctx.getSocketFactory());
+                conn.setConnectTimeout(connectTimeout); //5 seconds to connect, plus five for each retry
+                conn.setReadTimeout(readTimeout); //10 seconds to acknowledge the response, plus five for each retry
+                conn.setHostnameVerifier(new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String hostname, SSLSession session) {
+                        return true;
                     }
-            }, null);
+                });
+                conn.connect();
 
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-            conn.setSSLSocketFactory(ctx.getSocketFactory());
-            conn.setConnectTimeout(5000); //5 seconds to connect
-            conn.setReadTimeout(10000); //10 seconds to acknowledge the response
-            conn.setHostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
+                // retrieve the N-length signing chain for the server certificates
+                // certs[0] is the server's certificate
+                Certificate[] certs = conn.getServerCertificates();
+                if (certs.length > 0 && certs[0] instanceof X509Certificate) {
+                    return ((X509Certificate) certs[0]);
+                }else {
+                    Log.d(Aware.TAG, "Not an X509Certificate! " + certs[0].getType() + " : " + certs[0].toString());
+                    // connection is not HTTPS or server is not signed with an X.509 certificate,
+                    return null;
                 }
-            });
-            conn.connect();
 
-            // retrieve the N-length signing chain for the server certificates
-            // certs[0] is the server's certificate
-            Certificate[] certs = conn.getServerCertificates();
-            if (certs.length > 0 && certs[0] instanceof X509Certificate) {
-                return ((X509Certificate) certs[0]);
+            } catch (SSLPeerUnverifiedException | NoSuchAlgorithmException | KeyManagementException spue) {
+                // connection to server is not verified, unable to get certificates
+                Log.d(Aware.TAG, "Certificates: " + spue.getMessage());
+                connectTimeout += increment;
+                readTimeout += increment;
+            } catch (IllegalStateException ise) {
+                // shouldn't get here -- indicates attempt to get certificates before
+                // connection is established
+                Log.d(Aware.TAG, "Certificates: " + ise.getMessage());
+                connectTimeout += increment;
+                readTimeout += increment;
+            } catch (IOException ioe) {
+                // error connecting to URL -- this must be caught last since
+                // other exceptions are subclasses of IOException
+                Log.d(Aware.TAG, "Certificates: " + ioe.getMessage());
+                connectTimeout += increment;
+                readTimeout += increment;
             }
-
-            Log.d(Aware.TAG, "Not an X509Certificate! " + certs[0].getType() + " : " + certs[0].toString());
-
-            // connection is not HTTPS or server is not signed with an X.509 certificate, return null
-            return null;
-        } catch (SSLPeerUnverifiedException | NoSuchAlgorithmException | KeyManagementException spue) {
-            // connection to server is not verified, unable to get certificates
-            Log.d(Aware.TAG, "Certificates: " + spue.getMessage());
-            return null;
-        } catch (IllegalStateException ise) {
-            // shouldn't get here -- indicates attempt to get certificates before
-            // connection is established
-            Log.d(Aware.TAG, "Certificates: " + ise.getMessage());
-            return null;
-        } catch (IOException ioe) {
-            // error connecting to URL -- this must be caught last since
-            // other exceptions are subclasses of IOException
-            Log.d(Aware.TAG, "Certificates: " + ioe.getMessage());
-            return null;
         }
+        return null;
     }
 
     /**
@@ -307,6 +319,7 @@ public class SSLManager {
      * @return true if a certificate exists, false otherwise
      */
     public static boolean hasCertificate(Context context, String hostname) {
+
         if (hostname == null || hostname.length() == 0) return false;
 
         File root_folder;
