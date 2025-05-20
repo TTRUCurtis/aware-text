@@ -22,6 +22,8 @@ import com.aware.ui.PermissionsHandler;
 import com.aware.utils.Http;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
+import com.aware.utils.serverping.AwareServerPing;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -57,13 +59,16 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
         if (participantId == null) {
             return Result.error("Unable to find participant ID from provided info: " + registrationData);
         } else {
+            FirebaseCrashlytics.getInstance().setUserId(participantId);
             Aware.setSetting(application, Aware_Preferences.DEVICE_ID, participantId);
         }
 
         Result<StudyMetadata.Builder> result = getStudyUrls(registrationData);
 
         if (result.hasError()) {
-            return Result.error(result.getErrorMsg()); //immediately return since we can't do
+            assert result.getErrorMsg() != null;
+            AwareServerPing.INSTANCE.sendDebugPing(application, "GetStudyMetadata.doInBackground.69", result.getErrorMsg());
+            return Result.error(ERROR_MESSAGE); //immediately return since we can't do
             // anything else
         } else return addRemainingStudyMetadata(result);
     }
@@ -97,6 +102,8 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
                                 .setPermissions(PermissionsHandler.Companion.populatePermissionsList(new JSONArray(studyBuilderWithConfig.getData().configuration)))
                                 .build());
             } catch (JSONException e) {
+                String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                AwareServerPing.INSTANCE.sendDebugPing(application, "GetStudyMetadata.addRemainingStudyMetadata.105", stackTraceString);
                 e.printStackTrace();
                 return Result.error(ERROR_MESSAGE);
             }
@@ -129,6 +136,8 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
                         .substring(0, studyBuilder.url
                                 .indexOf("/index.php")) + "/index.php/webservice/client_get_study_info/" + studyApiKey, true);
             } catch (FileNotFoundException e) {
+                String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                AwareServerPing.INSTANCE.sendDebugPing(application, "GetStudyMetadata.getStudyInfo.139", stackTraceString);
                 request = null;
             }
         } else {
@@ -154,7 +163,8 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
             data.put("package_version_name", String.valueOf(package_info.versionName));
         } catch (PackageManager.NameNotFoundException e) {
             Log.d(Aware.TAG, "Failed to put package info: " + e);
-            e.printStackTrace();
+            String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+            AwareServerPing.INSTANCE.sendDebugPing(application, "GetStudyMetadata.addStudyConfig.166", stackTraceString);
         }
 
         String studyUrl = studyMetadata.url;
@@ -164,7 +174,9 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
                 response = new Https(SSLManager.getHTTPS(application, studyUrl))
                         .dataPOST(studyUrl, data, true);
             } catch (FileNotFoundException e) {
-                return Result.error("Certificate not found for " + studyUrl);
+                String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                AwareServerPing.INSTANCE.sendDebugPing(application, "GetStudyMetadata.addStudyConfig.177", stackTraceString);
+                return Result.error(ERROR_MESSAGE);
             }
         } else {
             response = new Http().dataPOST(studyUrl, data, true);
@@ -178,12 +190,13 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
                     return Result.data(studyMetadata);
                 } else {
                     String message = studyConfig.getJSONObject(0).getString("message");
-                    return Result.error("Message from server: " + message);
+                    Log.e(TAG, "message from server: " + message);
+                    return Result.error(ERROR_MESSAGE);
                 }
             } catch (JSONException e) {
-                e.printStackTrace();
-                return Result.error("There was a problem with the response data from get study " +
-                        "config");
+                String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                AwareServerPing.INSTANCE.sendDebugPing(application, "GetStudyMetadata.addStudyConfig.197", stackTraceString);
+                return Result.error(ERROR_MESSAGE);
             }
         } else return Result.error("There was a problem retrieving the study's " +
                 "configuration settings");
@@ -290,6 +303,8 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
             String quitUrl = responseJO.getString("quit_url");
             String debugUrl = responseJO.getString("debug_url");
 
+            AwareServerPing.INSTANCE.setDebugUrl(debugUrl);
+
             return Result.data(
                     new StudyMetadata.Builder()
                             .setUrl(studyUrl)
@@ -300,10 +315,12 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
             );
 
         } catch (JSONException e) {
-            e.printStackTrace();
             Log.d(TAG, registrationUri + " --> " + response);
-            return Result.error("There was a problem with the response data from get study web " +
+            Log.d(TAG, "There was a problem with the response data from get study web " +
                     "address: " + e.getMessage());
+            String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+            AwareServerPing.INSTANCE.sendDebugPing(application, "GetStudyMetadata.getStudyUrls.321", stackTraceString);
+            return Result.error(ERROR_MESSAGE);
         }
     }
 

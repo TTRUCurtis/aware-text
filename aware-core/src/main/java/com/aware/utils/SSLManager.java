@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.R;
+import com.aware.utils.serverping.AwareServerPing;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -73,6 +74,7 @@ public class SSLManager {
                         Log.d(Aware.TAG, "Certificates: Already present and key_management=once: " + hostname);
                 }
             } else {
+                Exception exception = null;
                 try {
                     if (!hasCertificate(context, hostname)) {
                         if (Aware.DEBUG) Log.d(Aware.TAG, "Certificates: Downloading for the first time SSL certificate: " + protocol+"://"+hostname);
@@ -85,9 +87,14 @@ public class SSLManager {
                         new CheckCertificates(context, url).execute(cert);
                     }
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                    exception = e;
                 } catch (CertificateException e) {
-                    e.printStackTrace();
+                    exception = e;
+                } finally {
+                    if(exception != null) {
+                        String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(exception);
+                        AwareServerPing.INSTANCE.sendDebugPing(context, "SSLManager.handleUrl.92", stackTraceString);
+                    }
                 }
             }
         }
@@ -119,7 +126,7 @@ public class SSLManager {
         @Override
         protected Void doInBackground(X509Certificate... x509Certificate) {
             try {
-                X509Certificate remote_certificate = retrieveRemoteCertificate(new URL(protocol, hostname, port, ""));
+                X509Certificate remote_certificate = retrieveRemoteCertificate(context, new URL(protocol, hostname, port, ""));
                 if (!x509Certificate[0].equals(remote_certificate)) { //local certificate is expired or different, download new certificate
                     downloadCertificate(context, protocol, hostname, port, true);
                     //this will force download of SSL certificate from the server. Checked every 15 minutes until successful update to up-to-date certificate.
@@ -137,7 +144,7 @@ public class SSLManager {
      * @param url
      * @return
      */
-    public static X509Certificate retrieveRemoteCertificate(URL url) {
+    public static X509Certificate retrieveRemoteCertificate(Context context, URL url) {
 
         int retry = 3;
         int connectTimeout = 5000;
@@ -145,7 +152,7 @@ public class SSLManager {
         int increment = 5000;
 
         while(retry-- > 0) {
-
+            Exception exception = null;
             try {
                 SSLContext ctx = SSLContext.getInstance("TLS");
                 ctx.init(null, new TrustManager[]{
@@ -191,20 +198,24 @@ public class SSLManager {
             } catch (SSLPeerUnverifiedException | NoSuchAlgorithmException | KeyManagementException spue) {
                 // connection to server is not verified, unable to get certificates
                 Log.d(Aware.TAG, "Certificates: " + spue.getMessage());
-                connectTimeout += increment;
-                readTimeout += increment;
+                exception = spue;
             } catch (IllegalStateException ise) {
                 // shouldn't get here -- indicates attempt to get certificates before
                 // connection is established
                 Log.d(Aware.TAG, "Certificates: " + ise.getMessage());
-                connectTimeout += increment;
-                readTimeout += increment;
+                exception = ise;
             } catch (IOException ioe) {
                 // error connecting to URL -- this must be caught last since
                 // other exceptions are subclasses of IOException
                 Log.d(Aware.TAG, "Certificates: " + ioe.getMessage());
-                connectTimeout += increment;
-                readTimeout += increment;
+                exception = ioe;
+            } finally {
+                if(exception != null) {
+                    connectTimeout += increment;
+                    readTimeout += increment;
+                    String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(exception);
+                    AwareServerPing.INSTANCE.sendDebugPing(context, "SSLManager.retrieveRemoteCertificate.218", stackTraceString);
+                }
             }
         }
         return null;
@@ -231,13 +242,15 @@ public class SSLManager {
         root_folder.mkdirs();
 
         try {
-            X509Certificate certificate = retrieveRemoteCertificate(new URL(protocol, hostname, port, ""));
+            X509Certificate certificate = retrieveRemoteCertificate(context, new URL(protocol, hostname, port, ""));
             byte[] certificate_data = certificate.getEncoded();
             FileOutputStream outputStream = new FileOutputStream(new File(root_folder.toString() + "/server.crt"));
             outputStream.write(certificate_data);
             outputStream.close();
         } catch (CertificateEncodingException | IOException | NullPointerException e) {
             Log.d(Aware.TAG, "SSL error: " + e.getMessage());
+            String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+            AwareServerPing.INSTANCE.sendDebugPing(context, "SSLManager.downloadCertificate.252", stackTraceString);
         }
     }
 
@@ -289,11 +302,13 @@ public class SSLManager {
                 }
             } catch (IOException e) {
                 Log.e(Aware.TAG, "Certificates: Can not download crt: " + crt_url);
-                // TODO: error handling
+                String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                AwareServerPing.INSTANCE.sendDebugPing(context, "SSLManager.handleCrtParameters.305", stackTraceString);
                 return;
             }
         } else {
-            // TODO: error handling
+            String message = "Unable to download certificate because both crt and crt_url and null.";
+            AwareServerPing.INSTANCE.sendDebugPing(context, "SSLManager.handleCrtParameters.310", message);
             Log.e(Aware.TAG, "Certificates: Both crt and crt_url are null: ");
             return;
         }
@@ -302,7 +317,9 @@ public class SSLManager {
         if (crt_sha256 != null) {
             String actual_hash = Encrypter.hashGeneric(crt, "SHA-256");
             if (!actual_hash.equals(crt_sha256)) {
-                Log.e(Aware.TAG, "Invalid certificate hash: " + crt_sha256 + "!=" + actual_hash);
+                String message = "Invalid certificate hash: " + crt_sha256 + "!=" + actual_hash;
+                Log.e(Aware.TAG, message);
+                AwareServerPing.INSTANCE.sendDebugPing(context, "SSLManager.handleCrtParameters.320", message);
                 return;
             }
         }
@@ -383,6 +400,8 @@ public class SSLManager {
             Log.d(Aware.TAG, "Set certificate for " + hostname);
         } catch (java.io.IOException e) {
             Log.d(Aware.TAG, "Can not write certificate: " + cert_file);
+            String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+            AwareServerPing.INSTANCE.sendDebugPing(context, "SSLManager.setCertificate.403", stackTraceString);
             e.printStackTrace();
         }
     }

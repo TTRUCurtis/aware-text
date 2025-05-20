@@ -13,6 +13,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 import org.json.JSONObject
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -27,6 +30,14 @@ object AwareServerPing {
     private var deviceInfo : JSONObject? = null
     private var permissionsStatus: JSONObject? = null
     private var studyEligibilityInfo: JSONObject? = null
+
+
+    fun getExceptionStackTraceAsString(e: Exception): String {
+        val sw = StringWriter()
+        val pw = PrintWriter(sw)
+        e.printStackTrace(pw)
+        return sw.toString()
+    }
 
     fun setServerUrl(url: String?) {
         if(serverUrl == null && url != null) {
@@ -166,7 +177,7 @@ object AwareServerPing {
 
     fun sendDebugPing(context: Context, source: String, message: String) {
         val url = debugUrl ?: return
-        val pid = Aware.getSetting(context, Aware_Preferences.DEVICE_ID) ?: "test_pid"
+        val pid = Aware.getSetting(context, Aware_Preferences.DEVICE_ID)
         val currentMillis = System.currentTimeMillis()
         val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val readableTime = formatter.format(Date(currentMillis))
