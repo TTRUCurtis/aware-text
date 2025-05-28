@@ -46,8 +46,9 @@ public class Plugin extends Aware_Plugin {
         contextBroadcaster.setProvider(AUTHORITY);
         contextBroadcaster.setTag(TAG);
 
-
-        REQUIRED_PERMISSIONS.add(Manifest.permission.ACTIVITY_RECOGNITION);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            REQUIRED_PERMISSIONS.add(Manifest.permission.ACTIVITY_RECOGNITION);
+        }
 
         CONTEXT_PRODUCER = () -> {
             Intent context = new Intent(ACTION_AWARE_GOOGLE_ACTIVITY_RECOGNITION);
