@@ -135,9 +135,9 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             permissions = new ArrayList<>(studyMetadata.getPermissions());
             Aware.get_device_info(JoinStudyActivity.this);
             AwareServerPing.INSTANCE.setDeviceInfo(this);
-            AwareServerPing.INSTANCE.setServerUrl(studyMetadata.getSocialMediaUrl());
-            AwareServerPing.INSTANCE.setQuitUrl(studyMetadata.getQuitUrl());
-            AwareServerPing.INSTANCE.setDebugUrl(studyMetadata.getDebugUrl());
+            AwareServerPing.INSTANCE.setServerUrl(this, studyMetadata.getSocialMediaUrl());
+            AwareServerPing.INSTANCE.setQuitUrl(this, studyMetadata.getQuitUrl());
+            AwareServerPing.INSTANCE.setDebugUrl(this, studyMetadata.getDebugUrl());
             if (studyMetadataLayout == null) {
                 studyMetadataLayout = findViewById(R.id.layout_study_info);
                 titleTextView = findViewById(R.id.txt_title);

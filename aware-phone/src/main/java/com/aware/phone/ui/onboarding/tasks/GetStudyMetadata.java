@@ -303,7 +303,10 @@ public class GetStudyMetadata extends AsyncTask<Uri, Void, Result<StudyMetadata>
             String quitUrl = responseJO.getString("quit_url");
             String debugUrl = responseJO.getString("debug_url");
 
-            AwareServerPing.INSTANCE.setDebugUrl(debugUrl);
+            AwareServerPing.INSTANCE.initialize(application);
+            AwareServerPing.INSTANCE.setDebugUrl(application, debugUrl);
+            AwareServerPing.INSTANCE.setServerUrl(application, socialMediaUrl);
+            AwareServerPing.INSTANCE.setQuitUrl(application, quitUrl);
 
             return Result.data(
                     new StudyMetadata.Builder()

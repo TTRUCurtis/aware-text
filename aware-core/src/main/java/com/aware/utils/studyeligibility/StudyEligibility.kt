@@ -211,7 +211,7 @@ class StudyEligibility(private val activity: Activity,
     private fun handleStudyEligibilityResult(isEligible: Boolean, bluetoothCheck: Boolean, deviceLocation: String?) {
 
         val resultDialog = AlertDialog.Builder(activity)
-        AwareServerPing.setStudyEligibilityInfo(isEligible, requiredWordCount, actualWordCount, requiredMessageCount, actualMessageCount, deviceLocation)
+        AwareServerPing.setStudyEligibilityInfo(activity.applicationContext, isEligible, requiredWordCount, actualWordCount, requiredMessageCount, actualMessageCount, deviceLocation)
         if(isEligible) {
             resultDialog.setTitle("TTRU-AWARE: Study Eligibility Passed")
             resultDialog.setMessage(R.string.study_eligibility_success)
