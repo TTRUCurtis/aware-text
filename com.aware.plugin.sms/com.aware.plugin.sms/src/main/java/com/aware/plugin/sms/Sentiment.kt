@@ -32,8 +32,13 @@ class Sentiment @Inject constructor(
                 val scores = sentimentAnalysis.getScores(tokens)
                 scores.map { (category, pair) ->
                     if (pair.first != 0.0) {
+                        val sentimentId = message.id!!.split("_")
+                            .toMutableList()
+                            .apply { add(2, category) }
+                            .joinToString("_")
                         sentimentList.add(
                             SentimentData(
+                                sentimentId,
                                 retrievalTimestamp,
                                 messageTimestamp,
                                 category,
@@ -53,6 +58,7 @@ class Sentiment @Inject constructor(
 }
 
 data class SentimentData(
+    val sentimentId: String,
     val retrievalTimestamp: String,
     val messageTimestamp: String,
     val category: String,

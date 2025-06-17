@@ -5,6 +5,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.util.Log
 import com.aware.Aware
+import com.aware.Aware_Preferences
 import com.aware.utils.Encrypter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,7 @@ class Repository @Inject constructor(
         const val KEY_THREAD_ID = "thread_id"
         const val KEY_ADDRESS = "address"
         const val KEY_DATE = "date"
+        const val KEY_ID = "_id"
     }
 
     object SmsConstants {
@@ -38,7 +40,6 @@ class Repository @Inject constructor(
         const val KEY_M_TYPE = "m_type"
         const val KEY_TEXT = "text"
         const val KEY_CT = "ct"
-        const val KEY_ID = "_id"
         const val KEY_DATA = "_data"
     }
 
@@ -94,8 +95,12 @@ class Repository @Inject constructor(
                         c.getString(c.getColumnIndexOrThrow(SmsConstants.KEY_MSG_BODY))
                     val currentTime = System.currentTimeMillis()
                     val isMms = false
+                    val id =
+                        c.getString(c.getColumnIndexOrThrow(MsgConstants.KEY_ID))
+                    val smsId = "${Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)}_SMS_${id}"
                     smsList.add(
                         Message(
+                            smsId,
                             threadId,
                             user,
                             type,
@@ -149,6 +154,7 @@ class Repository @Inject constructor(
             var threadId: String
             val timeStamp = System.currentTimeMillis()
             var type: String
+            var id: String
 
             val mmsUri = Uri.parse("content://mms")
             val mmsProjection = arrayOf("_id", "thread_id", "msg_box", "ct_t", "date", "m_type")
@@ -169,6 +175,7 @@ class Repository @Inject constructor(
                     if (mmsCursor.moveToFirst()) {
 
                         do {
+                            id = mmsCursor.getString(mmsCursor.getColumnIndexOrThrow(MsgConstants.KEY_ID))
                             mid = mmsCursor.getString(0)
                             threadId =
                                 mmsCursor.getString(mmsCursor.getColumnIndexOrThrow(MsgConstants.KEY_THREAD_ID))
@@ -202,7 +209,7 @@ class Repository @Inject constructor(
                                     val mmsPartId =
                                         mmsPartCursor.getString(
                                             mmsPartCursor.getColumnIndexOrThrow(
-                                                MmsConstants.KEY_ID
+                                                MsgConstants.KEY_ID
                                             )
                                         )
                                     if ("text/plain" == mmsPartType) {
@@ -262,8 +269,10 @@ class Repository @Inject constructor(
                             }
 
                             val isMms = true
+                            val mmsId = "${Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)}_MMS_${id}"
                             mmsList.add(
                                 Message(
+                                    mmsId,
                                     threadId,
                                     addresses,
                                     type,
