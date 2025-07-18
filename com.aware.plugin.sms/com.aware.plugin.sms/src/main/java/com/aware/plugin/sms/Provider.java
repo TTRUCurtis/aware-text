@@ -49,7 +49,7 @@ public class Provider extends ContentProvider {
                 Sms_Data.MSG_ADDRESS + " text default ''," +
                 Sms_Data.MSG_BODY + " text default ''," +
                 Sms_Data.MSG_MMS_PART_TYPE + " text default ''," +
-                Sms_Data.MSG_MESSAGE_ID + " varchar(255) not null unique"
+                Sms_Data.MSG_MESSAGE_ID + " varchar(255) unique"
                 ,
             Sentiment_Analysis._ID + " integer primary key autoincrement," +
                     Sentiment_Analysis.RETRIEVAL_TIMESTAMP + " real default 0," +
@@ -61,7 +61,7 @@ public class Provider extends ContentProvider {
                     Sentiment_Analysis.SCORE + " real default 0," +
                     Sentiment_Analysis.ADDRESS + " text default ''," +
                     Sentiment_Analysis.TYPE + " text default ''," +
-                    Sentiment_Analysis.SENTIMENT_ID + " varchar(255) not null unique"
+                    Sentiment_Analysis.SENTIMENT_ID + " varchar(255) unique"
     };
 
     public static final class Sms_Data implements BaseColumns {
