@@ -30,6 +30,7 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
     private final Application application;
     private final Listener listener;
     private String socialMediaUrl;
+    private String quitUrl;
 
     public JoinStudy(Application application, Listener listener) {
         this.application = application;
@@ -59,16 +60,17 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
         }
         if (!study.isClosed()) study.close();
 
-        AwareServerPing.INSTANCE.setDeviceInfo(application);
         AwareServerPing.INSTANCE.setPermissionsStatus(application, params[0].getPermissions());
-        AwareServerPing.INSTANCE.setStudyInfo(true, application.getSharedPreferences(StudyEligibility.Values.PREFS_NAME,0).getBoolean(StudyEligibility.Values.PREF_ELIGIBILITY_CHECKED_KEY,false));
+
 
         StudyUtils.applySettings(application, study_configs);
 
         //Last step in joining study
         socialMediaUrl = params[0].getSocialMediaUrl();
+        quitUrl = params[0].getQuitUrl();
         if (socialMediaUrl != null) {
-            new Https().dataPOSTJson(socialMediaUrl, AwareServerPing.INSTANCE.getRegistrationData(), true);
+            //new Https().dataPOSTJson(socialMediaUrl, AwareServerPing.INSTANCE.getRegistrationData(), true);
+            AwareServerPing.INSTANCE.sendStudyRegistrationPing(application);
         }
 
         return null;
@@ -78,7 +80,6 @@ public class JoinStudy extends AsyncTask<StudyMetadata, Void, Void> {
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
         listener.onPostExecute(null);
-        AwareServerPing.INSTANCE.setServerURL(socialMediaUrl+"/update");
     }
 
     public interface Listener {

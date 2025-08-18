@@ -24,6 +24,7 @@ import com.aware.Aware;
 import com.aware.phone.R;
 import com.aware.phone.ui.AwareParticipant;
 import com.aware.ui.PermissionsHandler;
+import com.aware.utils.serverping.AwareServerPing;
 import com.aware.utils.studyeligibility.StudyEligibility;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,7 +39,7 @@ import java.util.List;
 // it should be done before joining study, if not, can leave it in the main screen.
 // if should be done before loading/joining study, do it in get study metadata
 // or create new task, initialize db
-public class JoinStudyActivity extends AppCompatActivity implements PermissionsHandler.PermissionCallback{
+public class JoinStudyActivity extends AppCompatActivity implements PermissionsHandler.PermissionCallback {
 
     private JoinStudyViewModel viewModel;
     private ProgressDialog loader;
@@ -64,7 +65,6 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         setContentView(R.layout.activity_join_study);
 
         permissionsHandler = new PermissionsHandler(this);
-        studyEligibility = new StudyEligibility(this);
         deniedPermissions = new ArrayList<>();
 
         if (Aware.isStudy(this)) {
@@ -124,7 +124,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                     viewModel.dismissErrorDialog();
                     dialog.dismiss();
                 });
-                builder.setTitle("Error retrieving study metadata");
+                builder.setTitle("Error registering for study");
                 builder.setMessage(errorMsg);
                 builder.show();
             }
@@ -132,7 +132,12 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
 
         viewModel.getStudyMetadataLiveData().observe(this, studyMetadata -> {
             joinStudyFromTextLayout.setVisibility(View.GONE);
+            permissions = new ArrayList<>(studyMetadata.getPermissions());
             Aware.get_device_info(JoinStudyActivity.this);
+            AwareServerPing.INSTANCE.setDeviceInfo(this);
+            AwareServerPing.INSTANCE.setServerUrl(this, studyMetadata.getSocialMediaUrl());
+            AwareServerPing.INSTANCE.setQuitUrl(this, studyMetadata.getQuitUrl());
+            AwareServerPing.INSTANCE.setDebugUrl(this, studyMetadata.getDebugUrl());
             if (studyMetadataLayout == null) {
                 studyMetadataLayout = findViewById(R.id.layout_study_info);
                 titleTextView = findViewById(R.id.txt_title);
@@ -157,17 +162,18 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 finish();
             });
 
-            if(!studyEligibility.hasEligibilityBeenChecked() && studyMetadata.getConfiguration() != null) {
-                try {
-                    studyEligibility.checkForSmsPluginStatus(new JSONArray(studyMetadata.getConfiguration()));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+            try {
+                JSONArray studyConfig = new JSONArray(studyMetadata.getConfiguration());
+                studyEligibility = new StudyEligibility(
+                        this, studyConfig, permissionsHandler, this, studyMetadata.getPermissions()
+                );
+
+            } catch(JSONException e) {
+                e.printStackTrace();
             }
 
-            if(studyEligibility.isSmsPluginEnabled()) {
-                permissions = studyMetadata.getPermissions();
-                studyEligibility.showSMSPermissionDialog(permissionsHandler, this);
+            if(studyEligibility.shouldPerformStudyEligibility()) {
+                studyEligibility.showStudyEligibilityDialog();
             } else {
                 permissionsHandler.requestPermissions(studyMetadata.getPermissions(), this);
             }
@@ -192,7 +198,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 "\"Go to settings\", click on \"Permissions\" and Please select " +
                         "\"Allow\" or \"Allow only while using the app\" or \"Ask every time\" for " +
                         "the following permissions: " + permissionsString;
-                messageTitleTextView.setText("Aware: Permanently Denied Permissions");
+                messageTitleTextView.setText("TTRU-Aware: Permanently Denied Permissions");
                 messageDescriptionTextView.setText(message);
                 actionButton.setEnabled(true);
                 actionButton.setText("Go to settings");
@@ -233,10 +239,10 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
             result -> {
                 if (!Aware.isBatteryOptimizationIgnored(this, getPackageName())) {
                     new AlertDialog.Builder(this)
-                            .setMessage("To proceed, please allow AWARE to run in the background.")
+                            .setMessage("To proceed, please allow TTRU-AWARE to run in the background.")
                             .setPositiveButton("ok", (dialog, which) -> requestIgnoreBatteryOptimization())
                             .show();
-                }else if(Aware.isBatteryOptimizationIgnored(this, getPackageName())) {
+                }else if(Aware.isBatteryOptimizationIgnored(this, getPackageName()) && !Applications.isAccessibilityEnabled(this)) {
                     grantAccessibility();
                 }
             }
@@ -246,8 +252,7 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
         if (!Aware.is_watch(JoinStudyActivity.this)) {
             if (accessibilityDialog == null) {
                 accessibilityDialog = new AlertDialog.Builder(JoinStudyActivity.this)
-                        .setMessage("AWARE requires Accessibility access to participate in studies. " +
-                                "Please click \"SETTINGS\" and turn on Accessibility access to continue.")
+                        .setMessage(R.string.accessibility_permissions_dialogue)
                         .setPositiveButton("Settings", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -314,45 +319,12 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
     @Override
     public void onPermissionGranted() {
 
-        if (studyEligibility.isSmsPluginEnabled() && !studyEligibility.hasEligibilityBeenChecked()) {
-            studyEligibility.performStudyEligibilityCheck(this::handleStudyEligibilityResult);
+        if (studyEligibility.shouldPerformStudyEligibility() &&
+            !studyEligibility.hasEligibilityBeenChecked()) {
+            studyEligibility.performStudyEligibilityCheck();
         } else {
             requestIgnoreBatteryOptimization();
         }
-    }
-
-    private void handleStudyEligibilityResult(boolean isEligible) {
-
-        String message = isEligible ? "You passed!" : "You did not pass!";
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setMessage(message)
-                .create();
-
-        dialog.show();
-
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                dialog.dismiss();
-
-                if (isEligible) {
-                    permissionsHandler.requestPermissions(permissions, JoinStudyActivity.this);
-                } else {
-                    studyEligibility.markEligibilityAsUnchecked();
-                    actionButton.setEnabled(true);
-                    actionButton.setText("Retry");
-                    messageTitleTextView.setText("Unable to register for this study");
-                    messageDescriptionTextView.setText("You did not meet the minimum requirements for this study." +
-                            "If you feel this is an error hit retry or contact the study administrator.");
-                    actionButton.setOnClickListener(v -> {
-                        startActivity(
-                                new Intent(JoinStudyActivity.this, JoinStudyActivity.class)
-                        );
-                        finish();
-                    });
-                }
-            }
-        }, 2000);
     }
 
     @Override
@@ -380,5 +352,4 @@ public class JoinStudyActivity extends AppCompatActivity implements PermissionsH
                 .show();
 
     }
-
 }

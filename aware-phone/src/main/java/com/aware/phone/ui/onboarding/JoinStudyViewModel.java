@@ -28,7 +28,7 @@ public class JoinStudyViewModel extends AndroidViewModel {
 
     public void loadStudy(Uri registrationData) {
         if (studyMetadataLiveData.getValue() == null) {
-            loadingIndicator.setValue(new LoadingIndicator("Loading study", "Please wait..."));
+            loadingIndicator.setValue(new LoadingIndicator("Loading study", "Please wait...this may take a moment"));
 
             new GetStudyMetadata(getApplication(), new GetStudyMetadata.Listener() {
                 @Override

@@ -22,6 +22,8 @@ import com.aware.phone.ui.onboarding.JoinStudyActivity
 import com.aware.providers.Aware_Provider
 import com.aware.ui.PermissionsHandler
 import com.aware.utils.Scheduler
+import com.aware.utils.serverping.AwareServerPing
+import com.aware.utils.studyeligibility.StudyEligibility
 import kotlinx.android.synthetic.main.aware_item_layout.view.*
 import kotlinx.android.synthetic.main.aware_ui_participant.*
 import kotlinx.coroutines.Dispatchers
@@ -157,7 +159,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     private fun grantAccessibility() {
         if (!Aware.is_watch(this)) {
             AlertDialog.Builder(this@AwareParticipant).apply {
-                setMessage("AWARE requires Accessibility access to participate in studies. " +
+                setMessage("TTRU-AWARE requires Accessibility access to participate in studies. " +
                         "Please click \"SETTINGS\" and turn on Accessibility access to continue.")
                 setPositiveButton("settings"){ dialog, _ ->
                     dialog.dismiss()
@@ -189,8 +191,6 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
         applicationContext.contentResolver.query(Aware_Provider.Aware_Studies.CONTENT_URI, null, null, null, null)?.use {
             if(it.moveToFirst()){
-                ap_device_id.text =
-                    "Device Id: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_DEVICE_ID))}"
                 ap_study_title.text =
                     "Study Name: ${it.getString(it.getColumnIndexOrThrow(Aware_Provider.Aware_Studies.STUDY_TITLE))}"
             }
@@ -234,7 +234,23 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             }
             false
         }
-        ap_study_options_title.text = "AWARE STUDY OPTIONS"
+        ap_study_options_title.text = "TTRU-AWARE STUDY OPTIONS"
+
+        ap_device_id.text =
+            "Device Id: ${if(Aware.getSetting(this, Aware_Preferences.DEVICE_ID).isBlank()) {
+                Aware.getSetting(this, Aware_Preferences.DEVICE_ID)
+
+            } else {
+                getDeviceId()
+            }}"
+    }
+
+    private fun getDeviceId(): String? {
+        var deviceId = Aware.getSetting(this, Aware_Preferences.DEVICE_ID)
+        while(deviceId.isBlank()) {
+            deviceId = Aware.getSetting(this, Aware_Preferences.DEVICE_ID)
+        }
+        return deviceId
     }
 
     private fun triggerQuitStudyButton() {
@@ -300,7 +316,8 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             .setMessage("Are you sure you want to quit the study?")
             .setCancelable(false)
             .setPositiveButton("Yes") { dialogInterface, _ ->
-
+                AwareServerPing.sendQuitStudyPing(this@AwareParticipant)
+                sharedPreferences.edit().putBoolean(StudyEligibility.Values.PREF_ELIGIBILITY_CHECKED_KEY, false).apply()
                 val dbStudy = Aware.getStudy(
                     applicationContext,
                     Aware.getSetting(
@@ -581,7 +598,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
     override fun onPermissionDenied(deniedPermissions: List<String>?) {
 
         AlertDialog.Builder(this)
-            .setTitle("Aware: Permanently Denied Permissions")
+            .setTitle("TTRU-AWARE: Permanently Denied Permissions")
             .setMessage("You have permanently denied necessary permissions. Please follow the " +
                     "instructions in the \"Revoked Permissions\" section to grant permissions")
             .setNegativeButton("ok", DialogInterface.OnClickListener { dialog, _ ->
@@ -610,7 +627,7 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
 
         val awareParticipantItems = mutableListOf(
             AwareParticipantItem(
-                "AWARE Study",
+                "TTRU-AWARE Study",
                 "",
                 R.drawable.ic_launcher_aware,
                 R.id.aware_item_card,
@@ -618,21 +635,21 @@ class AwareParticipant : AppCompatActivity(), PermissionsHandler.PermissionCallb
             ),
             AwareParticipantItem(
                 "Sync Data",
-                "Send data to the AWARE server",
+                "Send data to server",
                 R.drawable.ic_sync,
                 R.id.aware_item_card,
                 R.drawable.item_background_3
             ),
             AwareParticipantItem(
                 "Quit Study",
-                "Quit a study you're currently enrolled in",
+                "Quit study you're currently enrolled in",
                 R.drawable.ic_quit,
                 R.id.aware_item_card,
                 R.drawable.item_background_2
             ),
             AwareParticipantItem(
                 "Revoked Permission",
-                "Granting permissions from app settings",
+                "Grant permissions from app settings",
                 R.drawable.ic_error,
                 R.id.aware_item_card,
                 R.drawable.item_background_2

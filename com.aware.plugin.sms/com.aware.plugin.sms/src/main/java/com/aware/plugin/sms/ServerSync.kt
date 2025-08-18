@@ -21,10 +21,8 @@ class ServerSync @Inject constructor(
 
             for (message in messageList) {
                 val smsInfo = ContentValues()
-                smsInfo.put(
-                    Provider.Sms_Data.RETRIEVAL_TIMESTAMP,
-                    message.retrievalDate
-                )
+                smsInfo.put(Provider.Sms_Data.MSG_MESSAGE_ID, message.id)
+                smsInfo.put(Provider.Sms_Data.RETRIEVAL_TIMESTAMP, message.retrievalDate)
                 smsInfo.put(
                     Provider.Sms_Data.DEVICE_ID,
                     Aware.getSetting(applicationContext, Aware_Preferences.DEVICE_ID)
@@ -49,6 +47,8 @@ class ServerSync @Inject constructor(
 
             for (sentiment in sentimentList) {
                 val sentimentInfo = ContentValues()
+                sentimentInfo.put(
+                    Provider.Sentiment_Analysis.SENTIMENT_ID, sentiment.sentimentId)
                 sentimentInfo.put(
                     Provider.Sentiment_Analysis.RETRIEVAL_TIMESTAMP, sentiment.retrievalTimestamp
                 )

@@ -31,6 +31,7 @@ import com.aware.providers.Aware_Provider;
 import com.aware.utils.Http;
 import com.aware.utils.Https;
 import com.aware.utils.SSLManager;
+import com.aware.utils.serverping.AwareServerPing;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -330,6 +331,8 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
                 try {
                     response = new Https(SSLManager.getHTTPS(mContext, WEBSERVER)).dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/create_table", fields, true);
                 } catch (FileNotFoundException e) {
+                    String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                    AwareServerPing.INSTANCE.sendDebugPing(mContext, "AwareSyncAdapter.createRemoteTable.334", stackTraceString);
                     response = null;
                 }
             } else {
@@ -633,6 +636,8 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
                 try {
                     success = new Https(SSLManager.getHTTPS(mContext, WEBSERVER)).dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/insert", request, true);
                 } catch (FileNotFoundException e) {
+                    String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                    AwareServerPing.INSTANCE.sendDebugPing(mContext, "AwareSyncAdapter.syncBatch.640", stackTraceString);
                     success = null;
                 }
             } else {
@@ -652,6 +657,8 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
                             .toString());
 
                 } catch (JSONException e) {
+                    String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                    AwareServerPing.INSTANCE.sendDebugPing(mContext, "AwareSyncAdapter.syncBatch.660", stackTraceString);
                     e.printStackTrace();
                 }
 

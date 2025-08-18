@@ -71,7 +71,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
         setContentView(R.layout.aware_join_study)
         studyUrl = intent.getStringExtra(EXTRA_STUDY_URL)
         permissionsHandler = PermissionsHandler(this@AwareJoinStudy)
-        studyEligibility = StudyEligibility(this@AwareJoinStudy)
+        studyEligibility = StudyEligibility(this@AwareJoinStudy, studyConfigs, permissionsHandler, this, ArrayList(permissions))
         missingPermissions = mutableListOf()
         processIntentScheme()
         handleParticipantIdDetection()
@@ -158,12 +158,9 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
                 } catch(e: JSONException) { e.printStackTrace() }
                 studyConfigs?.let {
                     populateStudyInfo(it)
-                    if(!studyEligibility.hasEligibilityBeenChecked())
-                        studyEligibility.checkForSmsPluginStatus(it)
-
                 }
-                if(studyEligibility.isSmsPluginEnabled()){
-                    studyEligibility.showSMSPermissionDialog(permissionsHandler, this@AwareJoinStudy)
+                if(studyEligibility.shouldPerformStudyEligibility()){
+                    studyEligibility.showStudyEligibilityDialog()
                 }else{
                     setupSignUpButton()
                     setupQuitButton()
@@ -682,12 +679,8 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
     override fun onPermissionGranted() {
 
-        if(studyEligibility.isSmsPluginEnabled() && !studyEligibility.hasEligibilityBeenChecked()) {
-            studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback {
-                override fun onEligibilityChecked(isEligible: Boolean) {
-                    handleStudyEligibilityResult(isEligible)
-                }
-            })
+        if(studyEligibility.shouldPerformStudyEligibility() && !studyEligibility.hasEligibilityBeenChecked()) {
+            studyEligibility.performStudyEligibilityCheck()
         }else {
             pluginsInstalled = true
             requestIgnoreBatteryOptimization()
@@ -779,12 +772,7 @@ class AwareJoinStudy : AppCompatActivity(), PermissionsHandler.PermissionCallbac
 
             if(missingPermissions.isEmpty()) {
                 if(studyEligibility.hasEligibilityBeenChecked()) {
-                    studyEligibility.performStudyEligibilityCheck(object: StudyEligibility.EligibilityCheckCallback {
-                        override fun onEligibilityChecked(isEligible: Boolean) {
-                            handleStudyEligibilityResult(isEligible)
-                        }
-
-                    })
+                    studyEligibility.performStudyEligibilityCheck()
                 }
             }
         }

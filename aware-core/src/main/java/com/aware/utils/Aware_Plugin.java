@@ -136,7 +136,7 @@ public class Aware_Plugin extends Service {
 
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
                         .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
-                        .setContentTitle("AWARE: Permission Revoked")
+                        .setContentTitle("TTRU-AWARE: Permission Revoked")
                         .setContentText("Permissions are required to remain in the study.\nTap to open app and accept permissions.")
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                         .setAutoCancel(true)
@@ -232,7 +232,7 @@ public class Aware_Plugin extends Service {
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
                     .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
-                    .setContentTitle("AWARE: Permission Revoked")
+                    .setContentTitle("TTRU-AWARE: Permission Revoked")
                     .setContentText("Permissions are required to remain in the study.\nTap to open app and accept permissions.")
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setAutoCancel(true)

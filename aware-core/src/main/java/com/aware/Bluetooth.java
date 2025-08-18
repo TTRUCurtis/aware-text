@@ -1,4 +1,3 @@
-
 package com.aware;
 
 import android.Manifest;
@@ -30,7 +29,6 @@ import com.aware.providers.Bluetooth_Provider.Bluetooth_Data;
 import com.aware.providers.Bluetooth_Provider.Bluetooth_Sensor;
 import com.aware.utils.Aware_Sensor;
 import com.aware.utils.Encrypter;
-
 import java.util.HashMap;
 
 /**
@@ -131,9 +129,15 @@ public class Bluetooth extends Aware_Sensor {
 
         REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH);
         REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_ADMIN);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_COARSE_LOCATION); //we need this permission for BT scanning to work
-        REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_CONNECT);
-        REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_SCAN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
+            REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_CONNECT);
+            REQUIRED_PERMISSIONS.add(Manifest.permission.BLUETOOTH_SCAN);
+            REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_FINE_LOCATION); // still needed for scan filtering
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // Android 10 and 11
+            REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        } else {
+            REQUIRED_PERMISSIONS.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
 
         bluetoothAdapter = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) ? ((BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter() : BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {

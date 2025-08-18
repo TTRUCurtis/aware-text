@@ -13,6 +13,8 @@ public class StudyMetadata {
     private final ArrayList<String> permissions;
     private final String surveyUrl;
     private final String socialMediaUrl;
+    private final String quitUrl;
+    private final String debugUrl;
 
     public boolean showPermissionsNoticeDialog() {
         return showPermissionsNoticeDialog;
@@ -29,6 +31,12 @@ public class StudyMetadata {
         return surveyUrl;
     }
 
+    public String getQuitUrl() {
+        return quitUrl;
+    }
+
+    public String getDebugUrl() { return debugUrl; }
+
     public String getSocialMediaUrl() {
         return socialMediaUrl;
     }
@@ -39,7 +47,7 @@ public class StudyMetadata {
 
     private StudyMetadata(String url, String name, String researcher, String description,
                           String configuration, ArrayList<String> permissions, String surveyUrl,
-                          String socialMediaUrl) {
+                          String socialMediaUrl, String quitUrl, String debugUrl) {
         this.url = url;
         this.name = name;
         this.researcher = researcher;
@@ -48,6 +56,8 @@ public class StudyMetadata {
         this.permissions = permissions;
         this.surveyUrl = surveyUrl;
         this.socialMediaUrl = socialMediaUrl;
+        this.quitUrl = quitUrl;
+        this.debugUrl = debugUrl;
     }
 
     public String getResearcher() {
@@ -79,6 +89,8 @@ public class StudyMetadata {
         ArrayList<String> permissions;
         public String surveyUrl;
         public String socialMediaUrl;
+        public String quitUrl;
+        public String debugUrl;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -120,9 +132,19 @@ public class StudyMetadata {
             return this;
         }
 
+        public Builder setQuitUrl(String quitUrl) {
+            this.quitUrl = quitUrl;
+            return this;
+        }
+
+        public Builder setDebugUrl(String debugUrl) {
+            this.debugUrl = debugUrl;
+            return this;
+        }
+
         public StudyMetadata build() {
             return new StudyMetadata(url, name, researcher, description, configuration, permissions,
-                    surveyUrl, socialMediaUrl);
+                    surveyUrl, socialMediaUrl, quitUrl, debugUrl);
         }
     }
 }

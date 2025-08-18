@@ -20,7 +20,7 @@ import java.util.HashMap;
 
 public class Provider extends ContentProvider {
 
-    public static final int DATABASE_VERSION = 4;
+    public static final int DATABASE_VERSION = 5;
 
     /**
      * Provider authority: com.aware.plugin.sms.provider.sms
@@ -48,7 +48,9 @@ public class Provider extends ContentProvider {
                 Sms_Data.MSG_THREAD_ID + " text default ''," +
                 Sms_Data.MSG_ADDRESS + " text default ''," +
                 Sms_Data.MSG_BODY + " text default ''," +
-                Sms_Data.MSG_MMS_PART_TYPE + " text default ''",
+                Sms_Data.MSG_MMS_PART_TYPE + " text default ''," +
+                Sms_Data.MSG_MESSAGE_ID + " varchar(255) unique"
+                ,
             Sentiment_Analysis._ID + " integer primary key autoincrement," +
                     Sentiment_Analysis.RETRIEVAL_TIMESTAMP + " real default 0," +
                     Sentiment_Analysis.DEVICE_ID + " text default ''," +
@@ -58,8 +60,8 @@ public class Provider extends ContentProvider {
                     Sentiment_Analysis.DICTIONARY_WORDS + " integer default 0," +
                     Sentiment_Analysis.SCORE + " real default 0," +
                     Sentiment_Analysis.ADDRESS + " text default ''," +
-                    Sentiment_Analysis.TYPE + " text default ''"
-
+                    Sentiment_Analysis.TYPE + " text default ''," +
+                    Sentiment_Analysis.SENTIMENT_ID + " varchar(255) unique"
     };
 
     public static final class Sms_Data implements BaseColumns {
@@ -85,6 +87,7 @@ public class Provider extends ContentProvider {
         public static final String MSG_ADDRESS = "address"; // should be md5 encrypted
         public static final String MSG_BODY = "body";
         public static final String MSG_MMS_PART_TYPE = "mms_part_type";
+        public static final String MSG_MESSAGE_ID = "message_id";
     }
 
     public static final class Sentiment_Analysis implements BaseColumns {
@@ -105,6 +108,7 @@ public class Provider extends ContentProvider {
         public static final String SCORE = "score";
         public static final String ADDRESS = "address";
         public static final String TYPE = "type";
+        public static final String SENTIMENT_ID = "sentiment_id";
     }
 
 
@@ -144,6 +148,7 @@ public class Provider extends ContentProvider {
         databaseMap.put(Sms_Data.MSG_ADDRESS, Sms_Data.MSG_ADDRESS);
         databaseMap.put(Sms_Data.MSG_BODY, Sms_Data.MSG_BODY);
         databaseMap.put(Sms_Data.MSG_MMS_PART_TYPE, Sms_Data.MSG_MMS_PART_TYPE);
+        databaseMap.put(Sms_Data.MSG_MESSAGE_ID, Sms_Data.MSG_MESSAGE_ID);
         //TODO Remove these maps if not necessary
 
         sentimentMap = new HashMap<>();
@@ -157,6 +162,7 @@ public class Provider extends ContentProvider {
         sentimentMap.put(Sentiment_Analysis.SCORE, Sentiment_Analysis.SCORE);
         sentimentMap.put(Sentiment_Analysis.ADDRESS, Sentiment_Analysis.ADDRESS);
         sentimentMap.put(Sentiment_Analysis.TYPE, Sentiment_Analysis.TYPE);
+        sentimentMap.put(Sentiment_Analysis.SENTIMENT_ID, Sentiment_Analysis.SENTIMENT_ID);
 
         return true;
     }

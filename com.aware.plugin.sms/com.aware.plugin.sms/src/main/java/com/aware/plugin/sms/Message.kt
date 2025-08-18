@@ -6,7 +6,7 @@ import java.security.NoSuchAlgorithmException
 
 
 //TODO change this to a data class or at least use Kotlin's primary constructor parameters
-open class Message(threadId: String?, address: String, type: String, message_date: String?, retrieval_date: String?, msg: String?, mmsPartType: String?, isMms: Boolean) {
+open class Message(id: String?, threadId: String?, address: String, type: String, message_date: String?, retrieval_date: String?, msg: String?, mmsPartType: String?, isMms: Boolean) {
 
     var tag = "AWARE::sms"
     var threadId: String? = null
@@ -18,6 +18,8 @@ open class Message(threadId: String?, address: String, type: String, message_dat
     var retrievalDate: String? = null
     var msg: String? = null
     var mmsPartType: String? = null
+    var id: String? = null
+    var isMms: Boolean? = null
 
     private fun md5(s: String): String {
         try {
@@ -56,7 +58,7 @@ open class Message(threadId: String?, address: String, type: String, message_dat
     }
 
     init {
-       // this.id = id
+        this.id = id
         this.threadId = threadId
         setAddress(address)
         setType(type, isMms)
@@ -64,5 +66,6 @@ open class Message(threadId: String?, address: String, type: String, message_dat
         this.retrievalDate = retrieval_date
         this.msg = msg
         this.mmsPartType = mmsPartType
+        this.isMms = isMms
     }
 }
