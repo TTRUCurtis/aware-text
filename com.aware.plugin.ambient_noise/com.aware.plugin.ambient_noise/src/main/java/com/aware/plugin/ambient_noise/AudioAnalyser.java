@@ -111,18 +111,20 @@ public class AudioAnalyser extends IntentService {
      */
     public static boolean isMicrophoneAvailable(Context context) {
         MediaRecorder recorder = new MediaRecorder();
-        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
-        recorder.setOutputFile(new File(context.getCacheDir(), "MediaUtil#micAvailTestFile").getAbsolutePath());
         boolean available = true;
         try {
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+            recorder.setOutputFile(new File(context.getCacheDir(), "MediaUtil#micAvailTestFile").getAbsolutePath());
             recorder.prepare();
             recorder.start();
         } catch (Exception exception) {
             available = false;
+        } finally {
+            recorder.release();
         }
-        recorder.release();
+
         return available;
     }
 }

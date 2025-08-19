@@ -42,19 +42,28 @@ public class AudioAnalysis {
     }
 
     public boolean isSilent(double db) {
-        double threshold = Double.valueOf(Aware.getSetting(context, Settings.PLUGIN_AMBIENT_NOISE_SILENCE_THRESHOLD));
-        return (db <= threshold);
+        String thresholdStr = Aware.getSetting(context, Settings.PLUGIN_AMBIENT_NOISE_SILENCE_THRESHOLD);
+        double threshold = 50.0; // default value
+        if(thresholdStr != null && !thresholdStr.trim().isEmpty()) {
+            try {
+                threshold = Double.parseDouble(thresholdStr.trim());
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return db <= threshold;
     }
 
     public float getFrequency() {
         int buffer_size = AudioRecord.getMinBufferSize(AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM), AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT) * 10;
-
-        double[] fft = new double[buffer_size];
-        for (int i = 0; i < buffer_size; i++) {
+        int len = Math.min(buffer_size, audio_data.length);
+        double[] fft = new double[len];
+        for (int i = 0; i < len; i++) {
             fft[i] = (double) audio_data[i] / 32768.0; //signed 16-bit
         }
 
-        RealDoubleFFT transformer = new RealDoubleFFT(buffer_size);
+        RealDoubleFFT transformer = new RealDoubleFFT(len);
         transformer.ft(fft);
 
         double hz = 0;
