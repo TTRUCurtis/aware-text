@@ -328,13 +328,8 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
         if (!WEBSERVICE_SIMPLE) {
             //Create table if doesn't exist on the remote webservice server
             if (protocol.equals("https")) {
-                try {
-                    response = new Https(SSLManager.getHTTPS(mContext, WEBSERVER)).dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/create_table", fields, true);
-                } catch (FileNotFoundException e) {
-                    String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
-                    AwareServerPing.INSTANCE.sendDebugPing(mContext, "AwareSyncAdapter.createRemoteTable.334", stackTraceString);
-                    response = null;
-                }
+                Https https = Https.fromUrl(mContext, WEBSERVER, 3, 500);
+                response = https.dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/create_table", fields, true);
             } else {
                 response = new Http().dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/create_table", fields, true);
             }
@@ -409,11 +404,8 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
         if (!(WEBSERVICE_SIMPLE && WEBSERVICE_REMOVE_DATA) || dontClearSensors.contains(DATABASE_TABLE)) {
             // Normal AWARE API always gets here.
             if (protocol.equals("https")) {
-                try {
-                    latest = new Https(SSLManager.getHTTPS(mContext, WEBSERVER)).dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/latest", request, true);
-                } catch (FileNotFoundException e) {
-                    return null;
-                }
+                Https https = Https.fromUrl(mContext, WEBSERVER, 3, 500);
+                latest = https.dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/latest", request, true);
             } else {
                 latest = new Http().dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/latest", request, true);
             }
@@ -633,13 +625,8 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
 
             String success;
             if (protocol.equals("https")) {
-                try {
-                    success = new Https(SSLManager.getHTTPS(mContext, WEBSERVER)).dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/insert", request, true);
-                } catch (FileNotFoundException e) {
-                    String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
-                    AwareServerPing.INSTANCE.sendDebugPing(mContext, "AwareSyncAdapter.syncBatch.640", stackTraceString);
-                    success = null;
-                }
+                Https https = Https.fromUrl(mContext, WEBSERVER, 3, 500);
+                success = https.dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/insert", request, true);
             } else {
                 success = new Http().dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/insert", request, true);
             }

@@ -1,5 +1,6 @@
 package com.aware.utils;
 
+import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
@@ -11,6 +12,8 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -57,42 +60,79 @@ public class Https {
          */
     public Https(InputStream certificate) {
         if (certificate == null) {
-            //Log.e(TAG, "SSL: unable to read certificate!");
-            return;
+            throw new IllegalStateException("Https(): certificate InputStream is null");
         }
 
         try {
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(keyStore); //add our keystore to the trusted keystores
-
-            //Load SSL public certificate so we can talk with the server
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            InputStream caInput = new BufferedInputStream(certificate);
-            Certificate ca = cf.generateCertificate(caInput);
-
-            keyStore.load(null, null); //initialize as empty keystore
-            keyStore.setCertificateEntry("ca", ca); //add our certificate to keystore
-            trustManagerFactory.init(keyStore); //add our keystore to the trusted keystores
-
-            //Initialize a SSL connection context
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
-            sslSocketFactory = sslContext.getSocketFactory();
-
-            //Fix for known-bug on <= JellyBean (4.x)
+            sslSocketFactory = buildFactoryFromInputStream(certificate);
+            //Known keepAlive fix for <= JellyBean
             System.setProperty("http.keepAlive", "false");
+        } catch (Exception e) {
+            throw new IllegalStateException("Https(): SSL init failed: " + e.getMessage(), e);
+        }
+    }
 
-        } catch (CertificateException e) {
-            Log.e(TAG, "CertificateException " + e.getMessage());
-        } catch (KeyManagementException e) {
-            Log.e(TAG, "KeyManagementException " + e.getMessage());
-        } catch (NoSuchAlgorithmException e) {
-            Log.e(TAG, "NoSuchAlgorithmException " + e.getMessage());
-        } catch (KeyStoreException e) {
-            Log.e(TAG, "KeyStoreException " + e.getMessage());
-        } catch (IOException e) {
-            Log.e(TAG, "IOException " + e.getMessage());
+    public static Https fromUrl(Context context, String httpsUrl, int retries, long sleepMillis) {
+        if(httpsUrl == null) throw new IllegalArgumentException("fromUrl(): url is null");
+
+        Uri uri = Uri.parse(httpsUrl);
+        if(!"https".equalsIgnoreCase(uri.getScheme())) {
+            throw new IllegalArgumentException("fromUrl(): non-HTTPS url: " + httpsUrl);
+        }
+
+        String host = uri.getHost();
+        if(host == null || host.isEmpty()) {
+            throw new IllegalArgumentException("fromUrl(): host is empty for " + httpsUrl);
+        }
+
+        int retriesLeft = Math.max(0, retries);
+        do {
+            if(SSLManager.hasCertificate(context, host)) {
+                try {
+                    InputStream cert = SSLManager.getHTTPS(context, httpsUrl);
+                    if(cert != null) {
+                        return new Https(cert);
+                    }
+                } catch(FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            SSLManager.handleUrl(context, httpsUrl, true);
+
+            if(retriesLeft > 0 && sleepMillis > 0) {
+                try {
+                    Thread.sleep(sleepMillis);
+                } catch(InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        } while(retries --> 0);
+
+        // a final attempt to ensure
+        try {
+            InputStream cert = SSLManager.getHTTPS(context, httpsUrl);
+            if(cert != null) return new Https(cert);
+        } catch(FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        throw new IllegalStateException("fromUrl(): certificate unavailable after retries for " + httpsUrl);
+    }
+
+    private static SSLSocketFactory buildFactoryFromInputStream(InputStream certificate) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        try(BufferedInputStream caInput = new BufferedInputStream(certificate)) {
+            Certificate ca = cf.generateCertificate(caInput);
+            keyStore.load(null, null);
+            keyStore.setCertificateEntry("ca", ca);
+            tmf.init(keyStore);
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, tmf.getTrustManagers(), null);
+            return sslContext.getSocketFactory();
         }
     }
 
@@ -175,6 +215,8 @@ public class Https {
             Log.e(TAG, "Sync HTTPS dataPost io/null error: " + e.getMessage());
         } catch (IllegalStateException e) {
             Log.e(TAG, "Sync HTTPS dataPost state error: " + e.getMessage());
+        } catch(IllegalArgumentException e) {
+            Log.e(TAG, "Sync HTTPS dataPost illegal argument error: " + e.getMessage());
         }
         return null;
     }
@@ -300,5 +342,4 @@ public class Https {
 
         return null;
     }
-
 }

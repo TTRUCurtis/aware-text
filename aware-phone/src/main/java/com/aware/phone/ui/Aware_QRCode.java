@@ -163,12 +163,8 @@ public class Aware_QRCode extends Aware_Activity implements ZBarScannerView.Resu
                     while(!SSLManager.hasCertificate(getApplicationContext(), study_uri.getHost())) {
                         //wait until we have the certificate downloaded
                     }
-
-                    try {
-                        request = new Https(SSLManager.getHTTPS(getApplicationContext(), study_url)).dataGET(study_url.substring(0, study_url.indexOf("/index.php")) + "/index.php/webservice/client_get_study_info/" + study_api_key, true);
-                    } catch (FileNotFoundException e) {
-                        request = null;
-                    }
+                    Https https = Https.fromUrl(getApplicationContext(), study_url, 3, 500);
+                    request = https.dataGET(study_url.substring(0, study_url.indexOf("/index.php")) + "/index.php/webservice/client_get_study_info/" + study_api_key, true);
                 } else {
                     request = new Http().dataGET(study_url.substring(0, study_url.indexOf("/index.php")) + "/index.php/webservice/client_get_study_info/" + study_api_key, true);
                 }
@@ -196,11 +192,8 @@ public class Aware_QRCode extends Aware_Activity implements ZBarScannerView.Resu
 
                         String answer;
                         if (protocol.equals("https")) {
-                            try {
-                                answer = new Https(SSLManager.getHTTPS(getApplicationContext(), study_url)).dataPOST(study_url, data, true);
-                            } catch (FileNotFoundException e) {
-                                answer = null;
-                            }
+                            Https https = Https.fromUrl(getApplicationContext(), study_url, 3, 500);
+                            answer = https.dataPOST(study_url, data, true);
                         } else {
                             answer = new Http().dataPOST(study_url, data, true);
                         }

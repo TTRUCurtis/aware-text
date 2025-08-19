@@ -435,14 +435,12 @@ public class Aware extends Service {
                     device_ping.put("package_version_code", String.valueOf(package_info.versionCode));
                     device_ping.put("package_version_name", String.valueOf(package_info.versionName));
                 }
-            } catch (PackageManager.NameNotFoundException e) {
+            } catch (PackageManager.NameNotFoundException ignored) {
             }
 
-            try {
-                new Https(SSLManager.getHTTPS(getApplicationContext(), "https://api.awareframework.com/index.php")).dataPOST("https://api.awareframework.com/index.php/awaredev/alive", device_ping, true);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
+            Https https = Https.fromUrl(getApplicationContext(), "https://api.awareframework.com/index.php", 3, 500);
+            https.dataPOST("https://api.awareframework.com/index.php/awaredev/alive", device_ping, true);
+
             return true;
         }
     }
@@ -475,41 +473,42 @@ public class Aware extends Service {
             studyCheck.put(Aware_Preferences.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
             studyCheck.put("study_check", "1");
 
-            try {
-                String webserver = Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER);
-
-                Uri url = Uri.parse(webserver);
-                String protocol = url.getScheme();
-
-                String study_status;
-                if (protocol.equalsIgnoreCase("https")) {
-                    study_status = new Https(SSLManager.getHTTPS(getApplicationContext(), Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER))).dataPOST(Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER), studyCheck, true);
-                } else {
-                    study_status = new Http().dataPOST(Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER), studyCheck, true);
-                }
-
-                if (study_status == null)
-                    return true; //unable to connect to server, timeout, etc. We do nothing.
-
-                if (DEBUG)
-                    Log.d(Aware.TAG, "Study_status: \n" + study_status);
-
+            String webserver = Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER);
+            Uri url = Uri.parse(webserver);
+            String protocol = url.getScheme();
+            String study_status;
+            if (protocol.equalsIgnoreCase("https")) {
                 try {
-                    JSONArray status = new JSONArray(study_status);
-
-                    JSONObject study = status.getJSONObject(0);
-                    if (!study.optBoolean("status", false)) {
-                        return false; //study no longer active, make clients quit the study and reset.
-                    }
-
-                    if (!study.getString("config").equalsIgnoreCase("[]")) {
-                        JSONObject configJSON = new JSONObject(study.getString("config"));
-                        Aware.tweakSettings(getApplicationContext(), new JSONArray().put(configJSON));
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    Https https = Https.fromUrl(getApplicationContext(), webserver, 3, 500);
+                    study_status = https.dataPOST(webserver, studyCheck, true);
+                } catch (IllegalStateException e) {
+                    if (Aware.DEBUG)
+                        Log.d(Aware.TAG, "AsyncStudyCheck: HTTPS unavailable: " + e.getMessage());
+                    return true;
                 }
-            } catch (FileNotFoundException e) {
+            } else {
+                study_status = new Http().dataPOST(Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER), studyCheck, true);
+            }
+
+            if (study_status == null)
+                return true; //unable to connect to server, timeout, etc. We do nothing.
+
+            if (DEBUG)
+                Log.d(Aware.TAG, "Study_status: \n" + study_status);
+
+            try {
+                JSONArray status = new JSONArray(study_status);
+
+                JSONObject study = status.getJSONObject(0);
+                if (!study.optBoolean("status", false)) {
+                    return false; //study no longer active, make clients quit the study and reset.
+                }
+
+                if (!study.getString("config").equalsIgnoreCase("[]")) {
+                    JSONObject configJSON = new JSONObject(study.getString("config"));
+                    Aware.tweakSettings(getApplicationContext(), new JSONArray().put(configJSON));
+                }
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
             return true;
@@ -999,7 +998,6 @@ public class Aware extends Service {
      *
      * @param key the name of the setting
      * @return value
-     *
      * @deprecated We should not be using
      * static methods for non-static data as they do not allow for ease of
      * testing, refactoring, or scalability. Inject the Singleton
@@ -1022,7 +1020,6 @@ public class Aware extends Service {
      *
      * @param key
      * @param value
-     *
      * @deprecated We should not be using
      * static methods for non-static data. Inject the Singleton {@link SettingsRepository}
      * instead.
@@ -1448,11 +1445,8 @@ public class Aware extends Service {
                         //wait until we have the certificate downloaded
                     }
 
-                    try {
-                        request = new Https(SSLManager.getHTTPS(getApplicationContext(), full_url)).dataGET(full_url.substring(0, full_url.indexOf("/index.php")) + "/index.php/webservice/client_get_study_info/" + study_api_key, true);
-                    } catch (FileNotFoundException e) {
-                        request = null;
-                    }
+                    Https https = Https.fromUrl(getApplicationContext(), full_url, 3, 500);
+                    request = https.dataGET(full_url.substring(0, full_url.indexOf("/index.php")) + "/index.php/webservice/client_get_study_info/" + study_api_key, true);
                 } else {
                     request = new Http().dataGET(full_url.substring(0, full_url.indexOf("/index.php")) + "/index.php/webservice/client_get_study_info/" + study_api_key, true);
                 }
@@ -1482,11 +1476,8 @@ public class Aware extends Service {
 
                         String answer;
                         if (protocol.equals("https")) {
-                            try {
-                                answer = new Https(SSLManager.getHTTPS(getApplicationContext(), full_url)).dataPOST(full_url, data, true);
-                            } catch (FileNotFoundException e) {
-                                answer = null;
-                            }
+                            Https https = Https.fromUrl(getApplicationContext(), full_url, 3, 500);
+                            answer = https.dataPOST(full_url, data, true);
                         } else {
                             answer = new Http().dataPOST(full_url, data, true);
                         }
@@ -2847,8 +2838,8 @@ public class Aware extends Service {
      * @param context
      */
     public static void startWebsocket(Context context) {
-        if(context == null) return;
-        if(websocket == null) websocket = new Intent(context, Websocket.class);
+        if (context == null) return;
+        if (websocket == null) websocket = new Intent(context, Websocket.class);
         context.startService(websocket);
     }
 

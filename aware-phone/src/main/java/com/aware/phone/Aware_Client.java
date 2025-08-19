@@ -606,12 +606,8 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                 }
             } catch (PackageManager.NameNotFoundException e) {
             }
-
-            try {
-                new Https(SSLManager.getHTTPS(getApplicationContext(), "https://api.awareframework.com/index.php")).dataPOST("https://api.awareframework.com/index.php/awaredev/alive", device_ping, true);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
+            Https https = Https.fromUrl(getApplicationContext(), "https://api.awareframework.com/index.php", 3, 500);
+            https.dataPOST("https://api.awareframework.com/index.php/awaredev/alive", device_ping, true);
             return true;
         }
     }
