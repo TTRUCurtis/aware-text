@@ -179,11 +179,25 @@ public class Aware_Plugin extends Service {
 
     private void scheduleDailyNotification() {
 
-        Intent notificationIntent = new Intent(this, NotificationReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+        Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(Aware_Plugin.this);
+        requestPermissions.putStringArrayListExtra(PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, new ArrayList<>(REQUIRED_PERMISSIONS));
+        requestPermissions.putExtra(PermissionsHandler.EXTRA_REDIRECT_SERVICE, getPackageName() + "/" + getClass().getName());
+        requestPermissions.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        PendingIntent permission = PendingIntent.getActivity(
                 this,
                 123,
-                notificationIntent,
+                requestPermissions,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        Intent notification = new Intent(Aware_Plugin.this, NotificationReceiver.class);
+        notification.putExtra("extra_permission_activity_pi", permission);
+
+        PendingIntent broadcast = PendingIntent.getBroadcast(
+                Aware_Plugin.this,
+                123,
+                notification,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
@@ -201,34 +215,25 @@ public class Aware_Plugin extends Service {
                 AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(),
                 AlarmManager.INTERVAL_DAY,
-                pendingIntent
+                broadcast
         );
     }
 
-    public class NotificationReceiver extends BroadcastReceiver {
+    public static class NotificationReceiver extends BroadcastReceiver {
+
         @Override
         public void onReceive(Context context, Intent intent) {
+
+            PendingIntent pi;
+
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pi = intent.getParcelableExtra("extra_permission_activity_pi", PendingIntent.class);
+            } else {
+                pi = intent.getParcelableExtra("extra_permission_activity_pi");
+            }
+
+
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-            Intent requestPermissions = permissionHandler.getPermissionHandlerIntent(context);
-            requestPermissions.putExtra(
-                    PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS,
-                    REQUIRED_PERMISSIONS
-            );
-            requestPermissions.putExtra(
-                    PermissionsHandler.EXTRA_REDIRECT_SERVICE,
-                    context.getPackageName() + "/" + getClass().getName()
-            );
-            requestPermissions.setFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
-            );
-
-            PendingIntent pi = PendingIntent.getActivity(
-                    context,
-                    123,
-                    requestPermissions,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, Aware.AWARE_NOTIFICATION_CHANNEL_GENERAL)
                     .setSmallIcon(R.drawable.ic_stat_aware_accessibility)
