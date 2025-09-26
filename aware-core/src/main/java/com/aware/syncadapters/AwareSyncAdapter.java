@@ -19,6 +19,7 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.format.DateUtils;
+import android.util.JsonWriter;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -30,15 +31,19 @@ import com.aware.R;
 import com.aware.providers.Aware_Provider;
 import com.aware.utils.Http;
 import com.aware.utils.Https;
-import com.aware.utils.SSLManager;
 import com.aware.utils.serverping.AwareServerPing;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.FileNotFoundException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Hashtable;
 
@@ -58,6 +63,7 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
     private final ArrayList<String> dontClearSensors = new ArrayList<>();
 
     private int notificationID = 99990;
+    private static final int BYTE_BUDGET = 1_500_000;
 
     public void init(String[] DATABASE_TABLES, String[] TABLES_FIELDS, Uri[] CONTEXT_URIS) {
         this.DATABASE_TABLES = DATABASE_TABLES;
@@ -577,83 +583,184 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
         }
     }
 
-    private Long syncBatch(Cursor context_data, String DATABASE_TABLE, String DEVICE_ID, Context mContext, String protocol, String WEBSERVER, Boolean DEBUG) throws JSONException {
-        JSONArray rows = new JSONArray();
-        long lastSynced = 0;
-        if (context_data != null && context_data.moveToFirst()) {
-            do {
-                JSONObject row = new JSONObject();
-                String[] columns = context_data.getColumnNames();
-                for (String c_name : columns) {
-                    if (c_name.equals("_id")) continue; //Skip local database ID
-                    if (c_name.equals("timestamp") || c_name.contains("double")) {
-                        row.put(c_name, context_data.getDouble(context_data.getColumnIndexOrThrow(c_name)));
-                    } else if (c_name.contains("float")) {
-                        row.put(c_name, context_data.getFloat(context_data.getColumnIndexOrThrow(c_name)));
-                    } else if (c_name.contains("long")) {
-                        row.put(c_name, context_data.getLong(context_data.getColumnIndexOrThrow(c_name)));
-                    } else if (c_name.contains("blob")) {
-                        row.put(c_name, context_data.getBlob(context_data.getColumnIndexOrThrow(c_name)));
-                    } else if (c_name.contains("integer")) {
-                        row.put(c_name, context_data.getInt(context_data.getColumnIndexOrThrow(c_name)));
-                    } else {
-                        String str = "";
-                        if (!context_data.isNull(context_data.getColumnIndexOrThrow(c_name))) { //fixes nulls and batch inserts not being possible
-                            str = context_data.getString(context_data.getColumnIndexOrThrow(c_name));
-                        }
-                        row.put(c_name, str);
-                    }
-                }
-                rows.put(row);
-            } while (context_data.moveToNext());
+    private Long syncBatch(Cursor context_data, String DATABASE_TABLE, String DEVICE_ID, Context mContext, String protocol, String WEBSERVER, Boolean DEBUG) throws UnsupportedEncodingException {
+        if (context_data == null || !context_data.moveToFirst()) {
+            if (context_data != null) context_data.close();
+            return 0L;
+        }
 
-            context_data.close(); //clear phone's memory immediately
-
-            lastSynced = rows.getJSONObject(rows.length() - 1).getLong("timestamp"); //last record to be synced
-            // For some tables, we must not clear everything.  Leave one row of these tables.
-            if (dontClearSensors.contains(DATABASE_TABLE)) {
-                if (rows.length() >= 2) {
-                    lastSynced = rows.getJSONObject(rows.length() - 2).getLong("timestamp"); //last record to be synced
-                } else {
-                    lastSynced = 0;
-                }
-            }
-
-            Hashtable<String, String> request = new Hashtable<>();
-            request.put(Aware_Preferences.DEVICE_ID, DEVICE_ID);
-            request.put("data", rows.toString());
-
-            String success;
-            if (protocol.equals("https")) {
-                Https https = Https.fromUrl(mContext, WEBSERVER, 3, 500);
-                success = https.dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/insert", request, true);
-            } else {
-                success = new Http().dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/insert", request, true);
-            }
-
-            //Something went wrong, e.g., server is down, lost internet, etc.
-            if (success == null) {
-                if (DEBUG) Log.d(Aware.TAG, DATABASE_TABLE + " FAILED to sync. Server down?");
+        final boolean isHttps = protocol.equals("https");
+        Https https = null;
+        if (isHttps) {
+            try {
+                https = Https.fromUrl(mContext, WEBSERVER, 3, 500);
+            } catch (IllegalStateException e) {
+                if (DEBUG) Log.e(Aware.TAG, "HTTPS init failed: " + e.getMessage());
+                context_data.close();
                 return null;
-            } else {
-
-                try {
-                    Aware.debug(mContext, new JSONObject()
-                            .put("table", DATABASE_TABLE)
-                            .put("last_sync_timestamp", lastSynced)
-                            .toString());
-
-                } catch (JSONException e) {
-                    String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
-                    AwareServerPing.INSTANCE.sendDebugPing(mContext, "AwareSyncAdapter.syncBatch.660", stackTraceString);
-                    e.printStackTrace();
-                }
-
-                if (DEBUG)
-                    Log.d(Aware.TAG, "Sync OK into " + DATABASE_TABLE + " [ " + rows.length() + " rows ]");
             }
         }
 
+        ByteArrayOutputStream buf = new ByteArrayOutputStream(BYTE_BUDGET + 64_000);
+        final OutputStreamWriter[] osw = {new OutputStreamWriter(buf, StandardCharsets.UTF_8)};
+        JsonWriter jw = new JsonWriter(osw[0]);
+        try {
+            jw.beginArray();
+        } catch (IOException e) {
+            if (DEBUG) Log.e(Aware.TAG, "JsonWriter beginArray() failed: " + e.getMessage());
+        }
+
+        String[] columns = context_data.getColumnNames();
+        int rowsInChunk = 0;
+        int totalRowsProcessed = 0;
+
+        long lastTimestampProcessed = 0L;
+        long secondToLastTimestamp;
+
+
+        try {
+            do {
+                jw.beginObject();
+                long tsForRow = 0L;
+
+                for (String c_name : columns) {
+                    if ("_id".equals(c_name)) continue;
+
+                    try {
+                        if (c_name.equals("timestamp") || c_name.contains("double")) {
+                            jw.name(c_name);
+                            double timestamp = context_data.getDouble(context_data.getColumnIndexOrThrow(c_name));
+                            jw.value(timestamp);
+                            if ("timestamp".equals(c_name)) tsForRow = (long) timestamp;
+                        } else if (c_name.contains("float")) {
+                            jw.name(c_name);
+                            jw.value((double) context_data.getFloat(context_data.getColumnIndexOrThrow(c_name)));
+                        } else if (c_name.contains("long")) {
+                            jw.name(c_name);
+                            jw.value(context_data.getLong(context_data.getColumnIndexOrThrow(c_name)));
+                        } else if (c_name.contains("blob")) {
+                            jw.name(c_name);
+                            jw.value(Arrays.toString(context_data.getBlob(context_data.getColumnIndexOrThrow(c_name))));
+                        } else if (c_name.contains("integer")) {
+                            jw.name(c_name);
+                            jw.value(context_data.getInt(context_data.getColumnIndexOrThrow(c_name)));
+                        } else {
+                            jw.name(c_name);
+                            String str = "";
+                            if (!context_data.isNull(context_data.getColumnIndexOrThrow(c_name))) {
+                                str = context_data.getString(context_data.getColumnIndexOrThrow(c_name));
+                            }
+                            jw.value(str);
+                        }
+                    } catch (IllegalArgumentException e) {
+                        if (Aware.DEBUG) Log.w(Aware.TAG, "Column issue for '" + c_name + "': " + e.getMessage());
+                        try { jw.name(c_name); jw.nullValue(); } catch (IOException ignore) {}
+                    }
+                }
+
+                jw.endObject();
+
+                secondToLastTimestamp = lastTimestampProcessed;
+                if (tsForRow != 0L) {
+                    lastTimestampProcessed = tsForRow;
+                } else {
+                    try {
+                        int idx = context_data.getColumnIndex("timestamp");
+                        if (idx >= 0) lastTimestampProcessed = context_data.getLong(idx);
+                    } catch (Exception ignored) {}
+                }
+
+                rowsInChunk++;
+                totalRowsProcessed++;
+
+                osw[0].flush();
+                if (buf.size() >= BYTE_BUDGET) {
+                    jw.endArray();
+                    osw[0].flush();
+
+                    String jsonChunk = buf.toString(StandardCharsets.UTF_8.name());
+                    Hashtable<String, String> request = new Hashtable<>();
+                    request.put(Aware_Preferences.DEVICE_ID, DEVICE_ID);
+                    request.put("data", jsonChunk);
+
+                    String url = WEBSERVER + "/" + DATABASE_TABLE + "/insert";
+                    String success = isHttps ? https.dataPOST(url, request, true) : new Http().dataPOST(url, request, true);
+                    if (success == null) {
+                        if (DEBUG) Log.d(Aware.TAG, DATABASE_TABLE + " FAILED to sync (chunk). Server down?");
+                        try { context_data.close(); } catch (Exception ignored) {}
+                        return null;
+                    }
+
+                    try {
+                        Aware.debug(mContext, new JSONObject()
+                                .put("table", DATABASE_TABLE)
+                                .put("last_sync_timestamp", lastTimestampProcessed)
+                                .toString());
+                    } catch (JSONException e) {
+                        String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                        AwareServerPing.INSTANCE.sendDebugPing(mContext, "AwareSyncAdapter.syncBatch.chunkDebug.flush", stackTraceString);
+                    }
+
+                    if (DEBUG) Log.d(Aware.TAG, "Sync OK into " + DATABASE_TABLE + " [ " + rowsInChunk + " rows in chunk ]");
+
+
+                    buf.reset();
+                    osw[0] = new OutputStreamWriter(buf, StandardCharsets.UTF_8);
+                    jw = new JsonWriter(osw[0]);
+                    jw.beginArray();
+                    rowsInChunk = 0;
+                }
+
+            } while (context_data.moveToNext());
+        } catch (IOException e) {
+            if (DEBUG) Log.e(Aware.TAG, "JSON streaming failed: " + e.getMessage());
+            try { context_data.close(); } catch (Exception ignored) {}
+            return null;
+        }
+
+        try { context_data.close(); } catch (Exception ignored) {}
+
+        try {
+            jw.endArray();
+            osw[0].flush();
+        } catch (IOException e) {
+            if (DEBUG) Log.e(Aware.TAG, "JsonWriter final endArray/flush failed: " + e.getMessage());
+        }
+
+        if (buf.size() > 2) {
+            String jsonChunk = buf.toString(StandardCharsets.UTF_8.name());
+            Hashtable<String, String> request = new Hashtable<>();
+            request.put(Aware_Preferences.DEVICE_ID, DEVICE_ID);
+            request.put("data", jsonChunk);
+
+            String url = WEBSERVER + "/" + DATABASE_TABLE + "/insert";
+            String success = isHttps ? https.dataPOST(url, request, true) : new Http().dataPOST(url, request, true);
+            if (success == null) {
+                if (DEBUG) Log.d(Aware.TAG, DATABASE_TABLE + " FAILED to sync (final chunk).");
+                return null;
+            }
+
+            try {
+                Aware.debug(mContext, new JSONObject()
+                        .put("table", DATABASE_TABLE)
+                        .put("last_sync_timestamp", lastTimestampProcessed)
+                        .toString());
+            } catch (JSONException e) {
+                String stackTraceString = AwareServerPing.INSTANCE.getExceptionStackTraceAsString(e);
+                AwareServerPing.INSTANCE.sendDebugPing(mContext, "AwareSyncAdapter.syncBatch.chunkDebug.final", stackTraceString);
+            }
+
+            if (DEBUG) Log.d(Aware.TAG, "Sync OK into " + DATABASE_TABLE + " [ " + rowsInChunk + " rows in final chunk ]");
+        }
+
+        long lastSynced = lastTimestampProcessed;
+        if (dontClearSensors.contains(DATABASE_TABLE)) {
+            if (totalRowsProcessed >= 2) {
+                lastSynced = secondToLastTimestamp;
+            } else {
+                lastSynced = 0L;
+            }
+        }
         return lastSynced;
     }
 
@@ -670,4 +777,5 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
         }
         return false;
     }
+
 }
