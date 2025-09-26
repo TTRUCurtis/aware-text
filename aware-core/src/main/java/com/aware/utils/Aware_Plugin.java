@@ -22,7 +22,9 @@ import com.aware.ui.PermissionsHandler;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
@@ -75,6 +77,8 @@ public class Aware_Plugin extends Service {
     public boolean PERMISSIONS_OK = true;
 
     public boolean SHOULD_NOTIFY = true;
+
+    private static final AtomicBoolean SSL_FETCH_IN_PROCESS = new AtomicBoolean(false);
 
     /**
      * Integration with sync adapters
@@ -160,8 +164,16 @@ public class Aware_Plugin extends Service {
 
             SHOULD_NOTIFY = true;
 
-            if (Aware.getSetting(this, Aware_Preferences.STATUS_WEBSERVICE).equals("true")) {
-                SSLManager.handleUrl(getApplicationContext(), Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER), true);
+            if(SSL_FETCH_IN_PROCESS.compareAndSet(false, true)) {
+                Executors.newSingleThreadExecutor().execute( () -> {
+                    try {
+                        SSLManager.handleUrl(getApplicationContext(), Aware.getSetting(this, Aware_Preferences.WEBSERVICE_SERVER), true);
+                    } catch(RejectedExecutionException | NullPointerException e) {
+                        e.printStackTrace();
+                    } finally {
+                        SSL_FETCH_IN_PROCESS.set(false);
+                    }
+                });
             }
 
             //Restores core AWARE service in case it get's killed
@@ -171,7 +183,6 @@ public class Aware_Plugin extends Service {
             }
 
             //Aware.startAWARE(getApplicationContext());
-
             //Aware.debug(this, "active: " + getClass().getName() + " package: " + getPackageName());
         }
         return super.onStartCommand(intent, flags, startId);
